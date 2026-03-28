@@ -198,6 +198,13 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     }
   }, [editingCotizacion])
 
+  const convertirPrecio = (precio: number, monedaOrigen: "USD" | "RD$", monedaDestino: "USD" | "RD$") => {
+    if (monedaOrigen === monedaDestino) return precio
+    if (monedaOrigen === "USD" && monedaDestino === "RD$") return precio * tasaCambio
+    if (monedaOrigen === "RD$" && monedaDestino === "USD") return precio / tasaCambio
+    return precio
+  }
+
   const generarPDF = async () => {
     if (!cliente || !email || productosSeleccionados.length === 0) {
       alert("Por favor completa todos los campos antes de generar el PDF")
@@ -387,13 +394,6 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   }
 
   if (!isOpen) return null
-
-  const convertirPrecio = (precio: number, monedaOrigen: "USD" | "RD$", monedaDestino: "USD" | "RD$") => {
-    if (monedaOrigen === monedaDestino) return precio
-    if (monedaOrigen === "USD" && monedaDestino === "RD$") return precio * tasaCambio
-    if (monedaOrigen === "RD$" && monedaDestino === "USD") return precio / tasaCambio
-    return precio
-  }
 
   const agregarProducto = (producto: Producto) => {
     const existingProduct = productosSeleccionados.find((p) => p.id === producto.id)

@@ -23,6 +23,7 @@ import {
   LogOut,
   Home,
   Receipt,
+  BarChart3,
 } from "lucide-react"
 
 interface ProductoEnCotizacion {
@@ -52,11 +53,6 @@ interface Cotizacion {
   monedaPrincipal?: "USD" | "RD$"
   itbisActivo?: boolean
   porcentajeItbis?: number
-  // Nuevos campos para tipo de pago y porcentajes
-  tipoPago?: "efectivo" | "transferencia"
-  porcentajePago?: 50 | 100
-  fechaPagoPendiente?: string
-  montoPendiente?: number
 }
 
 export default function CotizacionesPage() {
@@ -127,40 +123,6 @@ export default function CotizacionesPage() {
   const handleChangeEstado = (id: string, nuevoEstado: Cotizacion["estado"]) => {
     const nuevasCotizaciones = cotizaciones.map((c) => (c.id === id ? { ...c, estado: nuevoEstado } : c))
     saveCotizaciones(nuevasCotizaciones)
-  }
-
-  const generarFacturaDesdeCotizacion = (cotizacion: Cotizacion) => {
-    // Convertir cotización a factura
-    const factura = {
-      id: Date.now().toString(),
-      numero: `FAC-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(Date.now()).slice(-4)}`,
-      cliente: cotizacion.cliente,
-      email: cotizacion.email,
-      telefono: cotizacion.telefono,
-      direccion: "",
-      fecha: new Date().toISOString(),
-      vencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      productos: cotizacion.productos.map(p => ({
-        ...p,
-        imagen: "",
-        stock: 999,
-        rating: 5,
-        especificaciones: []
-      })),
-      subtotal: cotizacion.subtotal,
-      impuestos: cotizacion.impuestos,
-      total: cotizacion.total,
-      estado: "pendiente" as const,
-      notas: cotizacion.notas || ""
-    }
-
-    // Guardar factura en localStorage
-    const facturasExistentes = JSON.parse(localStorage.getItem("facturas") || "[]")
-    const nuevasFacturas = [...facturasExistentes, factura]
-    localStorage.setItem("facturas", JSON.stringify(nuevasFacturas))
-
-    // Redirigir a la página de facturas
-    router.push("/admin/facturas")
   }
 
   const generarPDFCotizacion = async (cotizacion: Cotizacion) => {
@@ -239,7 +201,7 @@ export default function CotizacionesPage() {
       doc.setFont("helvetica", "normal")
       doc.setTextColor(...textColor)
 
-      cotizacion.productos.forEach((producto, index) => {image.png
+      cotizacion.productos.forEach((producto, index) => {
         // Verificar si necesitamos nueva página
         if (yPosition > 180) {
           doc.addPage("landscape")
@@ -394,58 +356,54 @@ export default function CotizacionesPage() {
 
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
             <Image
               src="/images/jumtech-logo-new.png"
               alt="JumTech RD Logo"
-              width={50}
-              height={50}
+              width={36}
+              height={36}
               className="rounded-lg"
             />
             <div>
-              <span className="text-xl font-bold text-white">JumTech RD</span>
-              <Badge className="ml-2 bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">Admin</Badge>
+              <span className="text-base font-bold text-white">JumTech RD</span>
+              <Badge className="ml-2 bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs hidden sm:inline-flex">Admin</Badge>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="text-gray-300 hover:text-white transition-colors">
-              <Home className="h-4 w-4 mr-1 inline" />
-              Ver Sitio
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link href="/" className="text-gray-300 hover:text-white text-sm flex items-center gap-1">
+              <Home className="h-4 w-4" />Ver Sitio
             </Link>
-            <Link href="/admin/dashboard" className="text-gray-300 hover:text-white transition-colors">
-              Dashboard
-            </Link>
-            <Link href="/admin/productos" className="text-gray-300 hover:text-white transition-colors">
-              Productos
-            </Link>
-            <Link href="/admin/facturas" className="text-gray-300 hover:text-white transition-colors">
-              Facturas
-            </Link>
-            <Link href="/admin/reportes" className="text-gray-300 hover:text-white transition-colors">
-              Reportes
-            </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white">
-              <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
+            <Link href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">Dashboard</Link>
+            <Link href="/admin/facturas" className="text-gray-300 hover:text-white text-sm">Facturas</Link>
+            <Link href="/admin/reportes" className="text-gray-300 hover:text-white text-sm">Reportes</Link>
+            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+              <LogOut className="h-4 w-4 mr-1" />Salir
+            </Button>
+          </div>
+          {/* Mobile: solo logout */}
+          <div className="flex md:hidden">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
         </div>
       </nav>
 
-      <div className="pt-24 pb-16 px-4 relative z-10">
+      <div className="pt-16 pb-24 px-4 relative z-10">
         <div className="container mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-blue-600/20 text-blue-400 border-blue-600/30">Gestión de Cotizaciones</Badge>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Sistema de Cotizaciones</h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Administra y genera cotizaciones profesionales con control completo
+          <div className="text-center mb-6 pt-4">
+            <Badge className="mb-3 bg-blue-600/20 text-blue-400 border-blue-600/30">Gestión de Cotizaciones</Badge>
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Sistema de Cotizaciones</h1>
+            <p className="text-sm md:text-lg text-gray-300 max-w-2xl mx-auto">
+              Administra y genera cotizaciones profesionales
             </p>
           </div>
 
-          {/* Estadísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {/* Estadísticas — 2 cols mobile, 4 desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             <Card className="bg-white/5 border-gray-700/50">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -495,33 +453,32 @@ export default function CotizacionesPage() {
             </Card>
           </div>
 
-          {/* Filtros */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar por cliente o email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/5 border-gray-600 text-white placeholder-gray-400"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-400" />
+          {/* Filtros + botón nueva */}
+          <div className="flex flex-col gap-3 mb-5">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Buscar cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white/5 border-gray-600 text-white placeholder-gray-400 text-sm"
+                />
+              </div>
               <select
                 value={filterEstado}
                 onChange={(e) => setFilterEstado(e.target.value)}
-                className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
+                className="px-3 py-2 bg-white/5 border border-gray-600 rounded-lg text-white text-sm min-w-0"
               >
-                <option value="todos">Todos los estados</option>
+                <option value="todos">Todos</option>
                 <option value="pendiente">Pendiente</option>
                 <option value="enviada">Enviada</option>
                 <option value="aprobada">Aprobada</option>
                 <option value="rechazada">Rechazada</option>
               </select>
             </div>
-            <Button onClick={handleNewCotizacion} className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="h-5 w-5 mr-2" />
+            <Button onClick={handleNewCotizacion} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+              <Plus className="h-4 w-4 mr-2" />
               Nueva Cotización
             </Button>
           </div>
@@ -551,21 +508,19 @@ export default function CotizacionesPage() {
                   className="bg-white/5 border-gray-700/50 hover:border-blue-500/50 transition-all"
                 >
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">{cotizacion.cliente}</h3>
-                          <p className="text-gray-400 text-sm">{cotizacion.email}</p>
-                          {cotizacion.telefono && <p className="text-gray-400 text-sm">{cotizacion.telefono}</p>}
-                        </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                      <div>
+                        <h3 className="text-base font-semibold text-white">{cotizacion.cliente}</h3>
+                        <p className="text-gray-400 text-xs">{cotizacion.email}</p>
+                        {cotizacion.telefono && <p className="text-gray-400 text-xs">{cotizacion.telefono}</p>}
                       </div>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center gap-2 justify-between sm:justify-end">
                         <Badge className={getEstadoColor(cotizacion.estado)}>{cotizacion.estado}</Badge>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-blue-400">
+                          <p className="text-lg font-bold text-blue-400">
                             {cotizacion.monedaPrincipal || "RD$"} {cotizacion.total.toLocaleString()}
                           </p>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-xs text-gray-400">
                             {new Date(cotizacion.fecha).toLocaleDateString("es-DO")}
                           </p>
                         </div>
@@ -588,15 +543,6 @@ export default function CotizacionesPage() {
                           </>
                         )}
                         {cotizacion.itbisActivo === false && <span className="text-green-400"> • ITBIS: Exento</span>}
-                        {cotizacion.tipoPago && (
-                          <span className="text-blue-400"> • Pago: {cotizacion.tipoPago.toUpperCase()}</span>
-                        )}
-                        {cotizacion.porcentajePago && (
-                          <span className="text-purple-400"> • {cotizacion.porcentajePago}% pagado</span>
-                        )}
-                        {cotizacion.porcentajePago === 50 && cotizacion.montoPendiente && (
-                          <span className="text-orange-400"> • Pendiente: {cotizacion.monedaPrincipal || "RD$"} {cotizacion.montoPendiente.toLocaleString()}</span>
-                        )}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {cotizacion.productos.slice(0, 3).map((producto) => (
@@ -616,54 +562,45 @@ export default function CotizacionesPage() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <select
-                          value={cotizacion.estado}
-                          onChange={(e) => handleChangeEstado(cotizacion.id, e.target.value as Cotizacion["estado"])}
-                          className="px-3 py-1 bg-white/5 border border-gray-600 rounded text-white text-sm"
-                        >
-                          <option value="pendiente">Pendiente</option>
-                          <option value="enviada">Enviada</option>
-                          <option value="aprobada">Aprobada</option>
-                          <option value="rechazada">Rechazada</option>
-                        </select>
-                      </div>
-                      <div className="flex items-center space-x-2">
+                      <select
+                        value={cotizacion.estado}
+                        onChange={(e) => handleChangeEstado(cotizacion.id, e.target.value as Cotizacion["estado"])}
+                        className="px-2 py-1 bg-white/5 border border-gray-600 rounded text-white text-xs flex-1 mr-2"
+                      >
+                        <option value="pendiente">Pendiente</option>
+                        <option value="enviada">Enviada</option>
+                        <option value="aprobada">Aprobada</option>
+                        <option value="rechazada">Rechazada</option>
+                      </select>
+                      <div className="flex items-center gap-1">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => generarPDFCotizacion(cotizacion)}
-                          className="border-gray-600 text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                          className="border-gray-600 text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 px-2"
+                          title="Descargar PDF"
                         >
-                          <Download className="h-4 w-4 mr-1" />
-                          PDF
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => generarFacturaDesdeCotizacion(cotizacion)}
-                          className="border-gray-600 text-gray-300 hover:bg-purple-600 hover:text-white hover:border-purple-600"
-                        >
-                          <Receipt className="h-4 w-4 mr-1" />
-                          Factura
+                          <Download className="h-4 w-4" />
+                          <span className="hidden sm:inline ml-1">PDF</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleEditCotizacion(cotizacion)}
-                          className="border-gray-600 text-gray-300 hover:bg-green-600 hover:text-white hover:border-green-600"
+                          className="border-gray-600 text-gray-300 hover:bg-green-600 hover:text-white hover:border-green-600 px-2"
+                          title="Editar"
                         >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Editar
+                          <Edit className="h-4 w-4" />
+                          <span className="hidden sm:inline ml-1">Editar</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleDeleteCotizacion(cotizacion.id)}
-                          className="border-gray-600 text-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
+                          className="border-gray-600 text-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 px-2"
+                          title="Eliminar"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Eliminar
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -673,6 +610,22 @@ export default function CotizacionesPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Mobile bottom nav */}
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/90 border-t border-gray-800/50 flex justify-around py-2 z-50">
+        <Link href="/admin/dashboard" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
+          <Home className="h-5 w-5" /><span>Inicio</span>
+        </Link>
+        <Link href="/admin/cotizaciones" className="flex flex-col items-center text-blue-400 text-xs gap-1">
+          <FileText className="h-5 w-5" /><span>Cotizaciones</span>
+        </Link>
+        <Link href="/admin/facturas" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
+          <Receipt className="h-5 w-5" /><span>Facturas</span>
+        </Link>
+        <Link href="/admin/reportes" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
+          <BarChart3 className="h-5 w-5" /><span>Reportes</span>
+        </Link>
       </div>
 
       {/* Modal de Creación/Edición */}

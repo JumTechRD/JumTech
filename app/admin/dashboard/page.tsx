@@ -234,30 +234,28 @@ export default function AdminDashboardPage() {
               <Badge className="ml-2 bg-red-600/20 text-red-400 border-red-600/30 text-xs">Admin</Badge>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="text-gray-300 hover:text-white transition-colors">
-              <Home className="h-4 w-4 mr-1 inline" />
-              Ver Sitio
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
+              <Home className="h-4 w-4" />Ver Sitio
             </Link>
-            <Link href="/admin/productos" className="text-gray-300 hover:text-white transition-colors">
-              <Package className="h-4 w-4 mr-1 inline" />
-              Productos
+            <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
+              <FileText className="h-4 w-4" />Cotizaciones
             </Link>
-            <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white transition-colors">
-              <FileText className="h-4 w-4 mr-1 inline" />
-              Cotizaciones
+            <Link href="/admin/facturas" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
+              <Receipt className="h-4 w-4" />Facturas
             </Link>
-            <Link href="/admin/facturas" className="text-gray-300 hover:text-white transition-colors">
-              <Receipt className="h-4 w-4 mr-1 inline" />
-              Facturas
+            <Link href="/admin/reportes" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
+              <BarChart3 className="h-4 w-4" />Reportes
             </Link>
-            <Link href="/admin/reportes" className="text-gray-300 hover:text-white transition-colors">
-              <BarChart3 className="h-4 w-4 mr-1 inline" />
-              Reportes
-            </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white">
-              <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
+            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+              <LogOut className="h-4 w-4 mr-1" />Salir
+            </Button>
+          </div>
+          {/* Mobile logout */}
+          <div className="flex md:hidden">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -275,8 +273,8 @@ export default function AdminDashboardPage() {
             </p>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {/* Quick Actions — 2 cols mobile, 4 cols desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-red-500/50 transition-all cursor-pointer">
               <CardContent className="p-6 text-center" onClick={() => setShowProductManager(true)}>
                 <div className="p-4 bg-red-600/20 rounded-full w-fit mx-auto mb-4">
@@ -311,11 +309,13 @@ export default function AdminDashboardPage() {
 
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-green-500/50 transition-all cursor-pointer">
               <CardContent className="p-6 text-center">
-                <div className="p-4 bg-green-600/20 rounded-full w-fit mx-auto mb-4">
-                  <BarChart3 className="h-8 w-8 text-green-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Ver Reportes</h3>
-                <p className="text-gray-400">Análisis de ventas y productos</p>
+                <Link href="/admin/reportes" className="block">
+                  <div className="p-4 bg-green-600/20 rounded-full w-fit mx-auto mb-4">
+                    <BarChart3 className="h-8 w-8 text-green-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Ver Reportes</h3>
+                  <p className="text-gray-400">Análisis de ventas y productos</p>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -604,6 +604,22 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile bottom nav */}
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/90 border-t border-gray-800/50 flex justify-around py-2 z-50">
+        <Link href="/admin/dashboard" className="flex flex-col items-center text-red-400 text-xs gap-1">
+          <Home className="h-5 w-5" /><span>Inicio</span>
+        </Link>
+        <Link href="/admin/cotizaciones" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
+          <FileText className="h-5 w-5" /><span>Cotizaciones</span>
+        </Link>
+        <Link href="/admin/facturas" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
+          <Receipt className="h-5 w-5" /><span>Facturas</span>
+        </Link>
+        <Link href="/admin/reportes" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
+          <BarChart3 className="h-5 w-5" /><span>Reportes</span>
+        </Link>
       </div>
 
       {/* Product Manager Modal */}

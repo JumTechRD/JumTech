@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
     if (username === "admin" && password === "jumtech2024") {
       localStorage.setItem("adminAuth", "true")
       localStorage.setItem("adminUser", username)
-      router.push("/admin/cotizaciones")
+      router.push("/admin/dashboard")
     } else {
       setError("Credenciales incorrectas")
     }
