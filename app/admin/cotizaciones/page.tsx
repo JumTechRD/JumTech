@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { CotizacionCreator } from "@/components/cotizacion-creator"
+import { AdminBottomNav } from "@/components/admin-bottom-nav"
 import {
   Plus,
   Search,
@@ -638,6 +639,9 @@ export default function CotizacionesPage() {
         onSave={handleSaveCotizacion}
         editingCotizacion={editingCotizacion}
       />
+      
+      {/* Mobile Bottom Navigation */}
+      <AdminBottomNav />
     </div>
   )
 }
