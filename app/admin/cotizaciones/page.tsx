@@ -360,7 +360,7 @@ export default function CotizacionesPage() {
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Image
-              src="/images/jumtech-logo-new.png"
+              src="/images/logo-nuevo.jpeg"
               alt="JumTech RD Logo"
               width={36}
               height={36}
