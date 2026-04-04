@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+
+// GET all services
+export async function GET() {
+  try {
+    const services = await prisma.service.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return NextResponse.json(services, { status: 200 })
+  } catch (error) {
+    console.error('Error fetching services:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch services' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST create service (admin only)
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { title, description, image } = body
+
+    // Basic validation
+    if (!title || !description) {
+      return NextResponse.json(
+        { error: 'Title and description are required' },
+        { status: 400 }
+      )
+    }
+
+    // TODO: Add admin authorization check when auth is implemented
+    const service = await prisma.service.create({
+      data: {
+        title,
+        description,
+        image,
+      },
+    })
+
+    return NextResponse.json(service, { status: 201 })
+  } catch (error) {
+    console.error('Error creating service:', error)
+    return NextResponse.json(
+      { error: 'Failed to create service' },
+      { status: 500 }
+    )
+  }
+}
