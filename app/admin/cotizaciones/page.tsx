@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { CotizacionCreator } from "@/components/cotizacion-creator"
+import { AdminBottomNav } from "@/components/admin-bottom-nav"
 import {
   Plus,
   Search,
@@ -359,7 +360,7 @@ export default function CotizacionesPage() {
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Image
-              src="/images/jumtech-logo-new.png"
+              src="/images/logo-nuevo.jpeg"
               alt="JumTech RD Logo"
               width={36}
               height={36}
@@ -638,6 +639,9 @@ export default function CotizacionesPage() {
         onSave={handleSaveCotizacion}
         editingCotizacion={editingCotizacion}
       />
+      
+      {/* Mobile Bottom Navigation */}
+      <AdminBottomNav />
     </div>
   )
 }

@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
           <CardHeader className="text-center">
             <div className="mb-6">
               <Image
-                src="/images/jumtech-logo-new.png"
+                src="/images/logo-nuevo.jpeg"
                 alt="JumTech RD Logo"
                 width={80}
                 height={80}

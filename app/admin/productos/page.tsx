@@ -465,7 +465,7 @@ export default function ProductosPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Image
-              src="/images/jumtech-logo-new.png"
+              src="/images/logo-nuevo.jpeg"
               alt="JumTech RD Logo"
               width={50}
               height={50}

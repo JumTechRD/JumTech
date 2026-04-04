@@ -5,12 +5,13 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Monitor, Camera, Network, Code, Router, Shield, CheckCircle, ArrowLeft, ArrowRight, Clock } from "lucide-react"
+import { Monitor, Camera, Network, Code, Router, Shield, CheckCircle, ArrowLeft, ArrowRight, Clock, Menu, X } from "lucide-react"
 import { CotizacionForm } from "@/components/cotizacion-form"
 import { Logo } from "@/components/logo"
 
 export default function ServicesPage() {
   const [isCotizacionFormOpen, setIsCotizacionFormOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const openCotizacionForm = () => {
     setIsCotizacionFormOpen(true)
@@ -39,10 +40,12 @@ export default function ServicesPage() {
               alt="JumTech RD"
               width={200}
               height={60}
-              className="h-12 w-auto object-contain [mix-blend-mode:screen]"
+              className="h-10 sm:h-12 w-auto object-contain [mix-blend-mode:screen]"
               priority
             />
           </div>
+          
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors">
               Inicio
@@ -62,6 +65,70 @@ export default function ServicesPage() {
             <Button className="bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/25" onClick={openCotizacionForm}>
               Cotizar Proyecto
             </Button>
+          </div>
+          
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+        
+        {/* Mobile Navigation Menu */}
+        <div
+          className={`md:hidden transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+          }`}
+        >
+          <div className="px-4 py-4 bg-black/90 backdrop-blur-xl border-t border-gray-800/50">
+            <div className="flex flex-col space-y-3">
+              <Link
+                href="/"
+                className="text-gray-300 hover:text-white transition-colors py-2 px-4 rounded-lg hover:bg-white/10"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Inicio
+              </Link>
+              <Link
+                href="/servicios"
+                className="text-red-400 font-semibold py-2 px-4 rounded-lg bg-white/5"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Servicios
+              </Link>
+              <Link
+                href="/productos"
+                className="text-gray-300 hover:text-white transition-colors py-2 px-4 rounded-lg hover:bg-white/10"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Productos
+              </Link>
+              <Link
+                href="/nosotros"
+                className="text-gray-300 hover:text-white transition-colors py-2 px-4 rounded-lg hover:bg-white/10"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Nosotros
+              </Link>
+              <Link
+                href="/#contacto"
+                className="text-gray-300 hover:text-white transition-colors py-2 px-4 rounded-lg hover:bg-white/10"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Contacto
+              </Link>
+              <Button
+                className="bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/25 w-full"
+                onClick={() => {
+                  setIsMobileMenuOpen(false)
+                  openCotizacionForm()
+                }}
+              >
+                Cotizar Proyecto
+              </Button>
+            </div>
           </div>
         </div>
       </nav>

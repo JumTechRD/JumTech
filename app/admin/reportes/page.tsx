@@ -22,6 +22,7 @@ import {
   XCircle,
   FileSpreadsheet,
 } from "lucide-react"
+import { AdminBottomNav } from "@/components/admin-bottom-nav"
 
 interface Cotizacion {
   id: string
@@ -337,7 +338,7 @@ export default function ReportesPage() {
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Image src="/images/jumtech-logo-new.png" alt="JumTech RD" width={36} height={36} className="rounded-lg" />
+            <Image src="/images/logo-nuevo.jpeg" alt="JumTech RD" width={36} height={36} className="rounded-lg" />
             <div>
               <span className="text-base font-bold text-white">JumTech RD</span>
               <Badge className="ml-2 bg-green-600/20 text-green-400 border-green-600/30 text-xs hidden sm:inline-flex">Reportes</Badge>
@@ -591,20 +592,7 @@ export default function ReportesPage() {
           )}
 
           {/* Bottom nav mobile */}
-          <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/90 border-t border-gray-800/50 flex justify-around py-2 z-50">
-            <Link href="/admin/dashboard" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-              <Home className="h-5 w-5" /><span>Inicio</span>
-            </Link>
-            <Link href="/admin/cotizaciones" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-              <FileText className="h-5 w-5" /><span>Cotizaciones</span>
-            </Link>
-            <Link href="/admin/facturas" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-              <Receipt className="h-5 w-5" /><span>Facturas</span>
-            </Link>
-            <Link href="/admin/reportes" className="flex flex-col items-center text-green-400 text-xs gap-1">
-              <BarChart3 className="h-5 w-5" /><span>Reportes</span>
-            </Link>
-          </div>
+          <AdminBottomNav />
           <div className="h-16 md:hidden" />
         </div>
       </div>

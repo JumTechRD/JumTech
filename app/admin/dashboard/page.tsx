@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { ProductoManager } from "@/components/producto-manager"
 import { FacturaCreator } from "@/components/factura-creator"
+import { AdminBottomNav } from "@/components/admin-bottom-nav"
 
 interface Producto {
   id: string
@@ -223,7 +224,7 @@ export default function AdminDashboardPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Image
-              src="/images/jumtech-logo-new.png"
+              src="/images/logo-nuevo.jpeg"
               alt="JumTech RD Logo"
               width={50}
               height={50}
@@ -262,7 +263,7 @@ export default function AdminDashboardPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="pt-24 pb-16 px-4 relative z-10">
+      <div className="pt-24 pb-24 md:pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -648,6 +649,9 @@ export default function AdminDashboardPage() {
           productos={productos}
         />
       )}
+      
+      {/* Mobile Bottom Navigation */}
+      <AdminBottomNav />
     </div>
   )
 }

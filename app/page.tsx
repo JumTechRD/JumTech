@@ -71,16 +71,21 @@ const services = [
 function ServicesCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [itemsPerView, setItemsPerView] = useState(1)
+  const [isTransitioning, setIsTransitioning] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Create extended services array for infinite loop (duplicate items at start and end)
+  const extendedServices = [...services, ...services, ...services]
 
   // Update items per view based on screen size
   useEffect(() => {
     const updateItemsPerView = () => {
       if (window.innerWidth >= 1024) {
-        setItemsPerView(3) // Show 3 items on large screens
+        setItemsPerView(3)
       } else if (window.innerWidth >= 768) {
-        setItemsPerView(2) // Show 2 items on medium screens
+        setItemsPerView(2)
       } else {
-        setItemsPerView(1) // Show 1 item on small screens
+        setItemsPerView(1)
       }
     }
 
@@ -89,43 +94,82 @@ function ServicesCarousel() {
     return () => window.removeEventListener("resize", updateItemsPerView)
   }, [])
 
-  const maxIndex = Math.max(0, services.length - itemsPerView)
+  // Start from the middle set of services
+  useEffect(() => {
+    setCurrentIndex(services.length)
+  }, [])
 
   const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex >= maxIndex ? 0 : prevIndex + 1))
+    setIsTransitioning(true)
+    setCurrentIndex((prev) => prev + 1)
   }
 
   const prevSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex <= 0 ? maxIndex : prevIndex - 1))
+    setIsTransitioning(true)
+    setCurrentIndex((prev) => prev - 1)
   }
+
+  // Handle infinite loop reset
+  useEffect(() => {
+    if (currentIndex >= services.length * 2) {
+      // Reached the end of the third set, jump to the second set
+      const timeout = setTimeout(() => {
+        setIsTransitioning(false)
+        setCurrentIndex(services.length)
+      }, 500)
+      return () => clearTimeout(timeout)
+    } else if (currentIndex < services.length) {
+      // Reached before the first set, jump to the second set
+      const timeout = setTimeout(() => {
+        setIsTransitioning(false)
+        setCurrentIndex(services.length * 2 - 1)
+      }, 500)
+      return () => clearTimeout(timeout)
+    }
+  }, [currentIndex])
+
+  // Re-enable transition after instant jump
+  useEffect(() => {
+    if (!isTransitioning) {
+      const timeout = setTimeout(() => {
+        setIsTransitioning(true)
+      }, 50)
+      return () => clearTimeout(timeout)
+    }
+  }, [isTransitioning])
 
   // Auto-play carousel
   useEffect(() => {
     const interval = setInterval(() => {
       nextSlide()
-    }, 5000) // Change slide every 5 seconds
+    }, 4000)
 
     return () => clearInterval(interval)
-  }, [currentIndex, maxIndex])
+  }, [])
 
   const goToSlide = (index: number) => {
-    setCurrentIndex(Math.min(index, maxIndex))
+    setIsTransitioning(true)
+    setCurrentIndex(services.length + index)
   }
+
+  // Calculate the real index for dots
+  const realIndex = ((currentIndex - services.length) % services.length + services.length) % services.length
 
   return (
     <div className="relative px-2 sm:px-0">
       <div className="overflow-hidden rounded-2xl">
         <div
-          className="flex transition-transform duration-500 ease-in-out"
+          ref={containerRef}
+          className={`flex ${isTransitioning ? "transition-transform duration-500 ease-in-out" : ""}`}
           style={{
-            transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-            width: `${(services.length / itemsPerView) * 100}%`,
+            transform: `translateX(-${(currentIndex * 100) / itemsPerView}%)`,
+            width: `${(extendedServices.length / itemsPerView) * 100}%`,
           }}
         >
-          {services.map((service, index) => {
+          {extendedServices.map((service, index) => {
             const IconComponent = service.icon
             return (
-              <div key={index} className="flex-shrink-0" style={{ width: `${100 / services.length}%` }}>
+              <div key={index} className="flex-shrink-0" style={{ width: `${100 / extendedServices.length}%` }}>
                 <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-red-500/50 transition-all duration-300 group hover:bg-white/10 mx-1 sm:mx-2 h-full">
                   <div className="relative h-48 sm:h-56 md:h-64 lg:h-72 overflow-hidden rounded-t-lg">
                     <Image
@@ -134,7 +178,7 @@ function ServicesCarousel() {
                       fill
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      priority={index < 3}
+                      priority={index < 6}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-4 left-4">
@@ -157,7 +201,7 @@ function ServicesCarousel() {
                       className="bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300 w-full lg:w-auto"
                       asChild
                     >
-                      <Link href="/servicios">Ver más detalles</Link>
+                      <Link href="/servicios">Ver mas detalles</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -167,38 +211,32 @@ function ServicesCarousel() {
         </div>
       </div>
 
-      {/* Navigation Buttons - Only show if there are more items than visible */}
-      {maxIndex > 0 && (
-        <>
-          <button
-            onClick={prevSlide}
-            className="absolute left-1 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/60 backdrop-blur-sm text-white p-1.5 sm:p-2 lg:p-3 rounded-full hover:bg-black/80 transition-colors z-10 shadow-lg"
-          >
-            <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="absolute right-1 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/60 backdrop-blur-sm text-white p-1.5 sm:p-2 lg:p-3 rounded-full hover:bg-black/80 transition-colors z-10 shadow-lg"
-          >
-            <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
-          </button>
-        </>
-      )}
+      {/* Navigation Buttons */}
+      <button
+        onClick={prevSlide}
+        className="absolute left-1 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/60 backdrop-blur-sm text-white p-1.5 sm:p-2 lg:p-3 rounded-full hover:bg-black/80 transition-colors z-10 shadow-lg"
+      >
+        <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
+      </button>
+      <button
+        onClick={nextSlide}
+        className="absolute right-1 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/60 backdrop-blur-sm text-white p-1.5 sm:p-2 lg:p-3 rounded-full hover:bg-black/80 transition-colors z-10 shadow-lg"
+      >
+        <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
+      </button>
 
-      {/* Dots Indicator - Only show if there are multiple slides */}
-      {maxIndex > 0 && (
-        <div className="flex justify-center mt-4 sm:mt-6 space-x-1.5 sm:space-x-2">
-          {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-2 h-2 sm:w-3 sm:h-3 lg:w-4 lg:h-4 rounded-full transition-colors ${
-                index === currentIndex ? "bg-red-500" : "bg-gray-600 hover:bg-gray-500"
-              }`}
-            />
-          ))}
-        </div>
-      )}
+      {/* Dots Indicator */}
+      <div className="flex justify-center mt-4 sm:mt-6 gap-1.5 sm:gap-2">
+        {services.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-2 h-2 sm:w-3 sm:h-3 lg:w-4 lg:h-4 rounded-full transition-colors ${
+              index === realIndex ? "bg-red-500" : "bg-gray-600 hover:bg-gray-500"
+            }`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
