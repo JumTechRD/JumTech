@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyPassword } from '@/lib/auth'
+import { verifyPassword, generateToken } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,13 +37,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Generate JWT token
+    const token = await generateToken(user.id, user.role)
+
     // Don't return password in response
     const { password: _, ...userWithoutPassword } = user
 
-    // TODO: Implement session/JWT token generation and set in response
     return NextResponse.json(
       {
         user: userWithoutPassword,
+        token,
         message: 'Login successful',
       },
       { status: 200 }

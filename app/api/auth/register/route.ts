@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashPassword, validateEmail, validatePassword } from '@/lib/auth'
+import { hashPassword, validateEmail, validatePassword, sanitizeString } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!validateEmail(email)) {
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input types' },
+        { status: 400 }
+      )
+    }
+
+    const sanitizedEmail = sanitizeString(email.toLowerCase().trim())
+
+    if (!validateEmail(sanitizedEmail)) {
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
@@ -31,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: sanitizedEmail },
     })
 
     if (existingUser) {
@@ -45,7 +54,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password)
     const user = await prisma.user.create({
       data: {
-        email,
+        email: sanitizedEmail,
         password: hashedPassword,
       },
     })

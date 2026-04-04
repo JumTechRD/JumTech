@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { validateEmail } from '@/lib/auth'
+import { validateEmail, sanitizeString } from '@/lib/auth'
+import { requireAdmin } from '@/lib/middleware'
 
 // GET all quote requests (admin only)
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request)
+  if (!auth.isAuthorized) {
+    return auth.response
+  }
+
   try {
-    // TODO: Add admin authorization check when auth is implemented
     const quotes = await prisma.quoteRequest.findMany({
       include: {
         service: true,
@@ -25,7 +30,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create quote request
+// POST create quote request (public)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -39,6 +44,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (typeof name !== 'string' || typeof email !== 'string' || typeof phone !== 'string' || typeof message !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input types' },
+        { status: 400 }
+      )
+    }
+
     if (!validateEmail(email)) {
       return NextResponse.json(
         { error: 'Invalid email format' },
@@ -46,7 +58,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (phone.length < 7) {
+    const cleanPhone = phone.trim()
+    if (cleanPhone.length < 7 || cleanPhone.length > 20) {
       return NextResponse.json(
         { error: 'Invalid phone number' },
         { status: 400 }
@@ -65,12 +78,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Sanitize inputs
+    const sanitizedName = sanitizeString(name)
+    const sanitizedEmail = sanitizeString(email.toLowerCase())
+    const sanitizedPhone = sanitizeString(cleanPhone)
+    const sanitizedMessage = sanitizeString(message)
+
     const quote = await prisma.quoteRequest.create({
       data: {
-        name,
-        email,
-        phone,
-        message,
+        name: sanitizedName,
+        email: sanitizedEmail,
+        phone: sanitizedPhone,
+        message: sanitizedMessage,
         serviceId,
       },
       include: {
