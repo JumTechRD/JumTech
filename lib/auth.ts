@@ -1,9 +1,14 @@
 import bcrypt from 'bcryptjs'
-import { SignJWT } from 'jose'
+import { jwtVerify, SignJWT } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key'
-)
+const jwtSecretValue = process.env.JWT_SECRET
+if (!jwtSecretValue) {
+  throw new Error('Missing JWT_SECRET environment variable')
+}
+
+function getJwtSecret(): Uint8Array {
+  return new TextEncoder().encode(jwtSecretValue)
+}
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10)
@@ -21,7 +26,11 @@ export async function generateToken(userId: string, role: string): Promise<strin
   return new SignJWT({ userId, role })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
-    .sign(JWT_SECRET)
+    .sign(getJwtSecret())
+}
+
+export async function verifyToken(token: string) {
+  return jwtVerify(token, getJwtSecret())
 }
 
 export function validateEmail(email: string): boolean {

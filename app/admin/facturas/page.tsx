@@ -29,6 +29,7 @@ import {
 import { FacturaCreator } from "@/components/factura-creator"
 import { FacturaPreview } from "@/components/factura-preview"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
+import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
 
 interface ProductoEnFactura {
   id: string
@@ -71,29 +72,29 @@ export default function AdminFacturasPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const auth = localStorage.getItem("adminAuth")
-    if (auth !== "true") {
-      router.push("/admin/login")
-      return
-    }
-    setIsAuthenticated(true)
+    const loadAdminPage = async () => {
+      const isSessionValid = await ensureAdminSession(router)
+      if (!isSessionValid) return
 
-    // Cargar facturas y productos
-    const savedFacturas = localStorage.getItem("facturas")
-    if (savedFacturas) {
-      setFacturas(JSON.parse(savedFacturas))
+      setIsAuthenticated(true)
+
+      // Cargar facturas y productos
+      const savedFacturas = localStorage.getItem("facturas")
+      if (savedFacturas) {
+        setFacturas(JSON.parse(savedFacturas))
+      }
+
+      const savedProductos = localStorage.getItem("productos")
+      if (savedProductos) {
+        setProductos(JSON.parse(savedProductos))
+      }
     }
 
-    const savedProductos = localStorage.getItem("productos")
-    if (savedProductos) {
-      setProductos(JSON.parse(savedProductos))
-    }
+    void loadAdminPage()
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAuth")
-    localStorage.removeItem("adminUser")
-    router.push("/admin/login")
+    void logoutAdminSession(router)
   }
 
   const handleSaveFactura = (factura: Factura) => {
@@ -357,6 +358,7 @@ export default function AdminFacturasPage() {
               <select
                 value={filtroEstado}
                 onChange={(e) => setFiltroEstado(e.target.value)}
+                aria-label="Filtrar facturas por estado"
                 className="px-3 py-2 bg-white/5 border border-gray-600 rounded-lg text-white text-sm min-w-0"
               >
                 <option value="todos">Todos</option>

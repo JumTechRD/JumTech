@@ -35,6 +35,7 @@ import {
   Archive,
   RefreshCw,
 } from "lucide-react"
+import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
 
 interface Producto {
   id: string
@@ -111,20 +112,19 @@ export default function ProductosPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const auth = localStorage.getItem("adminAuth")
-    if (auth !== "true") {
-      router.push("/admin/login")
-      return
-    }
-    setIsAuthenticated(true)
+    const loadAdminPage = async () => {
+      const isSessionValid = await ensureAdminSession(router)
+      if (!isSessionValid) return
 
-    // Cargar productos desde localStorage
-    const productosGuardados = localStorage.getItem("productos")
-    if (productosGuardados) {
-      setProductos(JSON.parse(productosGuardados))
-    } else {
-      // Productos de ejemplo con datos mejorados
-      const productosEjemplo: Producto[] = [
+      setIsAuthenticated(true)
+
+      // Cargar productos desde localStorage
+      const productosGuardados = localStorage.getItem("productos")
+      if (productosGuardados) {
+        setProductos(JSON.parse(productosGuardados))
+      } else {
+        // Productos de ejemplo con datos mejorados
+        const productosEjemplo: Producto[] = [
         {
           id: "1",
           nombre: "Laptop Dell Inspiron 15",
@@ -230,15 +230,16 @@ export default function ProductosPage() {
           ultimaVenta: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
         },
       ]
-      setProductos(productosEjemplo)
-      localStorage.setItem("productos", JSON.stringify(productosEjemplo))
+        setProductos(productosEjemplo)
+        localStorage.setItem("productos", JSON.stringify(productosEjemplo))
+      }
     }
+
+    void loadAdminPage()
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAuth")
-    localStorage.removeItem("adminUser")
-    router.push("/admin/login")
+    void logoutAdminSession(router)
   }
 
   const saveProductos = (nuevosProductos: Producto[]) => {
@@ -617,6 +618,7 @@ export default function ProductosPage() {
               <select
                 value={filterCategoria}
                 onChange={(e) => setFilterCategoria(e.target.value)}
+                aria-label="Filtrar por categoría"
                 className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
               >
                 <option value="todos">Todas las categorías</option>
@@ -630,6 +632,7 @@ export default function ProductosPage() {
               <select
                 value={filterEstado}
                 onChange={(e) => setFilterEstado(e.target.value)}
+                aria-label="Filtrar por estado"
                 className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
               >
                 <option value="todos">Todos los estados</option>
@@ -640,6 +643,7 @@ export default function ProductosPage() {
               <select
                 value={filterStock}
                 onChange={(e) => setFilterStock(e.target.value)}
+                aria-label="Filtrar por stock"
                 className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
               >
                 <option value="todos">Todo el stock</option>
@@ -654,6 +658,7 @@ export default function ProductosPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
+                aria-label="Ordenar productos por"
                 className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
               >
                 <option value="nombre">Ordenar por</option>
@@ -773,6 +778,7 @@ export default function ProductosPage() {
                       <input
                         type="checkbox"
                         checked={selectedProducts.includes(producto.id)}
+                        aria-label={`Seleccionar producto ${producto.nombre}`}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setSelectedProducts([...selectedProducts, producto.id])

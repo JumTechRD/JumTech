@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
+import { verifyToken } from '@/lib/auth'
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key'
-)
+const AUTH_COOKIE_NAME = 'admin_session'
 
 export async function verifyAuth(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const headerToken = request.headers.get('authorization')?.replace('Bearer ', '')
+    const cookieToken = request.cookies.get(AUTH_COOKIE_NAME)?.value
+    const token = headerToken || cookieToken
 
     if (!token) {
       return { user: null, error: 'No token provided' }
     }
 
-    const verified = await jwtVerify(token, JWT_SECRET)
+    const verified = await verifyToken(token)
     return { user: verified.payload as any, error: null }
   } catch (error) {
     return { user: null, error: 'Invalid token' }

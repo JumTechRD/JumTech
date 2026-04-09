@@ -26,6 +26,7 @@ import {
   Receipt,
   BarChart3,
 } from "lucide-react"
+import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
 
 interface ProductoEnCotizacion {
   id: string
@@ -66,24 +67,24 @@ export default function CotizacionesPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const auth = localStorage.getItem("adminAuth")
-    if (auth !== "true") {
-      router.push("/admin/login")
-      return
-    }
-    setIsAuthenticated(true)
+    const loadAdminPage = async () => {
+      const isSessionValid = await ensureAdminSession(router)
+      if (!isSessionValid) return
 
-    // Cargar cotizaciones desde localStorage
-    const cotizacionesGuardadas = localStorage.getItem("cotizaciones")
-    if (cotizacionesGuardadas) {
-      setCotizaciones(JSON.parse(cotizacionesGuardadas))
+      setIsAuthenticated(true)
+
+      // Cargar cotizaciones desde localStorage
+      const cotizacionesGuardadas = localStorage.getItem("cotizaciones")
+      if (cotizacionesGuardadas) {
+        setCotizaciones(JSON.parse(cotizacionesGuardadas))
+      }
     }
+
+    void loadAdminPage()
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAuth")
-    localStorage.removeItem("adminUser")
-    router.push("/admin/login")
+    void logoutAdminSession(router)
   }
 
   const saveCotizaciones = (nuevasCotizaciones: Cotizacion[]) => {
@@ -469,6 +470,7 @@ export default function CotizacionesPage() {
               <select
                 value={filterEstado}
                 onChange={(e) => setFilterEstado(e.target.value)}
+                aria-label="Filtrar cotizaciones por estado"
                 className="px-3 py-2 bg-white/5 border border-gray-600 rounded-lg text-white text-sm min-w-0"
               >
                 <option value="todos">Todos</option>
@@ -566,6 +568,7 @@ export default function CotizacionesPage() {
                       <select
                         value={cotizacion.estado}
                         onChange={(e) => handleChangeEstado(cotizacion.id, e.target.value as Cotizacion["estado"])}
+                        aria-label={`Cambiar estado de cotizacion ${cotizacion.id}`}
                         className="px-2 py-1 bg-white/5 border border-gray-600 rounded text-white text-xs flex-1 mr-2"
                       >
                         <option value="pendiente">Pendiente</option>

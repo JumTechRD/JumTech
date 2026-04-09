@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyPassword, generateToken } from '@/lib/auth'
+import { generateToken, verifyPassword } from '@/lib/auth'
+
+const AUTH_COOKIE_NAME = 'admin_session'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,14 +45,25 @@ export async function POST(request: NextRequest) {
     // Don't return password in response
     const { password: _, ...userWithoutPassword } = user
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         user: userWithoutPassword,
-        token,
         message: 'Login successful',
       },
       { status: 200 }
     )
+
+    response.cookies.set({
+      name: AUTH_COOKIE_NAME,
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    })
+
+    return response
   } catch (error) {
     console.error('Error logging in:', error)
     return NextResponse.json(

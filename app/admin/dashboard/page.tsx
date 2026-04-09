@@ -23,6 +23,7 @@ import {
 import { ProductoManager } from "@/components/producto-manager"
 import { FacturaCreator } from "@/components/factura-creator"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
+import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
 
 interface Producto {
   id: string
@@ -83,36 +84,36 @@ export default function AdminDashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const auth = localStorage.getItem("adminAuth")
-    if (auth !== "true") {
-      router.push("/admin/login")
-      return
-    }
-    setIsAuthenticated(true)
+    const loadAdminPage = async () => {
+      const isSessionValid = await ensureAdminSession(router)
+      if (!isSessionValid) return
 
-    // Cargar productos
-    const savedProducts = localStorage.getItem("productos")
-    if (savedProducts) {
-      setProductos(JSON.parse(savedProducts))
+      setIsAuthenticated(true)
+
+      // Cargar productos
+      const savedProducts = localStorage.getItem("productos")
+      if (savedProducts) {
+        setProductos(JSON.parse(savedProducts))
+      }
+
+      // Cargar facturas
+      const savedFacturas = localStorage.getItem("facturas")
+      if (savedFacturas) {
+        setFacturas(JSON.parse(savedFacturas))
+      }
+
+      // Cargar cotizaciones
+      const savedCotizaciones = localStorage.getItem("cotizaciones")
+      if (savedCotizaciones) {
+        setCotizaciones(JSON.parse(savedCotizaciones))
+      }
     }
 
-    // Cargar facturas
-    const savedFacturas = localStorage.getItem("facturas")
-    if (savedFacturas) {
-      setFacturas(JSON.parse(savedFacturas))
-    }
-
-    // Cargar cotizaciones
-    const savedCotizaciones = localStorage.getItem("cotizaciones")
-    if (savedCotizaciones) {
-      setCotizaciones(JSON.parse(savedCotizaciones))
-    }
+    void loadAdminPage()
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAuth")
-    localStorage.removeItem("adminUser")
-    router.push("/admin/login")
+    void logoutAdminSession(router)
   }
 
   const handleSaveProduct = (producto: Producto) => {

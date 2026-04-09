@@ -23,6 +23,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
+import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
 
 interface Cotizacion {
   id: string
@@ -72,27 +73,27 @@ export default function ReportesPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const auth = localStorage.getItem("adminAuth")
-    if (auth !== "true") {
-      router.push("/admin/login")
-      return
+    const loadAdminPage = async () => {
+      const isSessionValid = await ensureAdminSession(router)
+      if (!isSessionValid) return
+
+      setIsAuthenticated(true)
+
+      const c = localStorage.getItem("cotizaciones")
+      if (c) setCotizaciones(JSON.parse(c))
+
+      const f = localStorage.getItem("facturas")
+      if (f) setFacturas(JSON.parse(f))
+
+      const p = localStorage.getItem("productos")
+      if (p) setProductos(JSON.parse(p))
     }
-    setIsAuthenticated(true)
 
-    const c = localStorage.getItem("cotizaciones")
-    if (c) setCotizaciones(JSON.parse(c))
-
-    const f = localStorage.getItem("facturas")
-    if (f) setFacturas(JSON.parse(f))
-
-    const p = localStorage.getItem("productos")
-    if (p) setProductos(JSON.parse(p))
+    void loadAdminPage()
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAuth")
-    localStorage.removeItem("adminUser")
-    router.push("/admin/login")
+    void logoutAdminSession(router)
   }
 
   // ── Métricas ──────────────────────────────────────────────

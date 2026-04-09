@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Eye, EyeOff, Lock, User, AlertCircle } from "lucide-react"
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -23,16 +23,27 @@ export default function AdminLoginPage() {
     setIsLoading(true)
     setError("")
 
-    // Simular autenticación (en producción usar un sistema real)
-    if (username === "admin" && password === "jumtech2024") {
-      localStorage.setItem("adminAuth", "true")
-      localStorage.setItem("adminUser", username)
-      router.push("/admin/dashboard")
-    } else {
-      setError("Credenciales incorrectas")
-    }
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
 
-    setIsLoading(false)
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        setError(data.error || "Credenciales incorrectas")
+        return
+      }
+
+      router.push("/admin/dashboard")
+    } catch (error) {
+      setError("No se pudo conectar con el servidor")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -71,19 +82,19 @@ export default function AdminLoginPage() {
 
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-                  Usuario
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                  Correo
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full pl-10 pr-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="Ingresa tu usuario"
+                    placeholder="Ingresa tu correo"
                   />
                 </div>
               </div>
