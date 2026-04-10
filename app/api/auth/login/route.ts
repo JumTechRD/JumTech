@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate JWT token
-    const token = await generateToken(user.id, user.role)
+    const token = await generateToken(user.id, user.role, user.permissions)
 
     // Don't return password in response
     const { password: _, ...userWithoutPassword } = user

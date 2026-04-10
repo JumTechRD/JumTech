@@ -23,7 +23,6 @@ import {
   Menu,
   X,
   ShoppingCart,
-  Settings,
 } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { CotizacionForm } from "@/components/cotizacion-form"
@@ -671,18 +670,9 @@ export default function HomePage() {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <Logo size="lg" />
-            <div className="flex items-center space-x-4">
-              <p className="text-gray-400 text-center md:text-right">
-                © 2024 JumTech RD. Todos los derechos reservados.
-              </p>
-              <Link
-                href="/admin/login"
-                className="text-gray-500 hover:text-red-400 transition-colors text-sm"
-                title="Acceso Administrativo"
-              >
-                <Settings className="h-4 w-4" />
-              </Link>
-            </div>
+            <p className="text-gray-400 text-center md:text-right">
+              © 2024 JumTech RD. Todos los derechos reservados.
+            </p>
           </div>
         </div>
       </footer>

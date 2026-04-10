@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FileText, Receipt, BarChart3, Home } from "lucide-react"
+import { LayoutDashboard, FileText, Receipt, BarChart3, Home, Users } from "lucide-react"
 
 const navItems = [
   { href: "/", icon: Home, label: "Sitio" },
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/admin/cotizaciones", icon: FileText, label: "Cotizar" },
   { href: "/admin/facturas", icon: Receipt, label: "Facturas" },
   { href: "/admin/reportes", icon: BarChart3, label: "Reportes" },
+  { href: "/admin/usuarios", icon: Users, label: "Usuarios" },
 ]
 
 export function AdminBottomNav() {

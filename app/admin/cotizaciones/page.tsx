@@ -380,6 +380,7 @@ export default function CotizacionesPage() {
             <Link href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">Dashboard</Link>
             <Link href="/admin/facturas" className="text-gray-300 hover:text-white text-sm">Facturas</Link>
             <Link href="/admin/reportes" className="text-gray-300 hover:text-white text-sm">Reportes</Link>
+            <Link href="/admin/usuarios" className="text-gray-300 hover:text-white text-sm">Usuarios</Link>
             <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
               <LogOut className="h-4 w-4 mr-1" />Salir
             </Button>

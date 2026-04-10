@@ -22,8 +22,12 @@ export async function verifyPassword(
   return bcrypt.compare(password, hashedPassword)
 }
 
-export async function generateToken(userId: string, role: string): Promise<string> {
-  return new SignJWT({ userId, role })
+export async function generateToken(
+  userId: string,
+  role: string,
+  permissions: string[] = []
+): Promise<string> {
+  return new SignJWT({ userId, role, permissions })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
     .sign(getJwtSecret())

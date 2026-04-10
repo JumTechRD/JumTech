@@ -207,6 +207,9 @@ export default function AdminFacturasPage() {
             <Link href="/admin/reportes" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <BarChart3 className="h-4 w-4" />Reportes
             </Link>
+            <Link href="/admin/usuarios" className="text-gray-300 hover:text-white transition-colors text-sm">
+              Usuarios
+            </Link>
             <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
               <LogOut className="h-4 w-4 mr-1" />Salir
             </Button>
@@ -263,6 +266,13 @@ export default function AdminFacturasPage() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <BarChart3 className="h-4 w-4" />Reportes
+              </Link>
+              <Link
+                href="/admin/usuarios"
+                className="text-gray-300 hover:text-white transition-colors py-2 px-3 rounded-lg hover:bg-white/10"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Usuarios
               </Link>
               <Button
                 variant="ghost"

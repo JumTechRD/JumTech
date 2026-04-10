@@ -19,6 +19,7 @@ import {
   BarChart3,
   Receipt,
   Home,
+  Users,
 } from "lucide-react"
 import { ProductoManager } from "@/components/producto-manager"
 import { FacturaCreator } from "@/components/factura-creator"
@@ -249,6 +250,9 @@ export default function AdminDashboardPage() {
             </Link>
             <Link href="/admin/reportes" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <BarChart3 className="h-4 w-4" />Reportes
+            </Link>
+            <Link href="/admin/usuarios" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
+              <Users className="h-4 w-4" />Usuarios
             </Link>
             <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
               <LogOut className="h-4 w-4 mr-1" />Salir
@@ -603,6 +607,12 @@ export default function AdminDashboardPage() {
                   Ver Sitio Web
                 </Link>
               </Button>
+              <Button asChild className="bg-indigo-600 hover:bg-indigo-700">
+                <Link href="/admin/usuarios">
+                  <Users className="h-4 w-4 mr-2" />
+                  Gestionar Usuarios
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -621,6 +631,9 @@ export default function AdminDashboardPage() {
         </Link>
         <Link href="/admin/reportes" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
           <BarChart3 className="h-5 w-5" /><span>Reportes</span>
+        </Link>
+        <Link href="/admin/usuarios" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
+          <Users className="h-5 w-5" /><span>Usuarios</span>
         </Link>
       </div>
 
