@@ -230,6 +230,9 @@ export default function AdminUsersPage() {
     setSelectedPermissions((previous) => [...previous, permission])
     setCustomPermission("")
   }
+  const removeSelectedPermission = (permission: string) => {
+    setSelectedPermissions((previous) => previous.filter((item) => item !== permission))
+  }
 
   const startEditingUser = (user: AdminUser) => {
     setEditingUserId(user.id)
@@ -336,20 +339,16 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 -left-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-400/15 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-[#0a0f1a] relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.08),transparent_35%),radial-gradient(circle_at_20%_30%,rgba(30,64,175,0.08),transparent_28%)]" />
 
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
+      <nav className="fixed top-0 w-full bg-[#080d17]/85 backdrop-blur-xl border-b border-slate-800/70 z-50">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Image src="/images/logo-nuevo.jpeg" alt="JumTech RD Logo" width={36} height={36} className="rounded-lg" />
             <div>
-              <span className="text-base font-bold text-white">JumTech RD</span>
-              <Badge className="ml-2 bg-indigo-600/20 text-indigo-400 border-indigo-600/30 text-xs hidden sm:inline-flex">
+              <span className="text-base font-semibold text-white tracking-tight">JumTech RD</span>
+              <Badge className="ml-2 bg-indigo-500/15 text-indigo-300 border-indigo-500/30 text-xs hidden sm:inline-flex">
                 Usuarios
               </Badge>
             </div>
@@ -385,253 +384,289 @@ export default function AdminUsersPage() {
         </div>
       </nav>
 
-      <div className="pt-20 pb-24 px-4 relative z-10">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="text-center">
-            <Badge className="mb-3 bg-indigo-600/20 text-indigo-400 border-indigo-600/30">Administración de Usuarios</Badge>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Control de accesos</h1>
-            <p className="text-gray-300">
-              Crea usuarios y define permisos personalizados según tu criterio.
+      <div className="pt-24 pb-24 px-4 md:px-6 relative z-10">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="space-y-3">
+            <Badge className="bg-indigo-500/15 text-indigo-200 border-indigo-500/30 px-3 py-1">Administración de Usuarios</Badge>
+            <h1 className="text-3xl md:text-4xl font-semibold text-slate-100 tracking-tight">Control de accesos</h1>
+            <p className="text-slate-400 max-w-2xl">
+              Gestiona usuarios, roles y permisos con una vista clara, consistente y profesional.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="bg-white/5 border-gray-700/50">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8">
+            <Card className="xl:col-span-4 bg-slate-900/70 border-slate-700/60 shadow-[0_12px_30px_-18px_rgba(15,23,42,0.9)] rounded-2xl">
+              <CardHeader className="space-y-2 pb-4">
+                <CardTitle className="text-slate-100 flex items-center gap-2 text-xl font-semibold">
                   <Users className="h-5 w-5 text-indigo-400" />
                   Nuevo usuario
                 </CardTitle>
+                <p className="text-sm text-slate-400">Completa los datos para crear un nuevo acceso administrativo.</p>
               </CardHeader>
               <CardContent>
-                <form className="space-y-4" onSubmit={handleCreateUser}>
-                  <div className="space-y-2">
-                    <Label htmlFor="user-email" className="text-gray-300">Correo</Label>
-                    <Input
-                      id="user-email"
-                      type="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      placeholder="usuario@empresa.com"
-                      required
-                    />
+                <form className="space-y-5" onSubmit={handleCreateUser}>
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Datos de acceso</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="user-email" className="text-slate-300">Correo</Label>
+                      <Input
+                        id="user-email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="usuario@empresa.com"
+                        required
+                        className="bg-slate-900/90 border-slate-700 text-slate-100 placeholder:text-slate-500 h-11"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="user-password" className="text-slate-300">Contraseña</Label>
+                      <Input
+                        id="user-password"
+                        type="password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Mínimo 6 caracteres"
+                        required
+                        className="bg-slate-900/90 border-slate-700 text-slate-100 placeholder:text-slate-500 h-11"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="user-password" className="text-gray-300">Contraseña</Label>
-                    <Input
-                      id="user-password"
-                      type="password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Mínimo 6 caracteres"
-                      required
-                    />
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Rol</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="user-role" className="text-slate-300">Tipo de usuario</Label>
+                      <select
+                        id="user-role"
+                        title="Seleccionar rol del usuario"
+                        aria-label="Seleccionar rol del usuario"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
+                        value={role}
+                        onChange={(event) => setRole(event.target.value as UserRole)}
+                      >
+                        <option value="CLIENT">CLIENT</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="user-role" className="text-gray-300">Rol</Label>
-                    <select
-                      id="user-role"
-                      title="Seleccionar rol del usuario"
-                      aria-label="Seleccionar rol del usuario"
-                      className="w-full rounded-md border border-gray-700 bg-black/40 px-3 py-2 text-white"
-                      value={role}
-                      onChange={(event) => setRole(event.target.value as UserRole)}
-                    >
-                      <option value="CLIENT">CLIENT</option>
-                      <option value="ADMIN">ADMIN</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="permissions" className="text-gray-300">
-                      Permisos personalizados (separados por coma)
-                    </Label>
-                    <Input
-                      id="permissions"
-                      value={permissionsInput}
-                      onChange={(event) => setPermissionsInput(event.target.value)}
-                      placeholder="MANAGE_USERS,VIEW_REPORTS,EDIT_PRODUCTS"
-                    />
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Permisos</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="permissions" className="text-slate-300">
+                        Permisos personalizados (separados por coma)
+                      </Label>
+                      <Input
+                        id="permissions"
+                        value={permissionsInput}
+                        onChange={(event) => setPermissionsInput(event.target.value)}
+                        placeholder="MANAGE_USERS,VIEW_REPORTS,EDIT_PRODUCTS"
+                        className="bg-slate-900/90 border-slate-700 text-slate-100 placeholder:text-slate-500 h-11"
+                      />
+                    </div>
                     {parsedPermissions.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {parsedPermissions.map((permission) => (
-                          <Badge key={permission} className="bg-indigo-600/20 text-indigo-300 border-indigo-600/30">
+                          <Badge key={permission} className="bg-indigo-500/15 text-indigo-200 border-indigo-500/30 rounded-full">
                             <Shield className="h-3 w-3 mr-1" />
                             {permission}
                           </Badge>
                         ))}
                       </div>
                     )}
+
+                    <div className="space-y-3">
+                      <Label className="text-slate-300">Permisos rápidos</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {AVAILABLE_PERMISSIONS.map((permission) => {
+                          const active = selectedPermissions.includes(permission)
+                          return (
+                            <button
+                              key={permission}
+                              type="button"
+                              onClick={() => toggleCreatePermission(permission)}
+                              className={`text-left rounded-lg border px-3 py-2.5 text-sm transition-colors ${
+                                active
+                                  ? "border-indigo-500/70 bg-indigo-500/15 text-indigo-200"
+                                  : "border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-500"
+                              }`}
+                            >
+                              {permission}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 rounded-lg border border-slate-800/80 bg-slate-900/40 p-3">
+                      <Label className="text-slate-400 text-xs">Permiso adicional (opcional)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={customPermission}
+                          onChange={(event) => setCustomPermission(event.target.value)}
+                          placeholder="Agregar permiso custom (ej: EXPORT_DATA)"
+                          className="bg-slate-900/90 border-slate-700 text-slate-100 placeholder:text-slate-500 h-11"
+                        />
+                        <Button type="button" variant="outline" onClick={addCustomPermission} className="border-slate-600 text-slate-200">
+                          Agregar
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-gray-300">Permisos rápidos</Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {AVAILABLE_PERMISSIONS.map((permission) => (
-                        <label
-                          key={permission}
-                          className="flex items-center gap-2 rounded-md border border-gray-700/60 px-3 py-2 text-sm text-gray-200"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedPermissions.includes(permission)}
-                            onChange={() => toggleCreatePermission(permission)}
-                          />
-                          {permission}
-                        </label>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        value={customPermission}
-                        onChange={(event) => setCustomPermission(event.target.value)}
-                        placeholder="Agregar permiso custom (ej: EXPORT_DATA)"
-                      />
-                      <Button type="button" variant="outline" onClick={addCustomPermission}>
-                        Agregar
-                      </Button>
-                    </div>
-                    {selectedPermissions.length > 0 && (
+
+                  {selectedPermissions.length > 0 && (
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                      <p className="text-xs text-slate-400 mb-2">Permisos seleccionados</p>
                       <div className="flex flex-wrap gap-2">
                         {selectedPermissions.map((permission) => (
-                          <Badge key={`selected-${permission}`} className="bg-indigo-600/20 text-indigo-300 border-indigo-600/30">
+                          <button
+                            key={`selected-${permission}`}
+                            type="button"
+                            onClick={() => removeSelectedPermission(permission)}
+                            className="inline-flex items-center gap-1 rounded-full border border-indigo-500/30 bg-indigo-500/15 px-2.5 py-1 text-xs text-indigo-200 hover:bg-indigo-500/25"
+                          >
                             {permission}
-                          </Badge>
+                            <X className="h-3 w-3" />
+                          </button>
                         ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {error && <p className="text-sm text-red-300">{error}</p>}
-                  {success && <p className="text-sm text-green-300">{success}</p>}
+                  {success && <p className="text-sm text-emerald-300">{success}</p>}
 
-                  <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={saving}>
+                  <Button
+                    type="submit"
+                    className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-[0_10px_20px_-12px_rgba(79,70,229,0.9)]"
+                    disabled={saving}
+                  >
                     {saving ? "Guardando..." : "Crear usuario"}
                   </Button>
                 </form>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-gray-700/50">
-              <CardHeader>
-                <CardTitle className="text-white">Usuarios registrados</CardTitle>
-                <Input
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value)
-                    setCurrentPage(1)
-                  }}
-                  placeholder="Buscar por correo, rol o permiso..."
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <select
-                    title="Filtrar usuarios por rol"
-                    aria-label="Filtrar usuarios por rol"
-                    className="w-full rounded-md border border-gray-700 bg-black/40 px-3 py-2 text-white text-sm"
-                    value={roleFilter}
-                    onChange={(event) => setRoleFilter(event.target.value as RoleFilter)}
-                  >
-                    <option value="ALL">Todos los roles</option>
-                    <option value="ADMIN">Solo ADMIN</option>
-                    <option value="CLIENT">Solo CLIENT</option>
-                  </select>
-                  <select
-                    title="Ordenar usuarios"
-                    aria-label="Ordenar usuarios"
-                    className="w-full rounded-md border border-gray-700 bg-black/40 px-3 py-2 text-white text-sm"
-                    value={sortBy}
-                    onChange={(event) => setSortBy(event.target.value as SortOption)}
-                  >
-                    <option value="NEWEST">Mas recientes</option>
-                    <option value="OLDEST">Mas antiguos</option>
-                    <option value="EMAIL_ASC">Correo A-Z</option>
-                    <option value="EMAIL_DESC">Correo Z-A</option>
-                  </select>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={quickFilter === "ALL" ? "default" : "outline"}
-                    onClick={() => setQuickFilter("ALL")}
-                  >
-                    Todos
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={quickFilter === "ADMIN" ? "default" : "outline"}
-                    onClick={() => setQuickFilter("ADMIN")}
-                  >
-                    ADMIN
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={quickFilter === "CLIENT" ? "default" : "outline"}
-                    onClick={() => setQuickFilter("CLIENT")}
-                  >
-                    CLIENT
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={quickFilter === "WITH_PERMISSIONS" ? "default" : "outline"}
-                    onClick={() => setQuickFilter("WITH_PERMISSIONS")}
-                  >
-                    Con permisos
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={quickFilter === "WITHOUT_PERMISSIONS" ? "default" : "outline"}
-                    onClick={() => setQuickFilter("WITHOUT_PERMISSIONS")}
-                  >
-                    Sin permisos
-                  </Button>
-                  <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleExportCsv}>
+            <Card className="xl:col-span-8 bg-slate-900/70 border-slate-700/60 shadow-[0_12px_30px_-18px_rgba(15,23,42,0.9)] rounded-2xl">
+              <CardHeader className="space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <CardTitle className="text-slate-100 text-xl font-semibold">Usuarios registrados</CardTitle>
+                    <p className="text-sm text-slate-400">
+                      Total: <span className="text-slate-200 font-medium">{users.length}</span>
+                    </p>
+                  </div>
+                  <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white" onClick={handleExportCsv}>
                     <Download className="h-4 w-4 mr-1" />
                     Exportar CSV
                   </Button>
                 </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3">
+                  <Input
+                    value={search}
+                    onChange={(event) => {
+                      setSearch(event.target.value)
+                      setCurrentPage(1)
+                    }}
+                    placeholder="Buscar por correo, rol o permiso..."
+                    className="bg-slate-900/90 border-slate-700 text-slate-100 placeholder:text-slate-500 h-11"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-slate-400">Rol</Label>
+                    <select
+                      title="Filtrar usuarios por rol"
+                      aria-label="Filtrar usuarios por rol"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
+                      value={roleFilter}
+                      onChange={(event) => setRoleFilter(event.target.value as RoleFilter)}
+                    >
+                      <option value="ALL">Todos los roles</option>
+                      <option value="ADMIN">Solo ADMIN</option>
+                      <option value="CLIENT">Solo CLIENT</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-slate-400">Orden</Label>
+                    <select
+                      title="Ordenar usuarios"
+                      aria-label="Ordenar usuarios"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
+                      value={sortBy}
+                      onChange={(event) => setSortBy(event.target.value as SortOption)}
+                    >
+                      <option value="NEWEST">Mas recientes</option>
+                      <option value="OLDEST">Mas antiguos</option>
+                      <option value="EMAIL_ASC">Correo A-Z</option>
+                      <option value="EMAIL_DESC">Correo Z-A</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-slate-400">Estado de permisos</Label>
+                    <select
+                      title="Filtrar por estado de permisos"
+                      aria-label="Filtrar por estado de permisos"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
+                      value={quickFilter}
+                      onChange={(event) => setQuickFilter(event.target.value as QuickFilter)}
+                    >
+                      <option value="ALL">Todos</option>
+                      <option value="ADMIN">Solo ADMIN</option>
+                      <option value="CLIENT">Solo CLIENT</option>
+                      <option value="WITH_PERMISSIONS">Con permisos</option>
+                      <option value="WITHOUT_PERMISSIONS">Sin permisos</option>
+                    </select>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 {loading ? (
-                  <p className="text-gray-400">Cargando usuarios...</p>
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-6 text-sm text-slate-400">
+                    Cargando usuarios...
+                  </div>
                 ) : filteredUsers.length === 0 ? (
-                  <p className="text-gray-400">Aún no hay usuarios creados.</p>
+                  <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950/50 p-8 text-center space-y-2">
+                    <p className="text-slate-200 font-medium">No hay resultados para los filtros actuales</p>
+                    <p className="text-sm text-slate-400">Prueba ajustando la búsqueda, el rol o el estado de permisos.</p>
+                  </div>
                 ) : (
                   paginatedUsers.map((user) => (
-                    <div key={user.id} className="rounded-lg border border-gray-700/60 bg-black/30 p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                        <p className="text-white font-medium">{user.email}</p>
-                        <Badge className={user.role === "ADMIN" ? "bg-red-600/20 text-red-300 border-red-600/30" : "bg-gray-600/20 text-gray-300 border-gray-600/30"}>
+                    <div key={user.id} className="rounded-xl border border-slate-800 bg-slate-950/65 p-4 md:p-5 space-y-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="text-slate-100 font-semibold text-base break-all">{user.email}</p>
+                        <Badge className={user.role === "ADMIN" ? "bg-rose-500/15 text-rose-200 border-rose-500/30" : "bg-slate-500/20 text-slate-200 border-slate-500/30"}>
                           {user.role}
                         </Badge>
                       </div>
-                      <p className="text-xs text-gray-400 mb-2">
-                        Creado: {new Date(user.createdAt).toLocaleString()}
-                      </p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+                        <span>Creado: {new Date(user.createdAt).toLocaleString()}</span>
+                        <span>Permisos: {user.permissions.length}</span>
+                        <span>{user.permissions.length > 0 ? "Estado: Configurado" : "Estado: Sin permisos"}</span>
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         {user.permissions.length > 0 ? (
                           user.permissions.map((permission) => (
-                            <Badge key={`${user.id}-${permission}`} className="bg-indigo-600/20 text-indigo-300 border-indigo-600/30">
+                            <Badge key={`${user.id}-${permission}`} className="bg-indigo-500/15 text-indigo-200 border-indigo-500/30 rounded-full">
                               {permission}
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-xs text-gray-500">Sin permisos personalizados</span>
+                          <span className="text-xs text-slate-500">Sin permisos personalizados</span>
                         )}
                       </div>
                       {editingUserId === user.id ? (
-                        <div className="mt-3 space-y-3 border-t border-gray-700/60 pt-3">
+                        <div className="mt-3 space-y-3 border-t border-slate-800 pt-3">
                           <div>
-                            <Label className="text-gray-300 text-xs">Rol</Label>
+                            <Label className="text-slate-300 text-xs">Rol</Label>
                             <select
                               title="Editar rol del usuario"
                               aria-label="Editar rol del usuario"
-                              className="mt-1 w-full rounded-md border border-gray-700 bg-black/40 px-3 py-2 text-white text-sm"
+                              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
                               value={editRole}
                               onChange={(event) => setEditRole(event.target.value as UserRole)}
                             >
@@ -640,20 +675,22 @@ export default function AdminUsersPage() {
                             </select>
                           </div>
                           <div>
-                            <Label className="text-gray-300 text-xs">Permisos (coma)</Label>
+                            <Label className="text-slate-300 text-xs">Permisos (coma)</Label>
                             <Input
                               value={editPermissionsInput}
                               onChange={(event) => setEditPermissionsInput(event.target.value)}
                               placeholder="MANAGE_USERS,VIEW_REPORTS"
+                              className="bg-slate-900/90 border-slate-700 text-slate-100 placeholder:text-slate-500 h-10"
                             />
                           </div>
                           <div>
-                            <Label className="text-gray-300 text-xs">Nueva contraseña (opcional)</Label>
+                            <Label className="text-slate-300 text-xs">Nueva contraseña (opcional)</Label>
                             <Input
                               type="password"
                               value={editPassword}
                               onChange={(event) => setEditPassword(event.target.value)}
                               placeholder="Minimo 6 caracteres"
+                              className="bg-slate-900/90 border-slate-700 text-slate-100 placeholder:text-slate-500 h-10"
                             />
                           </div>
                           <div className="flex gap-2">
@@ -665,24 +702,27 @@ export default function AdminUsersPage() {
                             >
                               {actionLoadingId === user.id ? "Guardando..." : "Guardar"}
                             </Button>
-                            <Button variant="outline" size="sm" onClick={cancelEditingUser}>
+                            <Button variant="outline" size="sm" onClick={cancelEditingUser} className="border-slate-600 text-slate-200">
                               <X className="h-4 w-4 mr-1" />
                               Cancelar
                             </Button>
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-3 flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => startEditingUser(user)}>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button variant="outline" size="sm" onClick={() => startEditingUser(user)} className="border-slate-600 text-slate-200 hover:bg-slate-800">
                             <Pencil className="h-4 w-4 mr-1" />
                             Editar
+                          </Button>
+                          <Button variant="outline" size="sm" className="border-slate-600 text-slate-200 hover:bg-slate-800">
+                            Ver detalle
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-red-600 text-red-300 hover:bg-red-900/30"
+                                className="border-red-500/50 text-red-300 hover:bg-red-950/40"
                                 disabled={actionLoadingId === user.id}
                               >
                                 <Trash2 className="h-4 w-4 mr-1" />
@@ -714,13 +754,14 @@ export default function AdminUsersPage() {
                 )}
                 {!loading && sortedUsers.length > 0 && (
                   <div className="pt-2 flex items-center justify-between">
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-slate-400">
                       Página {currentPage} de {totalPages}
                     </p>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
+                        className="border-slate-600 text-slate-200"
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                       >
@@ -729,6 +770,7 @@ export default function AdminUsersPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="border-slate-600 text-slate-200"
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                       >
