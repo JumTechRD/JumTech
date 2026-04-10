@@ -710,11 +710,20 @@ export default function AdminUsersPage() {
                         </div>
                       ) : (
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <Button variant="outline" size="sm" onClick={() => startEditingUser(user)} className="border-slate-600 text-slate-200 hover:bg-slate-800">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => startEditingUser(user)}
+                            className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+                          >
                             <Pencil className="h-4 w-4 mr-1" />
                             Editar
                           </Button>
-                          <Button variant="outline" size="sm" className="border-slate-600 text-slate-200 hover:bg-slate-800">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-slate-600 bg-slate-900 text-slate-200 hover:bg-slate-800 hover:text-white"
+                          >
                             Ver detalle
                           </Button>
                           <AlertDialog>
@@ -722,7 +731,7 @@ export default function AdminUsersPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-red-500/50 text-red-300 hover:bg-red-950/40"
+                                className="border-red-400/70 bg-red-500/10 text-red-200 hover:bg-red-500/20 hover:text-red-100"
                                 disabled={actionLoadingId === user.id}
                               >
                                 <Trash2 className="h-4 w-4 mr-1" />
