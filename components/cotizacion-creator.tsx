@@ -217,6 +217,29 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     return fecha.toLocaleDateString("es-DO")
   }
 
+  const cargarImagenComoDataUrl = (src: string) => {
+    return new Promise<string>((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext("2d")
+
+        if (!ctx) {
+          reject(new Error("No se pudo obtener el contexto del canvas"))
+          return
+        }
+
+        ctx.drawImage(img, 0, 0)
+        resolve(canvas.toDataURL("image/png"))
+      }
+      img.onerror = () => reject(new Error(`No se pudo cargar la imagen: ${src}`))
+      img.src = src
+    })
+  }
+
   const generarPDF = async () => {
     if (!cliente || !email || productosSeleccionados.length === 0) {
       alert("Por favor completa todos los campos antes de generar el PDF")
@@ -248,13 +271,24 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
       // Caja de logo
       doc.setFillColor(255, 255, 255)
       doc.roundedRect(margin, 6, 40, 24, 2, 2, "F")
-      doc.setTextColor(35, 35, 35)
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(12)
-      doc.text("JUMTECH RD", margin + 4, 20)
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(8)
-      doc.text("Soluciones Tecnológicas", margin + 4, 26)
+      let logoDataUrl: string | null = null
+      try {
+        logoDataUrl = await cargarImagenComoDataUrl("/logopdf.png")
+      } catch (logoError) {
+        console.warn("No se pudo cargar logopdf.png para el PDF:", logoError)
+      }
+
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, "PNG", margin + 1.5, 7.5, 37, 21.5, undefined, "FAST")
+      } else {
+        doc.setTextColor(35, 35, 35)
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(12)
+        doc.text("JUMTECH RD", margin + 4, 20)
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(8)
+        doc.text("Soluciones Tecnológicas", margin + 4, 26)
+      }
 
       // Datos de empresa
       doc.setTextColor(255, 255, 255)
