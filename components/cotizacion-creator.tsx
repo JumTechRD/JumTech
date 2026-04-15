@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus, Trash2, Save, Calculator, User, Package, Download, Edit3, Edit, Settings } from "lucide-react"
+import jsPDF from "jspdf"
 
 interface Producto {
   id: string
@@ -205,6 +206,17 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     return precio
   }
 
+  const formatearMonto = (monto: number) => {
+    return monto.toLocaleString("es-DO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    })
+  }
+
+  const formatearFecha = (fecha: Date) => {
+    return fecha.toLocaleDateString("es-DO")
+  }
+
   const generarPDF = async () => {
     if (!cliente || !email || productosSeleccionados.length === 0) {
       alert("Por favor completa todos los campos antes de generar el PDF")
@@ -214,171 +226,215 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     setIsGeneratingPDF(true)
 
     try {
-      // Importar jsPDF dinámicamente
-      const jsPDF = (await import("jspdf")).default
-      const doc = new jsPDF("portrait")
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
 
-      // Configuración de colores (siguiendo el formato de referencia)
-      const primaryColor = [139, 69, 19] // Marrón
-      const textColor = [0, 0, 0] // Negro
-      const lightGray = [128, 128, 128] // Gris
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margin = 15
+      const red: [number, number, number] = [190, 16, 24]
+      const darkText: [number, number, number] = [20, 20, 20]
+      const grayText: [number, number, number] = [90, 90, 90]
+      const lightGray: [number, number, number] = [245, 245, 245]
+      const lineGray: [number, number, number] = [215, 215, 215]
+      const contentWidth = pageWidth - margin * 2
 
-      // Header - Logo JumTech (izquierda)
       doc.setFillColor(255, 255, 255)
-      doc.rect(15, 15, 35, 20, "F")
-      doc.setTextColor(...primaryColor)
-      doc.setFontSize(14)
-      doc.setFont("helvetica", "bold")
-      doc.text("JumTech", 18, 25)
-      doc.setTextColor(220, 38, 38)
-      doc.text("RD", 30, 30)
+      doc.rect(0, 0, pageWidth, pageHeight, "F")
 
-      // Información de la empresa (centro-derecha)
-      doc.setTextColor(...textColor)
+      // Encabezado rojo principal
+      doc.setFillColor(...red)
+      doc.rect(0, 0, pageWidth, 38, "F")
+
+      // Caja de logo
+      doc.setFillColor(255, 255, 255)
+      doc.roundedRect(margin, 6, 40, 24, 2, 2, "F")
+      doc.setTextColor(35, 35, 35)
+      doc.setFont("helvetica", "bold")
       doc.setFontSize(12)
-      doc.setFont("helvetica", "bold")
-      doc.text("JumTech RD S.R.L.", 60, 20)
-
-      doc.setFontSize(8)
+      doc.text("JUMTECH RD", margin + 4, 20)
       doc.setFont("helvetica", "normal")
-      doc.text("Calle Lorenzo Despradel No. 7", 60, 26)
-      doc.text("La Castellana", 60, 30)
-      doc.text("Santo Domingo, República Dominicana", 60, 34)
-
-      // Título de Cotización (grande y centrado)
-      doc.setTextColor(...primaryColor)
-      doc.setFontSize(20)
-      doc.setFont("helvetica", "bold")
-      doc.text(`Cotización # ${numeroFactura}`, 15, 50)
-
-      // Información en 4 columnas (como la referencia)
-      doc.setTextColor(...textColor)
-      doc.setFontSize(9)
-      doc.setFont("helvetica", "bold")
-
-      // Headers de las columnas
-      doc.text("Fecha de Cotización:", 15, 65)
-      doc.text("Vencimiento:", 65, 65)
-      doc.text("Vendedor:", 115, 65)
-      doc.text("Términos de Pago:", 165, 65)
-
-      // Valores de las columnas
-      doc.setFont("helvetica", "normal")
-      doc.text(new Date().toLocaleDateString("es-DO"), 15, 72)
-      doc.text(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString("es-DO"), 65, 72)
-      doc.text("JumTech RD", 115, 72)
-      doc.text("EFECTIVO", 165, 72)
-
-      // Información del cliente (formato de referencia)
-      doc.setFont("helvetica", "bold")
-      doc.text(`Cliente ID: ${Date.now().toString().slice(-10)} `, 15, 85)
-      doc.text(`Nombre de Cliente: ${cliente}`, 100, 85)
-      doc.text(`Teléfono: ${telefono || "N/A"}`, 15, 92)
-
-      // Tabla de productos (formato exacto de la referencia)
-      let yPosition = 105
-
-      // Header de la tabla con fondo gris
-      doc.setFillColor(240, 240, 240)
-      doc.rect(15, yPosition, 180, 7, "F")
-
-      doc.setTextColor(...textColor)
       doc.setFontSize(8)
+      doc.text("Soluciones Tecnológicas", margin + 4, 26)
+
+      // Datos de empresa
+      doc.setTextColor(255, 255, 255)
       doc.setFont("helvetica", "bold")
-      doc.text("Línea No.", 18, yPosition + 5)
-      doc.text("Descripción", 35, yPosition + 5)
-      doc.text("Cantidad", 140, yPosition + 5)
-      doc.text("Precio", 160, yPosition + 5)
-      doc.text("Importe", 180, yPosition + 5)
+      doc.setFontSize(12)
+      doc.text("Jumtech RD", margin + 46, 15)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(8.5)
+      doc.text("Soluciones Tecnológicas Integrales", margin + 46, 20)
+      doc.text("Email: jumtechRD@gmail.com", margin + 46, 25)
+
+      // Título principal
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(16)
+      doc.text("COTIZACIÓN", pageWidth - margin, 21, { align: "right" })
+
+      let yPosition = 48
+      doc.setTextColor(...darkText)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(11)
+      doc.text("Cotización:", margin, yPosition)
+      doc.setFont("helvetica", "normal")
+      doc.text(numeroFactura, margin + 24, yPosition)
+      doc.setFont("helvetica", "bold")
+      doc.text("Fecha:", pageWidth - margin - 42, yPosition)
+      doc.setFont("helvetica", "normal")
+      doc.text(formatearFecha(new Date()), pageWidth - margin - 25, yPosition)
+
+      yPosition += 8
+      doc.setFont("helvetica", "bold")
+      doc.text("CLIENTE:", margin, yPosition)
+      yPosition += 6
+      doc.setFont("helvetica", "bold")
+      doc.text(cliente, margin, yPosition)
+      yPosition += 5
+      doc.setFont("helvetica", "normal")
+      doc.text(`Email: ${email}`, margin, yPosition)
+      yPosition += 5
+      doc.text(`Tel: ${telefono || "No especificado"}`, margin, yPosition)
 
       yPosition += 10
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(7)
+      const tableTop = yPosition
+      const colDescWidth = 110
+      const colCantWidth = 20
+      const colPrecioWidth = 25
+      const colTotalWidth = contentWidth - colDescWidth - colCantWidth - colPrecioWidth
 
-      // Productos con espaciado reducido
-      productosSeleccionados.forEach((producto, index) => {
+      doc.setFillColor(...lightGray)
+      doc.rect(margin, tableTop, contentWidth, 8, "F")
+      doc.setDrawColor(...lineGray)
+      doc.rect(margin, tableTop, contentWidth, 8)
+
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(10)
+      doc.setTextColor(...darkText)
+      doc.text("DESCRIPCIÓN", margin + 2, tableTop + 5.5)
+      doc.text("CANT.", margin + colDescWidth + 2, tableTop + 5.5)
+      doc.text("PRECIO", margin + colDescWidth + colCantWidth + 2, tableTop + 5.5)
+      doc.text("TOTAL", margin + colDescWidth + colCantWidth + colPrecioWidth + 2, tableTop + 5.5)
+
+      yPosition = tableTop + 8
+      const bottomLimit = pageHeight - 65
+
+      for (let index = 0; index < productosSeleccionados.length; index++) {
+        const producto = productosSeleccionados[index]
         const precioEnMonedaPrincipal = convertirPrecio(producto.precio, producto.moneda || "RD$", monedaPrincipal)
         const subtotalProducto = precioEnMonedaPrincipal * producto.cantidad
         const porcentajeExtra = (producto.porcentajeExtra || 0) / 100
         const totalConExtra = subtotalProducto * (1 + porcentajeExtra)
 
-        // Línea de producto (espaciado reducido)
-        doc.text((index + 1).toString(), 18, yPosition)
+        if (yPosition > bottomLimit) {
+          doc.addPage()
+          yPosition = margin
+          doc.setFillColor(...lightGray)
+          doc.rect(margin, yPosition, contentWidth, 8, "F")
+          doc.setDrawColor(...lineGray)
+          doc.rect(margin, yPosition, contentWidth, 8)
+          doc.setFont("helvetica", "bold")
+          doc.setFontSize(10)
+          doc.text("DESCRIPCIÓN", margin + 2, yPosition + 5.5)
+          doc.text("CANT.", margin + colDescWidth + 2, yPosition + 5.5)
+          doc.text("PRECIO", margin + colDescWidth + colCantWidth + 2, yPosition + 5.5)
+          doc.text("TOTAL", margin + colDescWidth + colCantWidth + colPrecioWidth + 2, yPosition + 5.5)
+          yPosition += 8
+        }
 
-        // Descripción en una sola línea (más compacta)
-        const descripcionCompleta = `${producto.nombre} - ${producto.descripcion}`
-        const descripcionCorta =
-          descripcionCompleta.length > 80 ? descripcionCompleta.substring(0, 80) + "..." : descripcionCompleta
-        doc.text(descripcionCorta, 35, yPosition)
+        const rowHeight = 14
+        if (index % 2 !== 0) {
+          doc.setFillColor(252, 252, 252)
+          doc.rect(margin, yPosition, contentWidth, rowHeight, "F")
+        }
 
-        doc.text(`${producto.cantidad}.00 Uds.`, 140, yPosition)
-        doc.text(`${precioEnMonedaPrincipal.toFixed(2)}`, 160, yPosition)
-        doc.text(`${monedaPrincipal} ${totalConExtra.toFixed(2)}`, 180, yPosition)
+        doc.setDrawColor(...lineGray)
+        doc.rect(margin, yPosition, contentWidth, rowHeight)
+        doc.line(margin + colDescWidth, yPosition, margin + colDescWidth, yPosition + rowHeight)
+        doc.line(
+          margin + colDescWidth + colCantWidth,
+          yPosition,
+          margin + colDescWidth + colCantWidth,
+          yPosition + rowHeight,
+        )
+        doc.line(
+          margin + colDescWidth + colCantWidth + colPrecioWidth,
+          yPosition,
+          margin + colDescWidth + colCantWidth + colPrecioWidth,
+          yPosition + rowHeight,
+        )
 
-        yPosition += 8 // Espaciado muy reducido entre productos
-      })
+        const descripcion = doc.splitTextToSize(producto.nombre, colDescWidth - 4)
+        const descripcionSecundaria = doc.splitTextToSize(producto.descripcion || "", colDescWidth - 4)
 
-      // Subtotal, ITBIS y Total (como en la referencia)
-      yPosition += 10
+        doc.setTextColor(...darkText)
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(9)
+        doc.text(descripcion[0] || producto.nombre, margin + 2, yPosition + 5)
 
-      // Subtotal
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(9)
-      doc.text("Subtotal", 150, yPosition)
-      doc.text(`${monedaPrincipal} ${calcularSubtotal().toFixed(2)}`, 180, yPosition)
+        if (descripcionSecundaria[0]) {
+          doc.setFont("helvetica", "normal")
+          doc.setFontSize(8)
+          doc.setTextColor(...grayText)
+          doc.text(descripcionSecundaria[0], margin + 2, yPosition + 10)
+        }
 
-      yPosition += 6
+        doc.setTextColor(...darkText)
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(9)
+        doc.text(`${producto.cantidad}`, margin + colDescWidth + 10, yPosition + 8, { align: "center" })
+        doc.text(formatearMonto(precioEnMonedaPrincipal), margin + colDescWidth + colCantWidth + colPrecioWidth - 2, yPosition + 8, {
+          align: "right",
+        })
+        doc.text(`${monedaPrincipal} ${formatearMonto(totalConExtra)}`, margin + contentWidth - 2, yPosition + 8, {
+          align: "right",
+        })
 
-      // ITBIS
-      if (itbisActivo) {
-        doc.text("ITBIS", 150, yPosition)
-        doc.text(`${monedaPrincipal} ${calcularImpuestos().toFixed(2)}`, 180, yPosition)
-        yPosition += 6
+        yPosition += rowHeight
       }
 
-      // Total (destacado)
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(10)
-      doc.text("Total", 150, yPosition)
-      doc.text(`${monedaPrincipal} ${calcularTotal().toFixed(2)}`, 180, yPosition)
+      yPosition += 6
+      const subtotal = calcularSubtotal()
+      const impuestos = calcularImpuestos()
+      const total = calcularTotal()
+      const totalsXLabel = pageWidth - margin - 45
+      const totalsXValue = pageWidth - margin
 
-      // Términos y condiciones (compactos)
-      yPosition += 20
-      doc.setFontSize(7)
       doc.setFont("helvetica", "normal")
+      doc.setFontSize(11)
+      doc.setTextColor(...darkText)
+      doc.text("Subtotal:", totalsXLabel, yPosition, { align: "right" })
+      doc.text(`${monedaPrincipal} ${formatearMonto(subtotal)}`, totalsXValue, yPosition, { align: "right" })
+      yPosition += 7
 
-      const terminos = [
-        "MOTIVOS DE CAMBIOS O DEVOLUCIONES: Productos defectuosos (7 días). - Incongruencia del",
-        "producto entregado con el descrito en la factura (7 días). - Cambio de opinión o problemas de calidad (1",
-        "día).",
-        "TIEMPOS DE GARANTÍA POR CONDICIONES DE FABRICACIÓN SON: Power Supply y fuentes: 1 mes. -",
-        "Accesorios de seguridad: revisar al comprar. - Cerco Eléctrico: 1 año. - CCTV: 1 año. - Monitores: 1 año. -",
-        "Intercoms: 1 año. - Controles de acceso y asistencia: 1 año. - Automatización Roger: 2 años. - Aires",
-        "Acondicionados: 2 años compressor / 1 año consola en piezas y servicio.",
-        "Cableado: 10 años * Productos en liquidación: no tiene cambio. * Restricciones por marcas.",
-      ]
-
-      terminos.forEach((termino) => {
-        doc.text(termino, 15, yPosition)
-        yPosition += 4
-      })
-
-      // Plazo de pago
+      doc.text(`ITBIS (${itbisActivo ? `${porcentajeItbis}%` : "0%"}):`, totalsXLabel, yPosition, { align: "right" })
+      doc.text(`${monedaPrincipal} ${formatearMonto(itbisActivo ? impuestos : 0)}`, totalsXValue, yPosition, { align: "right" })
       yPosition += 8
+
       doc.setFont("helvetica", "bold")
-      doc.setFontSize(9)
-      doc.text("Plazo de pago: Pago inmediato", 15, yPosition)
+      doc.setTextColor(...red)
+      doc.setFontSize(14)
+      doc.text("TOTAL:", totalsXLabel, yPosition, { align: "right" })
+      doc.text(`${monedaPrincipal} ${formatearMonto(total)}`, totalsXValue, yPosition, { align: "right" })
 
-      // Firmas (como en la referencia)
-      yPosition += 20
-      doc.setDrawColor(0, 0, 0)
-      doc.line(50, yPosition, 100, yPosition)
-      doc.line(130, yPosition, 180, yPosition)
-
-      doc.setFontSize(8)
+      yPosition += 11
+      doc.setFillColor(236, 236, 236)
+      doc.rect(margin, yPosition, contentWidth, 18, "F")
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(...darkText)
+      doc.setFontSize(10)
+      doc.text("NOTAS:", margin + 2, yPosition + 6)
       doc.setFont("helvetica", "normal")
-      doc.text("Recibido Por", 65, yPosition + 8)
-      doc.text("Aprobado Por", 145, yPosition + 8)
+      doc.setFontSize(10)
+      const notasTexto = notas?.trim() || "Sin notas adicionales."
+      const notasLineas = doc.splitTextToSize(notasTexto, contentWidth - 6)
+      doc.text(notasLineas[0] || "Sin notas adicionales.", margin + 2, yPosition + 12)
+
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(10)
+      doc.setTextColor(150, 40, 40)
+      doc.text("Gracias por su confianza - Jumtech RD | Soluciones Tecnológicas", pageWidth / 2, pageHeight - 10, {
+        align: "center",
+      })
 
       // Descargar el PDF
       const fileName = `Cotizacion-${numeroFactura}-${cliente.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`
