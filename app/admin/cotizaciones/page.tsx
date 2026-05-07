@@ -662,7 +662,7 @@ export default function CotizacionesPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => generarPDFCotizacion(cotizacion)}
-                          className="border-gray-600 text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 px-2"
+                          className="bg-slate-900/70 border-blue-500/40 text-blue-300 hover:bg-blue-600 hover:text-white hover:border-blue-500 px-2"
                           title="Descargar PDF"
                         >
                           <Download className="h-4 w-4" />
@@ -672,7 +672,7 @@ export default function CotizacionesPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleEditCotizacion(cotizacion)}
-                          className="border-gray-600 text-gray-300 hover:bg-green-600 hover:text-white hover:border-green-600 px-2"
+                          className="bg-slate-900/70 border-emerald-500/40 text-emerald-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-500 px-2"
                           title="Editar"
                         >
                           <Edit className="h-4 w-4" />
@@ -682,7 +682,7 @@ export default function CotizacionesPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDeleteCotizacion(cotizacion.id)}
-                          className="border-gray-600 text-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 px-2"
+                          className="bg-slate-900/70 border-red-500/40 text-red-300 hover:bg-red-600 hover:text-white hover:border-red-500 px-2"
                           title="Eliminar"
                         >
                           <Trash2 className="h-4 w-4" />
