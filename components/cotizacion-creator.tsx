@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus, Trash2, Save, Calculator, User, Package, Download, Edit3, Edit, Settings } from "lucide-react"
+import { fetchAdminProducts } from "@/lib/admin-api-client"
 import jsPDF from "jspdf"
 
 interface Producto {
@@ -13,6 +14,7 @@ interface Producto {
   descripcion: string
   precio: number
   categoria: string
+  activo?: boolean
 }
 
 interface ProductoEnCotizacion extends Producto {
@@ -155,15 +157,26 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   const [porcentajeExtraEdit, setPorcentajeExtraEdit] = useState(0)
 
   useEffect(() => {
-    // Cargar productos desde localStorage
-    const productosGuardados = localStorage.getItem("productos")
-    if (productosGuardados) {
-      const productosData = JSON.parse(productosGuardados)
-      // Solo mostrar productos activos
-      const productosActivos = productosData.filter((p: any) => p.activo !== false)
-      setProductosDisponibles([...productosActivos, ...productosDisponiblesInicial])
-    } else {
-      setProductosDisponibles(productosDisponiblesInicial)
+    let isMounted = true
+
+    const cargarProductos = async () => {
+      try {
+        const productosData = await fetchAdminProducts<Producto[]>()
+        const productosActivos = productosData.filter((p) => p.activo !== false)
+        if (isMounted) {
+          setProductosDisponibles([...productosActivos, ...productosDisponiblesInicial])
+        }
+      } catch (error) {
+        if (isMounted) {
+          setProductosDisponibles(productosDisponiblesInicial)
+        }
+      }
+    }
+
+    void cargarProductos()
+
+    return () => {
+      isMounted = false
     }
   }, [])
 

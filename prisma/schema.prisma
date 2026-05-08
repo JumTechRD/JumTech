@@ -52,3 +52,122 @@ model QuoteRequest {
   @@index([serviceId])
   @@index([email])
 }
+
+model Product {
+  id                   String           @id @default(cuid())
+  nombre               String
+  descripcion          String
+  precio               Float
+  categoria            String
+  imagen               String?
+  stock                Int              @default(0)
+  rating               Float            @default(4)
+  especificaciones     String[]         @default([])
+  activo               Boolean          @default(true)
+  fechaCreacion        DateTime         @default(now())
+  fechaActualizacion   DateTime         @updatedAt
+  precioCompra         Float?
+  margenGanancia       Float?
+  proveedor            String?
+  codigoBarras         String?
+  sku                  String?
+  peso                 Float?
+  dimensiones          Json?
+  garantia             Int?
+  ubicacion            String?
+  stockMinimo          Int?
+  stockMaximo          Int?
+  vendido              Int              @default(0)
+  ultimaVenta          DateTime?
+  invoiceItems         InvoiceItem[]
+  adminQuoteItems      AdminQuoteItem[]
+
+  @@index([categoria])
+  @@index([activo])
+  @@index([fechaCreacion])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  numero      String
+  cliente     String
+  email       String
+  telefono    String
+  direccion   String
+  fecha       DateTime
+  vencimiento DateTime
+  subtotal    Float
+  impuestos   Float
+  total       Float
+  estado      String        @default("pendiente")
+  notas       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  items       InvoiceItem[]
+
+  @@index([estado])
+  @@index([fecha])
+  @@index([email])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  nombre      String
+  descripcion String
+  precio      Float
+  categoria   String
+  imagen      String?
+  cantidad    Int
+  position    Int      @default(0)
+
+  @@index([invoiceId])
+  @@index([productId])
+}
+
+model AdminQuote {
+  id                String           @id @default(cuid())
+  numeroFactura     String?
+  cliente           String
+  email             String
+  telefono          String
+  fecha             DateTime
+  subtotal          Float
+  impuestos         Float
+  total             Float
+  estado            String           @default("pendiente")
+  notas             String?
+  monedaPrincipal   String?
+  itbisActivo       Boolean          @default(true)
+  porcentajeItbis   Float?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  items             AdminQuoteItem[]
+
+  @@index([estado])
+  @@index([fecha])
+  @@index([email])
+}
+
+model AdminQuoteItem {
+  id              String      @id @default(cuid())
+  adminQuoteId    String
+  adminQuote      AdminQuote  @relation(fields: [adminQuoteId], references: [id], onDelete: Cascade)
+  productId       String?
+  product         Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  nombre          String
+  descripcion     String
+  precio          Float
+  categoria       String
+  cantidad        Int
+  esManual        Boolean     @default(false)
+  moneda          String?
+  porcentajeExtra Float?
+  position        Int         @default(0)
+
+  @@index([adminQuoteId])
+  @@index([productId])
+}

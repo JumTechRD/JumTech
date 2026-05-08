@@ -139,9 +139,9 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       const doc = new jsPDF()
 
       // Configuración de colores corporativos
-      const primaryColor = [211, 38, 48] // Rojo corporativo #D32630
-      const secondaryColor = [47, 47, 47] // Gris oscuro corporativo #2F2F2F
-      const textColor = [31, 41, 55] // Gray-800
+      const primaryColor: [number, number, number] = [211, 38, 48] // Rojo corporativo #D32630
+      const secondaryColor: [number, number, number] = [47, 47, 47] // Gris oscuro corporativo #2F2F2F
+      const textColor: [number, number, number] = [31, 41, 55] // Gray-800
 
       // Header con logo y datos de empresa
       doc.setFillColor(...primaryColor)

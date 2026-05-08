@@ -3,6 +3,74 @@ import { prisma } from '@/lib/prisma'
 import { validateEmail, sanitizeString } from '@/lib/auth'
 import { requireAdmin } from '@/lib/middleware'
 
+const serviceOptions: Record<string, { title: string; description: string }> = {
+  mantenimiento: {
+    title: 'Mantenimiento de Computadoras',
+    description: 'Solicitud de mantenimiento de computadoras desde el formulario público',
+  },
+  camaras: {
+    title: 'Instalación de Cámaras NVR',
+    description: 'Solicitud de instalación de cámaras NVR desde el formulario público',
+  },
+  cableado: {
+    title: 'Cableado Estructurado',
+    description: 'Solicitud de cableado estructurado desde el formulario público',
+  },
+  desarrollo: {
+    title: 'Desarrollo de Aplicaciones',
+    description: 'Solicitud de desarrollo de aplicaciones desde el formulario público',
+  },
+  redes: {
+    title: 'Gestión de Redes',
+    description: 'Solicitud de gestión de redes desde el formulario público',
+  },
+  ciberseguridad: {
+    title: 'Ciberseguridad',
+    description: 'Solicitud de ciberseguridad desde el formulario público',
+  },
+  multiple: {
+    title: 'Múltiples Servicios',
+    description: 'Solicitud de múltiples servicios desde el formulario público',
+  },
+  otro: {
+    title: 'Otro',
+    description: 'Solicitud de otro servicio desde el formulario público',
+  },
+}
+
+async function resolveServiceId(serviceId?: unknown, service?: unknown) {
+  if (typeof serviceId === 'string' && serviceId.trim()) {
+    const existingService = await prisma.service.findUnique({
+      where: { id: serviceId },
+    })
+
+    return existingService?.id ?? null
+  }
+
+  if (typeof service !== 'string') {
+    return null
+  }
+
+  const serviceOption = serviceOptions[service]
+  if (!serviceOption) {
+    return null
+  }
+
+  const existingService = await prisma.service.findFirst({
+    where: { title: serviceOption.title },
+  })
+
+  if (existingService) {
+    return existingService.id
+  }
+
+  const createdService = await prisma.service.create({
+    data: serviceOption,
+  })
+
+  return createdService.id
+}
+
 // GET all quote requests (admin only)
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request)
@@ -34,10 +102,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, message, serviceId } = body
+    const { name, email, phone, message, serviceId, service } = body
 
     // Validation
-    if (!name || !email || !phone || !message || !serviceId) {
+    if (!name || !email || !phone || !message || (!serviceId && !service)) {
       return NextResponse.json(
         { error: 'All fields are required' },
         { status: 400 }
@@ -66,12 +134,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify service exists
-    const service = await prisma.service.findUnique({
-      where: { id: serviceId },
-    })
+    const resolvedServiceId = await resolveServiceId(serviceId, service)
 
-    if (!service) {
+    if (!resolvedServiceId) {
       return NextResponse.json(
         { error: 'Service not found' },
         { status: 404 }
@@ -90,7 +155,7 @@ export async function POST(request: NextRequest) {
         email: sanitizedEmail,
         phone: sanitizedPhone,
         message: sanitizedMessage,
-        serviceId,
+        serviceId: resolvedServiceId,
       },
       include: {
         service: true,

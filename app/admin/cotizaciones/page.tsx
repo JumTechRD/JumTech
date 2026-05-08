@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { CotizacionCreator } from "@/components/cotizacion-creator"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
+import { deleteAdminQuote, fetchAdminQuotes, saveAdminQuote } from "@/lib/admin-api-client"
 import {
   Plus,
   Search,
@@ -73,11 +74,7 @@ export default function CotizacionesPage() {
 
       setIsAuthenticated(true)
 
-      // Cargar cotizaciones desde localStorage
-      const cotizacionesGuardadas = localStorage.getItem("cotizaciones")
-      if (cotizacionesGuardadas) {
-        setCotizaciones(JSON.parse(cotizacionesGuardadas))
-      }
+      setCotizaciones(await fetchAdminQuotes<Cotizacion[]>())
     }
 
     void loadAdminPage()
@@ -85,11 +82,6 @@ export default function CotizacionesPage() {
 
   const handleLogout = () => {
     void logoutAdminSession(router)
-  }
-
-  const saveCotizaciones = (nuevasCotizaciones: Cotizacion[]) => {
-    setCotizaciones(nuevasCotizaciones)
-    localStorage.setItem("cotizaciones", JSON.stringify(nuevasCotizaciones))
   }
 
   const handleNewCotizacion = () => {
@@ -102,29 +94,44 @@ export default function CotizacionesPage() {
     setShowCreator(true)
   }
 
-  const handleSaveCotizacion = (cotizacion: Cotizacion) => {
-    if (editingCotizacion) {
-      // Actualizar cotización existente
-      const nuevasCotizaciones = cotizaciones.map((c) => (c.id === cotizacion.id ? cotizacion : c))
-      saveCotizaciones(nuevasCotizaciones)
-    } else {
-      // Nueva cotización
-      saveCotizaciones([...cotizaciones, cotizacion])
+  const handleSaveCotizacion = async (cotizacion: Cotizacion) => {
+    try {
+      const savedCotizacion = await saveAdminQuote<Cotizacion>(cotizacion, editingCotizacion?.id)
+      setCotizaciones((currentCotizaciones) =>
+        editingCotizacion
+          ? currentCotizaciones.map((c) => (c.id === savedCotizacion.id ? savedCotizacion : c))
+          : [savedCotizacion, ...currentCotizaciones],
+      )
+      setShowCreator(false)
+      setEditingCotizacion(null)
+    } catch (error) {
+      alert("Error al guardar la cotización")
     }
-    setShowCreator(false)
-    setEditingCotizacion(null)
   }
 
-  const handleDeleteCotizacion = (id: string) => {
+  const handleDeleteCotizacion = async (id: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar esta cotización?")) {
-      const nuevasCotizaciones = cotizaciones.filter((c) => c.id !== id)
-      saveCotizaciones(nuevasCotizaciones)
+      try {
+        await deleteAdminQuote(id)
+        setCotizaciones((currentCotizaciones) => currentCotizaciones.filter((c) => c.id !== id))
+      } catch (error) {
+        alert("Error al eliminar la cotización")
+      }
     }
   }
 
-  const handleChangeEstado = (id: string, nuevoEstado: Cotizacion["estado"]) => {
-    const nuevasCotizaciones = cotizaciones.map((c) => (c.id === id ? { ...c, estado: nuevoEstado } : c))
-    saveCotizaciones(nuevasCotizaciones)
+  const handleChangeEstado = async (id: string, nuevoEstado: Cotizacion["estado"]) => {
+    const cotizacion = cotizaciones.find((c) => c.id === id)
+    if (!cotizacion) return
+
+    try {
+      const savedCotizacion = await saveAdminQuote<Cotizacion>({ ...cotizacion, estado: nuevoEstado }, id)
+      setCotizaciones((currentCotizaciones) =>
+        currentCotizaciones.map((c) => (c.id === id ? savedCotizacion : c)),
+      )
+    } catch (error) {
+      alert("Error al cambiar el estado de la cotización")
+    }
   }
 
   const generarPDFCotizacion = async (cotizacion: Cotizacion) => {
@@ -134,10 +141,10 @@ export default function CotizacionesPage() {
       const doc = new jsPDF("landscape") // Formato horizontal
 
       // Configuración de colores
-      const primaryColor = [220, 38, 38] // Red-600
-      const textColor = [31, 41, 55] // Gray-800
-      const lightGray = [156, 163, 175] // Gray-400
-      const darkGray = [75, 85, 99] // Gray-600
+      const primaryColor: [number, number, number] = [220, 38, 38] // Red-600
+      const textColor: [number, number, number] = [31, 41, 55] // Gray-800
+      const lightGray: [number, number, number] = [156, 163, 175] // Gray-400
+      const darkGray: [number, number, number] = [75, 85, 99] // Gray-600
 
       // Header con fondo rojo
       doc.setFillColor(...primaryColor)

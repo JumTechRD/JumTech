@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ProductoManager } from "@/components/producto-manager"
+import { deleteAdminProduct, fetchAdminProducts, saveAdminProduct } from "@/lib/admin-api-client"
 import {
   Plus,
   Search,
@@ -118,121 +119,7 @@ export default function ProductosPage() {
 
       setIsAuthenticated(true)
 
-      // Cargar productos desde localStorage
-      const productosGuardados = localStorage.getItem("productos")
-      if (productosGuardados) {
-        setProductos(JSON.parse(productosGuardados))
-      } else {
-        // Productos de ejemplo con datos mejorados
-        const productosEjemplo: Producto[] = [
-        {
-          id: "1",
-          nombre: "Laptop Dell Inspiron 15",
-          descripcion: "Laptop para uso profesional y personal con excelente rendimiento",
-          precio: 45000,
-          categoria: "laptops",
-          imagen: "/placeholder.svg?height=300&width=300&text=Dell+Laptop",
-          stock: 5,
-          rating: 4.5,
-          especificaciones: ["Intel i5", "8GB RAM", "256GB SSD", "15.6 pulgadas"],
-          activo: true,
-          fechaCreacion: new Date().toISOString(),
-          fechaActualizacion: new Date().toISOString(),
-          precioCompra: 35000,
-          margenGanancia: 28.6,
-          proveedor: "Dell Technologies",
-          sku: "DELL-INS15-001",
-          peso: 1.8,
-          dimensiones: { largo: 35.8, ancho: 24.2, alto: 1.9 },
-          garantia: 12,
-          ubicacion: "Almacén A - Estante 1",
-          stockMinimo: 2,
-          stockMaximo: 10,
-          vendido: 15,
-          ultimaVenta: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "2",
-          nombre: 'Monitor Samsung 24"',
-          descripcion: "Monitor Full HD para oficina con excelente calidad de imagen",
-          precio: 12000,
-          categoria: "monitores",
-          imagen: "/placeholder.svg?height=300&width=300&text=Samsung+Monitor",
-          stock: 8,
-          rating: 4.3,
-          especificaciones: ["24 pulgadas", "Full HD", "IPS", "HDMI"],
-          activo: true,
-          fechaCreacion: new Date().toISOString(),
-          fechaActualizacion: new Date().toISOString(),
-          precioCompra: 9000,
-          margenGanancia: 33.3,
-          proveedor: "Samsung Electronics",
-          sku: "SAM-MON24-001",
-          peso: 3.2,
-          dimensiones: { largo: 55.2, ancho: 32.7, alto: 4.2 },
-          garantia: 24,
-          ubicacion: "Almacén A - Estante 2",
-          stockMinimo: 3,
-          stockMaximo: 15,
-          vendido: 8,
-          ultimaVenta: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "3",
-          nombre: "iPhone 15",
-          descripcion: "Último modelo de Apple con tecnología avanzada",
-          precio: 85000,
-          categoria: "celulares",
-          imagen: "/placeholder.svg?height=300&width=300&text=iPhone+15",
-          stock: 3,
-          rating: 4.8,
-          especificaciones: ["128GB", "Cámara 48MP", "5G", "iOS 17"],
-          activo: true,
-          fechaCreacion: new Date().toISOString(),
-          fechaActualizacion: new Date().toISOString(),
-          precioCompra: 75000,
-          margenGanancia: 13.3,
-          proveedor: "Apple Inc.",
-          sku: "APP-IPH15-001",
-          peso: 0.171,
-          dimensiones: { largo: 14.8, ancho: 7.2, alto: 0.8 },
-          garantia: 12,
-          ubicacion: "Almacén B - Estante 1",
-          stockMinimo: 1,
-          stockMaximo: 5,
-          vendido: 25,
-          ultimaVenta: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "4",
-          nombre: "Cámara IP Hikvision",
-          descripcion: "Cámara de seguridad 4K con visión nocturna",
-          precio: 8500,
-          categoria: "camaras",
-          imagen: "/placeholder.svg?height=300&width=300&text=Hikvision+Camera",
-          stock: 12,
-          rating: 4.6,
-          especificaciones: ["4K", "Visión nocturna", "IP67", "PoE"],
-          activo: true,
-          fechaCreacion: new Date().toISOString(),
-          fechaActualizacion: new Date().toISOString(),
-          precioCompra: 6000,
-          margenGanancia: 41.7,
-          proveedor: "Hikvision",
-          sku: "HIK-CAM4K-001",
-          peso: 0.8,
-          dimensiones: { largo: 12.0, ancho: 8.0, alto: 6.0 },
-          garantia: 24,
-          ubicacion: "Almacén A - Estante 3",
-          stockMinimo: 5,
-          stockMaximo: 20,
-          vendido: 18,
-          ultimaVenta: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ]
-        setProductos(productosEjemplo)
-        localStorage.setItem("productos", JSON.stringify(productosEjemplo))
-      }
+      setProductos(await fetchAdminProducts<Producto[]>())
     }
 
     void loadAdminPage()
@@ -240,11 +127,6 @@ export default function ProductosPage() {
 
   const handleLogout = () => {
     void logoutAdminSession(router)
-  }
-
-  const saveProductos = (nuevosProductos: Producto[]) => {
-    setProductos(nuevosProductos)
-    localStorage.setItem("productos", JSON.stringify(nuevosProductos))
   }
 
   const handleNewProduct = () => {
@@ -257,32 +139,45 @@ export default function ProductosPage() {
     setShowManager(true)
   }
 
-  const handleSaveProduct = (producto: Producto) => {
-    if (editingProduct) {
-      // Actualizar producto existente
-      const nuevosProductos = productos.map((p) => (p.id === producto.id ? producto : p))
-      saveProductos(nuevosProductos)
-    } else {
-      // Nuevo producto
-      saveProductos([...productos, producto])
+  const handleSaveProduct = async (producto: Producto) => {
+    try {
+      const savedProduct = await saveAdminProduct<Producto>(producto, editingProduct?.id)
+      setProductos((currentProducts) =>
+        editingProduct
+          ? currentProducts.map((p) => (p.id === savedProduct.id ? savedProduct : p))
+          : [savedProduct, ...currentProducts],
+      )
+      setShowManager(false)
+      setEditingProduct(null)
+    } catch (error) {
+      alert("Error al guardar el producto")
     }
-    setShowManager(false)
-    setEditingProduct(null)
   }
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-      const nuevosProductos = productos.filter((p) => p.id !== id)
-      saveProductos(nuevosProductos)
+      try {
+        await deleteAdminProduct(id)
+        setProductos((currentProducts) => currentProducts.filter((p) => p.id !== id))
+      } catch (error) {
+        alert("Error al eliminar el producto")
+      }
     }
   }
 
-  const handleToggleActive = (id: string) => {
-    const nuevosProductos = productos.map((p) => (p.id === id ? { ...p, activo: !p.activo } : p))
-    saveProductos(nuevosProductos)
+  const handleToggleActive = async (id: string) => {
+    const product = productos.find((p) => p.id === id)
+    if (!product) return
+
+    try {
+      const savedProduct = await saveAdminProduct<Producto>({ ...product, activo: !product.activo }, id)
+      setProductos((currentProducts) => currentProducts.map((p) => (p.id === id ? savedProduct : p)))
+    } catch (error) {
+      alert("Error al actualizar el producto")
+    }
   }
 
-  const handleDuplicateProduct = (producto: Producto) => {
+  const handleDuplicateProduct = async (producto: Producto) => {
     const productoDuplicado: Producto = {
       ...producto,
       id: Date.now().toString(),
@@ -290,36 +185,56 @@ export default function ProductosPage() {
       fechaCreacion: new Date().toISOString(),
       fechaActualizacion: new Date().toISOString(),
     }
-    saveProductos([...productos, productoDuplicado])
+    try {
+      const savedProduct = await saveAdminProduct<Producto>(productoDuplicado)
+      setProductos((currentProducts) => [savedProduct, ...currentProducts])
+    } catch (error) {
+      alert("Error al duplicar el producto")
+    }
   }
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     if (selectedProducts.length === 0) {
       alert("Selecciona al menos un producto")
       return
     }
 
-    switch (action) {
-      case "activate":
-        const productosActivados = productos.map((p) =>
-          selectedProducts.includes(p.id) ? { ...p, activo: true } : p
-        )
-        saveProductos(productosActivados)
-        break
-      case "deactivate":
-        const productosDesactivados = productos.map((p) =>
-          selectedProducts.includes(p.id) ? { ...p, activo: false } : p
-        )
-        saveProductos(productosDesactivados)
-        break
-      case "delete":
-        if (confirm(`¿Estás seguro de que quieres eliminar ${selectedProducts.length} productos?`)) {
-          const productosFiltrados = productos.filter((p) => !selectedProducts.includes(p.id))
-          saveProductos(productosFiltrados)
+    try {
+      switch (action) {
+        case "activate": {
+          const updatedProducts = await Promise.all(
+            productos
+              .filter((p) => selectedProducts.includes(p.id))
+              .map((p) => saveAdminProduct<Producto>({ ...p, activo: true }, p.id)),
+          )
+          setProductos((currentProducts) =>
+            currentProducts.map((p) => updatedProducts.find((updated) => updated.id === p.id) || p),
+          )
+          break
         }
-        break
+        case "deactivate": {
+          const updatedProducts = await Promise.all(
+            productos
+              .filter((p) => selectedProducts.includes(p.id))
+              .map((p) => saveAdminProduct<Producto>({ ...p, activo: false }, p.id)),
+          )
+          setProductos((currentProducts) =>
+            currentProducts.map((p) => updatedProducts.find((updated) => updated.id === p.id) || p),
+          )
+          break
+        }
+        case "delete":
+          if (confirm(`¿Estás seguro de que quieres eliminar ${selectedProducts.length} productos?`)) {
+            await Promise.all(selectedProducts.map((id) => deleteAdminProduct(id)))
+            setProductos((currentProducts) => currentProducts.filter((p) => !selectedProducts.includes(p.id)))
+          }
+          break
+      }
+    } catch (error) {
+      alert("Error al ejecutar la acción masiva")
+    } finally {
+      setSelectedProducts([])
     }
-    setSelectedProducts([])
   }
 
   // Filtrar y ordenar productos

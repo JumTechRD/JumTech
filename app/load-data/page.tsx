@@ -6,12 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Database, Download, RefreshCw } from "lucide-react"
 import Link from "next/link"
+import { saveAdminInvoice, saveAdminProduct, saveAdminQuote } from "@/lib/admin-api-client"
 
 export default function LoadDataPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
 
-  const loadSampleData = () => {
+  const loadSampleData = async () => {
     setIsLoading(true)
     
     // Productos de ejemplo con datos completos
@@ -686,20 +687,17 @@ export default function LoadDataPage() {
       }
     ];
 
-    // Simular carga
-    setTimeout(() => {
-      // Cargar productos
-      localStorage.setItem("productos", JSON.stringify(productosEjemplo));
-      
-      // Cargar cotizaciones
-      localStorage.setItem("cotizaciones", JSON.stringify(cotizacionesEjemplo));
-      
-      // Cargar facturas
-      localStorage.setItem("facturas", JSON.stringify(facturasEjemplo));
-      
+    try {
+      await Promise.all(productosEjemplo.map((producto) => saveAdminProduct(producto)))
+      await Promise.all(cotizacionesEjemplo.map((cotizacion) => saveAdminQuote(cotizacion)))
+      await Promise.all(facturasEjemplo.map((factura) => saveAdminInvoice(factura)))
+
       setIsLoading(false);
       setIsLoaded(true);
-    }, 2000);
+    } catch (error) {
+      setIsLoading(false);
+      alert("No se pudieron cargar los datos. Inicia sesión como administrador e intenta de nuevo.");
+    }
   };
 
   return (
@@ -795,7 +793,6 @@ export default function LoadDataPage() {
     </div>
   );
 }
-
 
 
 

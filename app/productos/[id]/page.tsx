@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ import {
   Menu,
   X,
 } from "lucide-react"
+import { fetchPublicProduct } from "@/lib/admin-api-client"
 
 interface Producto {
   id: string
@@ -79,28 +80,22 @@ const categorias = [
 
 export default function ProductoDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const [producto, setProducto] = useState<Producto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    const cargarProducto = () => {
+    const productId = Array.isArray(params.id) ? params.id[0] : params.id
+    if (!productId) {
+      setError("Producto no encontrado")
+      setLoading(false)
+      return
+    }
+
+    const cargarProducto = async () => {
       try {
-        const productosGuardados = localStorage.getItem("productos")
-        if (productosGuardados) {
-          const productos = JSON.parse(productosGuardados)
-          const productoEncontrado = productos.find((p: Producto) => p.id === params.id)
-          
-          if (productoEncontrado) {
-            setProducto(productoEncontrado)
-          } else {
-            setError("Producto no encontrado")
-          }
-        } else {
-          setError("No hay productos disponibles")
-        }
+        setProducto(await fetchPublicProduct<Producto>(productId))
       } catch (err) {
         setError("Error al cargar el producto")
       } finally {
@@ -108,7 +103,7 @@ export default function ProductoDetailPage() {
       }
     }
 
-    cargarProducto()
+    void cargarProducto()
   }, [params.id])
 
   const categoriaInfo = categorias.find(cat => cat.id === producto?.categoria)

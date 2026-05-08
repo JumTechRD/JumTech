@@ -25,6 +25,15 @@ import { ProductoManager } from "@/components/producto-manager"
 import { FacturaCreator } from "@/components/factura-creator"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
 import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
+import {
+  deleteAdminInvoice,
+  deleteAdminProduct,
+  fetchAdminInvoices,
+  fetchAdminProducts,
+  fetchAdminQuotes,
+  saveAdminInvoice,
+  saveAdminProduct,
+} from "@/lib/admin-api-client"
 
 interface Producto {
   id: string
@@ -36,6 +45,37 @@ interface Producto {
   stock: number
   rating: number
   especificaciones: string[]
+  activo: boolean
+  fechaCreacion: string
+  fechaActualizacion: string
+  precioCompra?: number
+  margenGanancia?: number
+  proveedor?: string
+  codigoBarras?: string
+  sku?: string
+  peso?: number
+  dimensiones?: {
+    largo: number
+    ancho: number
+    alto: number
+  }
+  garantia?: number
+  ubicacion?: string
+  stockMinimo?: number
+  stockMaximo?: number
+  vendido?: number
+  ultimaVenta?: string
+}
+
+interface ProductoEnFactura {
+  id: string
+  nombre: string
+  descripcion: string
+  precio: number
+  categoria: string
+  imagen?: string
+  stock?: number
+  cantidad: number
 }
 
 interface Factura {
@@ -47,7 +87,7 @@ interface Factura {
   direccion: string
   fecha: string
   vencimiento: string
-  productos: (Producto & { cantidad: number })[]
+  productos: ProductoEnFactura[]
   subtotal: number
   impuestos: number
   total: number
@@ -91,23 +131,14 @@ export default function AdminDashboardPage() {
 
       setIsAuthenticated(true)
 
-      // Cargar productos
-      const savedProducts = localStorage.getItem("productos")
-      if (savedProducts) {
-        setProductos(JSON.parse(savedProducts))
-      }
-
-      // Cargar facturas
-      const savedFacturas = localStorage.getItem("facturas")
-      if (savedFacturas) {
-        setFacturas(JSON.parse(savedFacturas))
-      }
-
-      // Cargar cotizaciones
-      const savedCotizaciones = localStorage.getItem("cotizaciones")
-      if (savedCotizaciones) {
-        setCotizaciones(JSON.parse(savedCotizaciones))
-      }
+      const [productosData, facturasData, cotizacionesData] = await Promise.all([
+        fetchAdminProducts<Producto[]>(),
+        fetchAdminInvoices<Factura[]>(),
+        fetchAdminQuotes<Cotizacion[]>(),
+      ])
+      setProductos(productosData)
+      setFacturas(facturasData)
+      setCotizaciones(cotizacionesData)
     }
 
     void loadAdminPage()
@@ -117,30 +148,34 @@ export default function AdminDashboardPage() {
     void logoutAdminSession(router)
   }
 
-  const handleSaveProduct = (producto: Producto) => {
-    let updatedProducts
-    if (editingProduct) {
-      updatedProducts = productos.map((p) => (p.id === producto.id ? producto : p))
-    } else {
-      updatedProducts = [...productos, producto]
+  const handleSaveProduct = async (producto: Producto) => {
+    try {
+      const savedProduct = await saveAdminProduct<Producto>(producto, editingProduct?.id)
+      setProductos((currentProducts) =>
+        editingProduct
+          ? currentProducts.map((p) => (p.id === savedProduct.id ? savedProduct : p))
+          : [savedProduct, ...currentProducts],
+      )
+      setShowProductManager(false)
+      setEditingProduct(null)
+    } catch (error) {
+      alert("Error al guardar el producto")
     }
-    setProductos(updatedProducts)
-    localStorage.setItem("productos", JSON.stringify(updatedProducts))
-    setShowProductManager(false)
-    setEditingProduct(null)
   }
 
-  const handleSaveFactura = (factura: Factura) => {
-    let updatedFacturas
-    if (editingFactura) {
-      updatedFacturas = facturas.map((f) => (f.id === factura.id ? factura : f))
-    } else {
-      updatedFacturas = [...facturas, factura]
+  const handleSaveFactura = async (factura: Factura) => {
+    try {
+      const savedFactura = await saveAdminInvoice<Factura>(factura, editingFactura?.id)
+      setFacturas((currentFacturas) =>
+        editingFactura
+          ? currentFacturas.map((f) => (f.id === savedFactura.id ? savedFactura : f))
+          : [savedFactura, ...currentFacturas],
+      )
+      setShowFacturaCreator(false)
+      setEditingFactura(null)
+    } catch (error) {
+      alert("Error al guardar la factura")
     }
-    setFacturas(updatedFacturas)
-    localStorage.setItem("facturas", JSON.stringify(updatedFacturas))
-    setShowFacturaCreator(false)
-    setEditingFactura(null)
   }
 
   const handleEditProduct = (producto: Producto) => {
@@ -153,19 +188,25 @@ export default function AdminDashboardPage() {
     setShowFacturaCreator(true)
   }
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-      const updatedProducts = productos.filter((p) => p.id !== id)
-      setProductos(updatedProducts)
-      localStorage.setItem("productos", JSON.stringify(updatedProducts))
+      try {
+        await deleteAdminProduct(id)
+        setProductos((currentProducts) => currentProducts.filter((p) => p.id !== id))
+      } catch (error) {
+        alert("Error al eliminar el producto")
+      }
     }
   }
 
-  const handleDeleteFactura = (id: string) => {
+  const handleDeleteFactura = async (id: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar esta factura?")) {
-      const updatedFacturas = facturas.filter((f) => f.id !== id)
-      setFacturas(updatedFacturas)
-      localStorage.setItem("facturas", JSON.stringify(updatedFacturas))
+      try {
+        await deleteAdminInvoice(id)
+        setFacturas((currentFacturas) => currentFacturas.filter((f) => f.id !== id))
+      } catch (error) {
+        alert("Error al eliminar la factura")
+      }
     }
   }
 

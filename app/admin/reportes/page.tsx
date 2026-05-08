@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
 import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
+import { fetchAdminInvoices, fetchAdminProducts, fetchAdminQuotes } from "@/lib/admin-api-client"
 
 interface Cotizacion {
   id: string
@@ -45,6 +46,7 @@ interface Factura {
   numero: string
   cliente: string
   email: string
+  telefono?: string
   fecha: string
   vencimiento: string
   productos: any[]
@@ -79,14 +81,14 @@ export default function ReportesPage() {
 
       setIsAuthenticated(true)
 
-      const c = localStorage.getItem("cotizaciones")
-      if (c) setCotizaciones(JSON.parse(c))
-
-      const f = localStorage.getItem("facturas")
-      if (f) setFacturas(JSON.parse(f))
-
-      const p = localStorage.getItem("productos")
-      if (p) setProductos(JSON.parse(p))
+      const [cotizacionesData, facturasData, productosData] = await Promise.all([
+        fetchAdminQuotes<Cotizacion[]>(),
+        fetchAdminInvoices<Factura[]>(),
+        fetchAdminProducts<Producto[]>(),
+      ])
+      setCotizaciones(cotizacionesData)
+      setFacturas(facturasData)
+      setProductos(productosData)
     }
 
     void loadAdminPage()

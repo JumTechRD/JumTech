@@ -1,5 +1,6 @@
 "use server"
 
+import { headers } from "next/headers"
 import { z } from "zod"
 
 // Schema de validación
@@ -14,6 +15,29 @@ const cotizacionSchema = z.object({
   descripcion: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
   ubicacion: z.string().optional(),
 })
+
+const serviceLabels: Record<string, string> = {
+  mantenimiento: "Mantenimiento de Computadoras",
+  camaras: "Instalación de Cámaras NVR",
+  cableado: "Cableado Estructurado",
+  desarrollo: "Desarrollo de Aplicaciones",
+  redes: "Gestión de Redes",
+  ciberseguridad: "Ciberseguridad",
+  multiple: "Múltiples Servicios",
+  otro: "Otro",
+}
+
+function buildRequestUrl(path: string) {
+  return headers().then((requestHeaders) => {
+    const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host")
+    if (!host) {
+      throw new Error("Missing request host")
+    }
+
+    const protocol = requestHeaders.get("x-forwarded-proto")?.split(",")[0] || "http"
+    return `${protocol}://${host}${path}`
+  })
+}
 
 export async function submitCotizacion(formData: FormData) {
   try {
@@ -31,9 +55,9 @@ export async function submitCotizacion(formData: FormData) {
     }
 
     const validatedData = cotizacionSchema.parse(rawData)
+    const serviceLabel = serviceLabels[validatedData.servicio] || validatedData.servicio
 
-    // Crear el contenido del email
-    const emailContent = `
+    const message = `
 Nueva Solicitud de Cotización - JumTech RD
 
 Información del Cliente:
@@ -44,7 +68,7 @@ Información del Cliente:
 - Ubicación: ${validatedData.ubicacion || "No especificada"}
 
 Detalles del Proyecto:
-- Servicio: ${validatedData.servicio}
+- Servicio: ${serviceLabel}
 - Presupuesto: ${validatedData.presupuesto || "No especificado"}
 - Urgencia: ${validatedData.urgencia}
 - Descripción: ${validatedData.descripcion}
@@ -55,20 +79,27 @@ Fecha de solicitud: ${new Date().toLocaleString("es-DO")}
 Este mensaje fue enviado desde el formulario de cotización de JumTech RD.
     `.trim()
 
-    // Simular envío de email (en producción usarías un servicio como SendGrid, Resend, etc.)
-    console.log("=== NUEVA COTIZACIÓN RECIBIDA ===")
-    console.log(emailContent)
-    console.log("=================================")
+    const response = await fetch(await buildRequestUrl("/api/quotes"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: validatedData.nombre,
+        email: validatedData.email,
+        phone: validatedData.telefono,
+        service: validatedData.servicio,
+        message,
+      }),
+      cache: "no-store",
+    })
 
-    // En un entorno de producción, aquí enviarías el email real
-    // await sendEmail({
-    //   to: "jumtechRD@gmail.com",
-    //   subject: `Nueva Cotización - ${validatedData.nombre}`,
-    //   body: emailContent
-    // })
-
-    // Simular delay de red
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    if (!response.ok) {
+      return {
+        success: false,
+        message: "Error al enviar la cotización. Por favor intenta nuevamente."
+      }
+    }
 
     return {
       success: true,

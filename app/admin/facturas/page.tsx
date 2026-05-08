@@ -30,14 +30,19 @@ import { FacturaCreator } from "@/components/factura-creator"
 import { FacturaPreview } from "@/components/factura-preview"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
 import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
+import { deleteAdminInvoice, fetchAdminInvoices, fetchAdminProducts, saveAdminInvoice } from "@/lib/admin-api-client"
 
-interface ProductoEnFactura {
+interface Producto {
   id: string
   nombre: string
   descripcion: string
   precio: number
   categoria: string
   imagen?: string
+  stock?: number
+}
+
+interface ProductoEnFactura extends Producto {
   cantidad: number
 }
 
@@ -61,7 +66,7 @@ interface Factura {
 export default function AdminFacturasPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [facturas, setFacturas] = useState<Factura[]>([])
-  const [productos, setProductos] = useState<ProductoEnFactura[]>([])
+  const [productos, setProductos] = useState<Producto[]>([])
   const [showCreator, setShowCreator] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [editingFactura, setEditingFactura] = useState<Factura | null>(null)
@@ -78,16 +83,12 @@ export default function AdminFacturasPage() {
 
       setIsAuthenticated(true)
 
-      // Cargar facturas y productos
-      const savedFacturas = localStorage.getItem("facturas")
-      if (savedFacturas) {
-        setFacturas(JSON.parse(savedFacturas))
-      }
-
-      const savedProductos = localStorage.getItem("productos")
-      if (savedProductos) {
-        setProductos(JSON.parse(savedProductos))
-      }
+      const [facturasData, productosData] = await Promise.all([
+        fetchAdminInvoices<Factura[]>(),
+        fetchAdminProducts<Producto[]>(),
+      ])
+      setFacturas(facturasData)
+      setProductos(productosData)
     }
 
     void loadAdminPage()
@@ -97,24 +98,29 @@ export default function AdminFacturasPage() {
     void logoutAdminSession(router)
   }
 
-  const handleSaveFactura = (factura: Factura) => {
-    let updatedFacturas
-    if (editingFactura) {
-      updatedFacturas = facturas.map((f) => (f.id === factura.id ? factura : f))
-    } else {
-      updatedFacturas = [...facturas, factura]
+  const handleSaveFactura = async (factura: Factura) => {
+    try {
+      const savedFactura = await saveAdminInvoice<Factura>(factura, editingFactura?.id)
+      setFacturas((currentFacturas) =>
+        editingFactura
+          ? currentFacturas.map((f) => (f.id === savedFactura.id ? savedFactura : f))
+          : [savedFactura, ...currentFacturas],
+      )
+      setShowCreator(false)
+      setEditingFactura(null)
+    } catch (error) {
+      alert("Error al guardar la factura")
     }
-    setFacturas(updatedFacturas)
-    localStorage.setItem("facturas", JSON.stringify(updatedFacturas))
-    setShowCreator(false)
-    setEditingFactura(null)
   }
 
-  const handleDeleteFactura = (id: string) => {
+  const handleDeleteFactura = async (id: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar esta factura?")) {
-      const updatedFacturas = facturas.filter((f) => f.id !== id)
-      setFacturas(updatedFacturas)
-      localStorage.setItem("facturas", JSON.stringify(updatedFacturas))
+      try {
+        await deleteAdminInvoice(id)
+        setFacturas((currentFacturas) => currentFacturas.filter((f) => f.id !== id))
+      } catch (error) {
+        alert("Error al eliminar la factura")
+      }
     }
   }
 

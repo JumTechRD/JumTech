@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react"
 import { Logo } from "@/components/logo"
+import { fetchPublicProducts } from "@/lib/admin-api-client"
 
 interface Producto {
   id: string
@@ -58,62 +59,27 @@ export default function ProductosPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    // Cargar productos desde localStorage
-    const productosGuardados = localStorage.getItem("productos")
-    if (productosGuardados) {
-      const productosData = JSON.parse(productosGuardados)
-      setProductos(productosData)
-      setProductosFiltrados(productosData)
-    } else {
-      // Productos de ejemplo si no hay datos guardados
-      const productosEjemplo: Producto[] = [
-        {
-          id: "1",
-          nombre: "Laptop Dell Inspiron 15",
-          descripcion: "Laptop para uso profesional y personal",
-          precio: 45000,
-          categoria: "laptops",
-          imagen: "/placeholder.svg?height=300&width=300&text=Dell+Laptop",
-          stock: 5,
-          rating: 4.5,
-          especificaciones: ["Intel i5", "8GB RAM", "256GB SSD", "15.6 pulgadas"],
-        },
-        {
-          id: "2",
-          nombre: 'Monitor Samsung 24"',
-          descripcion: "Monitor Full HD para oficina",
-          precio: 12000,
-          categoria: "monitores",
-          imagen: "/placeholder.svg?height=300&width=300&text=Samsung+Monitor",
-          stock: 8,
-          rating: 4.3,
-          especificaciones: ["24 pulgadas", "Full HD", "IPS", "HDMI"],
-        },
-        {
-          id: "3",
-          nombre: "iPhone 15",
-          descripcion: "Último modelo de Apple",
-          precio: 85000,
-          categoria: "celulares",
-          imagen: "/placeholder.svg?height=300&width=300&text=iPhone+15",
-          stock: 3,
-          rating: 4.8,
-          especificaciones: ["128GB", "Cámara 48MP", "5G", "iOS 17"],
-        },
-        {
-          id: "4",
-          nombre: "Cámara IP Hikvision",
-          descripcion: "Cámara de seguridad 4K",
-          precio: 8500,
-          categoria: "camaras",
-          imagen: "/placeholder.svg?height=300&width=300&text=Hikvision+Camera",
-          stock: 12,
-          rating: 4.6,
-          especificaciones: ["4K", "Visión nocturna", "IP67", "PoE"],
-        },
-      ]
-      setProductos(productosEjemplo)
-      setProductosFiltrados(productosEjemplo)
+    let isMounted = true
+
+    const cargarProductos = async () => {
+      try {
+        const productosData = await fetchPublicProducts<Producto[]>()
+        if (isMounted) {
+          setProductos(productosData)
+          setProductosFiltrados(productosData)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setProductos([])
+          setProductosFiltrados([])
+        }
+      }
+    }
+
+    void cargarProductos()
+
+    return () => {
+      isMounted = false
     }
   }, [])
 
