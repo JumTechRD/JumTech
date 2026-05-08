@@ -39,6 +39,25 @@ model Service {
   @@index([createdAt])
 }
 
+model Client {
+  id             String        @id @default(cuid())
+  name           String
+  email          String        @unique
+  phone          String
+  companyName    String?
+  identification String?       @unique
+  address        String?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  invoices       Invoice[]
+  adminQuotes    AdminQuote[]
+  quoteRequests  QuoteRequest[]
+
+  @@index([name])
+  @@index([phone])
+}
+
 model QuoteRequest {
   id        String   @id @default(cuid())
   name      String
@@ -46,11 +65,14 @@ model QuoteRequest {
   phone     String
   message   String
   serviceId String
+  clientId  String?
   service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 
   @@index([serviceId])
   @@index([email])
+  @@index([clientId])
 }
 
 model Product {
@@ -94,6 +116,9 @@ model Invoice {
   email       String
   telefono    String
   direccion   String
+  clientId    String?
+  sourceQuoteId String?      @unique
+  paymentMethod String      @default("transferencia")
   fecha       DateTime
   vencimiento DateTime
   subtotal    Float
@@ -104,10 +129,13 @@ model Invoice {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   items       InvoiceItem[]
+  client      Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  sourceQuote AdminQuote?   @relation("QuoteInvoice", fields: [sourceQuoteId], references: [id], onDelete: SetNull)
 
   @@index([estado])
   @@index([fecha])
   @@index([email])
+  @@index([clientId])
 }
 
 model InvoiceItem {
@@ -134,6 +162,7 @@ model AdminQuote {
   cliente           String
   email             String
   telefono          String
+  clientId          String?
   fecha             DateTime
   subtotal          Float
   impuestos         Float
@@ -146,10 +175,13 @@ model AdminQuote {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   items             AdminQuoteItem[]
+  client            Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  generatedInvoice  Invoice?         @relation("QuoteInvoice")
 
   @@index([estado])
   @@index([fecha])
   @@index([email])
+  @@index([clientId])
 }
 
 model AdminQuoteItem {

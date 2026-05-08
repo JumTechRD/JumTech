@@ -351,6 +351,7 @@ export default function ReportesPage() {
           <div className="hidden md:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white text-sm flex items-center gap-1"><Home className="h-4 w-4" />Ver Sitio</Link>
             <Link href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">Dashboard</Link>
+            <Link href="/admin/clientes" className="text-gray-300 hover:text-white text-sm">Clientes</Link>
             <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white text-sm flex items-center gap-1"><FileText className="h-4 w-4" />Cotizaciones</Link>
             <Link href="/admin/facturas" className="text-gray-300 hover:text-white text-sm flex items-center gap-1"><Receipt className="h-4 w-4" />Facturas</Link>
             <Link href="/admin/usuarios" className="text-gray-300 hover:text-white text-sm">Usuarios</Link>

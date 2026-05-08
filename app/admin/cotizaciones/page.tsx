@@ -10,14 +10,14 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { CotizacionCreator } from "@/components/cotizacion-creator"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
-import { deleteAdminQuote, fetchAdminQuotes, saveAdminQuote } from "@/lib/admin-api-client"
+import { deleteAdminQuote, fetchAdminClients, fetchAdminQuotes, saveAdminQuote } from "@/lib/admin-api-client"
+import { generateFinancialPdf } from "@/lib/pdf-documents"
 import {
   Plus,
   Search,
   Edit,
   Trash2,
   Download,
-  Filter,
   User,
   DollarSign,
   FileText,
@@ -26,8 +26,10 @@ import {
   Home,
   Receipt,
   BarChart3,
+  Package,
 } from "lucide-react"
 import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
+import type { ClientRecord } from "@/lib/admin-clients"
 
 interface ProductoEnCotizacion {
   id: string
@@ -38,6 +40,7 @@ interface ProductoEnCotizacion {
   cantidad: number
   esManual?: boolean
   moneda?: "USD" | "RD$"
+  porcentajeExtra?: number
 }
 
 interface Cotizacion {
@@ -46,6 +49,7 @@ interface Cotizacion {
   cliente: string
   email: string
   telefono: string
+  clientId?: string | null
   fecha: string
   productos: ProductoEnCotizacion[]
   subtotal: number
@@ -56,6 +60,9 @@ interface Cotizacion {
   monedaPrincipal?: "USD" | "RD$"
   itbisActivo?: boolean
   porcentajeItbis?: number
+  companyName?: string
+  identification?: string
+  address?: string
 }
 
 export default function CotizacionesPage() {
@@ -63,6 +70,7 @@ export default function CotizacionesPage() {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([])
   const [showCreator, setShowCreator] = useState(false)
   const [editingCotizacion, setEditingCotizacion] = useState<Cotizacion | null>(null)
+  const [clientes, setClientes] = useState<ClientRecord[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterEstado, setFilterEstado] = useState<string>("todos")
   const router = useRouter()
@@ -74,7 +82,12 @@ export default function CotizacionesPage() {
 
       setIsAuthenticated(true)
 
-      setCotizaciones(await fetchAdminQuotes<Cotizacion[]>())
+      const [quotesData, clientsData] = await Promise.all([
+        fetchAdminQuotes<Cotizacion[]>(),
+        fetchAdminClients<ClientRecord[]>(),
+      ])
+      setCotizaciones(quotesData)
+      setClientes(clientsData)
     }
 
     void loadAdminPage()
@@ -136,183 +149,47 @@ export default function CotizacionesPage() {
 
   const generarPDFCotizacion = async (cotizacion: Cotizacion) => {
     try {
-      // Importar jsPDF dinámicamente
-      const jsPDF = (await import("jspdf")).default
-      const doc = new jsPDF("landscape") // Formato horizontal
-
-      // Configuración de colores
-      const primaryColor: [number, number, number] = [220, 38, 38] // Red-600
-      const textColor: [number, number, number] = [31, 41, 55] // Gray-800
-      const lightGray: [number, number, number] = [156, 163, 175] // Gray-400
-      const darkGray: [number, number, number] = [75, 85, 99] // Gray-600
-
-      // Header con fondo rojo
-      doc.setFillColor(...primaryColor)
-      doc.rect(0, 0, 297, 35, "F") // Ajustado para landscape
-
-      // Logo placeholder
-      doc.setFillColor(255, 255, 255)
-      doc.roundedRect(15, 8, 25, 20, 2, 2, "F")
-      doc.setTextColor(...primaryColor)
-      doc.setFontSize(12)
-      doc.setFont("helvetica", "bold")
-      doc.text("LOGO", 20, 20)
-
-      // Información de la empresa
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(18)
-      doc.setFont("helvetica", "bold")
-      doc.text("JumTech RD", 50, 18)
-
-      doc.setFontSize(9)
-      doc.setFont("helvetica", "normal")
-      doc.text("Soluciones Tecnológicas Integrales", 50, 25)
-      doc.text("Email: jumtechRD@gmail.com", 50, 30)
-
-      // Título COTIZACIÓN
-      doc.setFontSize(24)
-      doc.setFont("helvetica", "bold")
-      doc.text("COTIZACIÓN", 200, 20)
-
-      // Información del cliente y cotización
-      doc.setTextColor(...textColor)
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "bold")
       const numeroCotizacion =
         cotizacion.numeroFactura || `COT-${new Date(cotizacion.fecha).getFullYear()}-${cotizacion.id.slice(-4)}`
-      doc.text(`Cotización: ${numeroCotizacion}`, 20, 50)
-      doc.text(`Fecha: ${new Date(cotizacion.fecha).toLocaleDateString("es-DO")}`, 20, 57)
+      const tasaCambio = 58
+      const selectedClient = cotizacion.clientId ? clientes.find((client) => client.id === cotizacion.clientId) : null
+      const items = cotizacion.productos.map((producto) => {
+        const monedaOrigen = producto.moneda || cotizacion.monedaPrincipal || "RD$"
+        const precioBase = monedaOrigen === "USD" ? producto.precio * tasaCambio : producto.precio
+        const precioConExtra = precioBase * producto.cantidad * (1 + (producto.porcentajeExtra || 0) / 100)
 
-      // Cliente
-      doc.text("CLIENTE:", 150, 50)
-      doc.setFont("helvetica", "normal")
-      doc.text(cotizacion.cliente, 150, 57)
-      doc.text(`Email: ${cotizacion.email}`, 150, 64)
-      if (cotizacion.telefono) {
-        doc.text(`Tel: ${cotizacion.telefono}`, 150, 71)
-      }
-
-      // Tabla de productos - Header
-      let yPosition = 85
-      doc.setFillColor(248, 250, 252)
-      doc.rect(20, yPosition, 257, 10, "F")
-
-      doc.setTextColor(...darkGray)
-      doc.setFontSize(9)
-      doc.setFont("helvetica", "bold")
-      doc.text("DESCRIPCIÓN", 25, yPosition + 7)
-      doc.text("CANT.", 180, yPosition + 7)
-      doc.text("PRECIO", 210, yPosition + 7)
-      doc.text("TOTAL", 250, yPosition + 7)
-
-      // Productos
-      yPosition += 15
-      doc.setFont("helvetica", "normal")
-      doc.setTextColor(...textColor)
-
-      cotizacion.productos.forEach((producto, index) => {
-        // Verificar si necesitamos nueva página
-        if (yPosition > 180) {
-          doc.addPage("landscape")
-          yPosition = 30
-
-          // Repetir header en nueva página
-          doc.setFillColor(248, 250, 252)
-          doc.rect(20, yPosition, 257, 10, "F")
-          doc.setTextColor(...darkGray)
-          doc.setFontSize(9)
-          doc.setFont("helvetica", "bold")
-          doc.text("DESCRIPCIÓN", 25, yPosition + 7)
-          doc.text("CANT.", 180, yPosition + 7)
-          doc.text("PRECIO", 210, yPosition + 7)
-          doc.text("TOTAL", 250, yPosition + 7)
-          yPosition += 15
+        return {
+          name: producto.nombre,
+          description: producto.descripcion,
+          quantity: producto.cantidad,
+          unitPriceLabel: `${cotizacion.monedaPrincipal || "RD$"} ${precioBase.toLocaleString("es-DO")}`,
+          lineTotalLabel: `${cotizacion.monedaPrincipal || "RD$"} ${precioConExtra.toLocaleString("es-DO")}`,
         }
-
-        const total = producto.precio * producto.cantidad
-
-        // Alternar color de fondo
-        if (index % 2 === 0) {
-          doc.setFillColor(249, 250, 251)
-          doc.rect(20, yPosition - 2, 257, 12, "F")
-        }
-
-        // Nombre del producto
-        doc.setFontSize(9)
-        doc.setFont("helvetica", "bold")
-        doc.setTextColor(...textColor)
-        const nombreCorto = producto.nombre.length > 45 ? producto.nombre.substring(0, 45) + "..." : producto.nombre
-        doc.text(nombreCorto, 25, yPosition + 3)
-
-        // Descripción
-        doc.setFontSize(7)
-        doc.setFont("helvetica", "normal")
-        doc.setTextColor(...lightGray)
-        const descripcionCorta =
-          producto.descripcion.length > 60 ? producto.descripcion.substring(0, 60) + "..." : producto.descripcion
-        doc.text(descripcionCorta, 25, yPosition + 7)
-
-        // Cantidad, precio y total
-        doc.setFontSize(9)
-        doc.setTextColor(...textColor)
-        doc.setFont("helvetica", "normal")
-        doc.text(producto.cantidad.toString(), 185, yPosition + 5)
-        doc.text(`$${producto.precio.toLocaleString()}`, 215, yPosition + 5)
-        doc.text(`$${total.toLocaleString()}`, 255, yPosition + 5)
-
-        yPosition += 15
       })
 
-      // Totales
-      yPosition += 10
-      doc.setDrawColor(...lightGray)
-      doc.line(180, yPosition, 277, yPosition)
-
-      yPosition += 10
-      doc.setFontSize(9)
-      doc.setFont("helvetica", "normal")
-      doc.setTextColor(...textColor)
-
-      doc.text("Subtotal:", 210, yPosition)
-      doc.text(`$${cotizacion.subtotal.toLocaleString()}`, 255, yPosition)
-
-      if (cotizacion.itbisActivo !== false) {
-        yPosition += 8
-        const porcentaje = cotizacion.porcentajeItbis || 18
-        doc.text(`ITBIS (${porcentaje}%):`, 210, yPosition)
-        doc.text(`$${cotizacion.impuestos.toLocaleString()}`, 255, yPosition)
-      }
-
-      yPosition += 8
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(11)
-      doc.setTextColor(...primaryColor)
-      doc.text("TOTAL:", 210, yPosition)
-      doc.text(`$${cotizacion.total.toLocaleString()}`, 255, yPosition)
-
-      // Notas
-      if (cotizacion.notas) {
-        yPosition += 20
-        doc.setFontSize(9)
-        doc.setFont("helvetica", "bold")
-        doc.setTextColor(...textColor)
-        doc.text("NOTAS:", 20, yPosition)
-
-        doc.setFont("helvetica", "normal")
-        yPosition += 8
-        const notasLines = doc.splitTextToSize(cotizacion.notas, 250)
-        doc.text(notasLines, 20, yPosition)
-      }
-
-      // Footer
-      doc.setFontSize(7)
-      doc.setTextColor(...lightGray)
-      const footerText = "Gracias por su confianza - JumTech RD | Soluciones Tecnológicas"
-      doc.text(footerText, 148 - doc.getTextWidth(footerText) / 2, 200)
-
-      // Descargar el PDF
-      const fileName = `Cotizacion-${numeroCotizacion}-${cotizacion.cliente.replace(/\s+/g, "-")}.pdf`
-      doc.save(fileName)
+      const subtotal = cotizacion.subtotal || cotizacion.total
+      await generateFinancialPdf({
+        fileName: `Cotizacion-${numeroCotizacion}-${cotizacion.cliente.replace(/\s+/g, "-")}.pdf`,
+        title: "COTIZACIÓN",
+        referenceLabel: "Cotización",
+        referenceValue: numeroCotizacion,
+        dateLabel: "Fecha",
+        dateValue: new Date(cotizacion.fecha).toLocaleDateString("es-DO"),
+        customerName: selectedClient?.name || cotizacion.cliente,
+        customerEmail: selectedClient?.email || cotizacion.email,
+        customerPhone: selectedClient?.phone || cotizacion.telefono || undefined,
+        customerCompanyName: selectedClient?.companyName || undefined,
+        customerIdentification: selectedClient?.identification || undefined,
+        customerAddress: selectedClient?.address || undefined,
+        items,
+        subtotalLabel: "Subtotal",
+        subtotalValue: `${cotizacion.monedaPrincipal || "RD$"} ${subtotal.toLocaleString("es-DO")}`,
+        totalLabel: "TOTAL",
+        totalValue: `${cotizacion.monedaPrincipal || "RD$"} ${subtotal.toLocaleString("es-DO")}`,
+        notes: cotizacion.notas,
+        validityNote: "Esta cotización es válida por 15 días.",
+        footerText: "Gracias por su confianza - JumTech RD | Soluciones Tecnológicas",
+      })
 
       alert("✅ PDF generado exitosamente!")
     } catch (error) {
@@ -385,6 +262,8 @@ export default function CotizacionesPage() {
               <Home className="h-4 w-4" />Ver Sitio
             </Link>
             <Link href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">Dashboard</Link>
+            <Link href="/admin/productos" className="text-gray-300 hover:text-white text-sm">Productos</Link>
+            <Link href="/admin/clientes" className="text-gray-300 hover:text-white text-sm">Clientes</Link>
             <Link href="/admin/facturas" className="text-gray-300 hover:text-white text-sm">Facturas</Link>
             <Link href="/admin/reportes" className="text-gray-300 hover:text-white text-sm">Reportes</Link>
             <Link href="/admin/usuarios" className="text-gray-300 hover:text-white text-sm">Usuarios</Link>
@@ -406,10 +285,8 @@ export default function CotizacionesPage() {
           {/* Header */}
           <div className="text-center mb-6 pt-4">
             <Badge className="mb-3 bg-blue-600/20 text-blue-400 border-blue-600/30">Gestión de Cotizaciones</Badge>
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Sistema de Cotizaciones</h1>
-            <p className="text-sm md:text-lg text-gray-300 max-w-2xl mx-auto">
-              Administra y genera cotizaciones profesionales
-            </p>
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Cotizaciones</h1>
+            <p className="text-sm md:text-lg text-gray-300 max-w-2xl mx-auto">Administra y genera cotizaciones</p>
           </div>
 
           {/* Estadísticas — 2 cols mobile, 4 desktop */}
@@ -479,7 +356,7 @@ export default function CotizacionesPage() {
                 value={filterEstado}
                 onChange={(e) => setFilterEstado(e.target.value)}
                 aria-label="Filtrar cotizaciones por estado"
-                className="px-3 py-2 bg-white/5 border border-gray-600 rounded-lg text-white text-sm min-w-0"
+                className="px-3 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white text-sm min-w-0 [&>option]:bg-slate-800 [&>option]:text-white"
               >
                 <option value="todos">Todos</option>
                 <option value="pendiente">Pendiente</option>
@@ -544,16 +421,6 @@ export default function CotizacionesPage() {
                         <strong>
                           {cotizacion.monedaPrincipal || "RD$"} {cotizacion.subtotal.toLocaleString()}
                         </strong>
-                        {cotizacion.itbisActivo !== false && (
-                          <>
-                            {" "}
-                            • ITBIS ({cotizacion.porcentajeItbis || 18}%):{" "}
-                            <strong>
-                              {cotizacion.monedaPrincipal || "RD$"} {cotizacion.impuestos.toLocaleString()}
-                            </strong>
-                          </>
-                        )}
-                        {cotizacion.itbisActivo === false && <span className="text-green-400"> • ITBIS: Exento</span>}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {cotizacion.productos.slice(0, 3).map((producto) => (
@@ -577,7 +444,7 @@ export default function CotizacionesPage() {
                         value={cotizacion.estado}
                         onChange={(e) => handleChangeEstado(cotizacion.id, e.target.value as Cotizacion["estado"])}
                         aria-label={`Cambiar estado de cotizacion ${cotizacion.id}`}
-                        className="px-2 py-1 bg-white/5 border border-gray-600 rounded text-white text-xs flex-1 mr-2"
+                        className="px-2 py-1 bg-slate-800/90 border border-gray-600 rounded text-white text-xs flex-1 mr-2 [&>option]:bg-slate-800 [&>option]:text-white"
                       >
                         <option value="pendiente">Pendiente</option>
                         <option value="enviada">Enviada</option>
@@ -628,6 +495,9 @@ export default function CotizacionesPage() {
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/90 border-t border-gray-800/50 flex justify-around py-2 z-50">
         <Link href="/admin/dashboard" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
           <Home className="h-5 w-5" /><span>Inicio</span>
+        </Link>
+        <Link href="/admin/productos" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
+          <Package className="h-5 w-5" /><span>Productos</span>
         </Link>
         <Link href="/admin/cotizaciones" className="flex flex-col items-center text-blue-400 text-xs gap-1">
           <FileText className="h-5 w-5" /><span>Cotizaciones</span>

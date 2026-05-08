@@ -400,6 +400,9 @@ export default function ProductosPage() {
             <Link href="/admin/dashboard" className="text-gray-300 hover:text-white transition-colors">
               Dashboard
             </Link>
+            <Link href="/admin/clientes" className="text-gray-300 hover:text-white transition-colors">
+              Clientes
+            </Link>
             <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white transition-colors">
               Cotizaciones
             </Link>

@@ -73,8 +73,14 @@ function ServicesCarousel() {
   const [isTransitioning, setIsTransitioning] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Create extended services array for infinite loop (duplicate items at start and end)
-  const extendedServices = [...services, ...services, ...services]
+  const cloneCount = itemsPerView
+  const carouselSlides = [
+    ...services.slice(-cloneCount),
+    ...services,
+    ...services.slice(0, cloneCount),
+  ]
+  const startIndex = cloneCount
+  const endIndex = startIndex + services.length - 1
 
   // Update items per view based on screen size
   useEffect(() => {
@@ -93,10 +99,14 @@ function ServicesCarousel() {
     return () => window.removeEventListener("resize", updateItemsPerView)
   }, [])
 
-  // Start from the middle set of services
   useEffect(() => {
-    setCurrentIndex(services.length)
-  }, [])
+    setIsTransitioning(false)
+    setCurrentIndex(startIndex)
+    const timeout = window.setTimeout(() => {
+      setIsTransitioning(true)
+    }, 0)
+    return () => window.clearTimeout(timeout)
+  }, [startIndex, itemsPerView])
 
   const nextSlide = () => {
     setIsTransitioning(true)
@@ -110,49 +120,49 @@ function ServicesCarousel() {
 
   // Handle infinite loop reset
   useEffect(() => {
-    if (currentIndex >= services.length * 2) {
-      // Reached the end of the third set, jump to the second set
-      const timeout = setTimeout(() => {
+    if (currentIndex > endIndex) {
+      const timeout = window.setTimeout(() => {
         setIsTransitioning(false)
-        setCurrentIndex(services.length)
+        setCurrentIndex(startIndex)
       }, 500)
-      return () => clearTimeout(timeout)
-    } else if (currentIndex < services.length) {
-      // Reached before the first set, jump to the second set
-      const timeout = setTimeout(() => {
-        setIsTransitioning(false)
-        setCurrentIndex(services.length * 2 - 1)
-      }, 500)
-      return () => clearTimeout(timeout)
+      return () => window.clearTimeout(timeout)
     }
-  }, [currentIndex])
+
+    if (currentIndex < startIndex) {
+      const timeout = window.setTimeout(() => {
+        setIsTransitioning(false)
+        setCurrentIndex(endIndex)
+      }, 500)
+      return () => window.clearTimeout(timeout)
+    }
+  }, [currentIndex, startIndex, endIndex])
 
   // Re-enable transition after instant jump
   useEffect(() => {
     if (!isTransitioning) {
-      const timeout = setTimeout(() => {
+      const timeout = window.setTimeout(() => {
         setIsTransitioning(true)
       }, 50)
-      return () => clearTimeout(timeout)
+      return () => window.clearTimeout(timeout)
     }
   }, [isTransitioning])
 
   // Auto-play carousel
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       nextSlide()
     }, 4000)
 
-    return () => clearInterval(interval)
+    return () => window.clearInterval(interval)
   }, [])
 
   const goToSlide = (index: number) => {
     setIsTransitioning(true)
-    setCurrentIndex(services.length + index)
+    setCurrentIndex(startIndex + index)
   }
 
   // Calculate the real index for dots
-  const realIndex = ((currentIndex - services.length) % services.length + services.length) % services.length
+  const realIndex = ((currentIndex - startIndex) % services.length + services.length) % services.length
 
   return (
     <div className="relative px-2 sm:px-0">
@@ -162,13 +172,16 @@ function ServicesCarousel() {
           className={`flex ${isTransitioning ? "transition-transform duration-500 ease-in-out" : ""}`}
           style={{
             transform: `translateX(-${(currentIndex * 100) / itemsPerView}%)`,
-            width: `${(extendedServices.length / itemsPerView) * 100}%`,
           }}
         >
-          {extendedServices.map((service, index) => {
+          {carouselSlides.map((service, index) => {
             const IconComponent = service.icon
             return (
-              <div key={index} className="flex-shrink-0" style={{ width: `${100 / extendedServices.length}%` }}>
+              <div
+                key={`${service.title}-${index}`}
+                className="flex-shrink-0"
+                style={{ width: `${100 / itemsPerView}%` }}
+              >
                 <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-red-500/50 transition-all duration-300 group hover:bg-white/10 mx-1 sm:mx-2 h-full">
                   <div className="relative h-48 sm:h-56 md:h-64 lg:h-72 overflow-hidden rounded-t-lg">
                     <Image

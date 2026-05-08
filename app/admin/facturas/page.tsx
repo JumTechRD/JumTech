@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -15,7 +15,6 @@ import {
   Edit,
   LogOut,
   Search,
-  Filter,
   Eye,
   Home,
   Calendar,
@@ -25,12 +24,21 @@ import {
   Menu,
   FileText,
   BarChart3,
+  Package,
 } from "lucide-react"
 import { FacturaCreator } from "@/components/factura-creator"
 import { FacturaPreview } from "@/components/factura-preview"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
 import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
-import { deleteAdminInvoice, fetchAdminInvoices, fetchAdminProducts, saveAdminInvoice } from "@/lib/admin-api-client"
+import {
+  deleteAdminInvoice,
+  fetchAdminClients,
+  fetchAdminInvoices,
+  fetchAdminProducts,
+  saveAdminInvoice,
+} from "@/lib/admin-api-client"
+import { generateFinancialPdf } from "@/lib/pdf-documents"
+import type { ClientRecord } from "@/lib/admin-clients"
 
 interface Producto {
   id: string
@@ -53,6 +61,9 @@ interface Factura {
   email: string
   telefono: string
   direccion: string
+  clientId?: string | null
+  sourceQuoteId?: string | null
+  paymentMethod?: "transferencia" | "efectivo"
   fecha: string
   vencimiento: string
   productos: ProductoEnFactura[]
@@ -61,18 +72,23 @@ interface Factura {
   total: number
   estado: "pendiente" | "pagada" | "vencida" | "cancelada"
   notas?: string
+  companyName?: string
+  identification?: string
 }
 
 export default function AdminFacturasPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [facturas, setFacturas] = useState<Factura[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
+  const [clientes, setClientes] = useState<ClientRecord[]>([])
   const [showCreator, setShowCreator] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [editingFactura, setEditingFactura] = useState<Factura | null>(null)
   const [previewFactura, setPreviewFactura] = useState<Factura | null>(null)
   const [filtroEstado, setFiltroEstado] = useState<string>("todos")
   const [busqueda, setBusqueda] = useState("")
+  const [fechaInicial, setFechaInicial] = useState("")
+  const [fechaFinal, setFechaFinal] = useState("")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const router = useRouter()
 
@@ -83,16 +99,36 @@ export default function AdminFacturasPage() {
 
       setIsAuthenticated(true)
 
-      const [facturasData, productosData] = await Promise.all([
-        fetchAdminInvoices<Factura[]>(),
+      const [productosData, clientesData] = await Promise.all([
         fetchAdminProducts<Producto[]>(),
+        fetchAdminClients<ClientRecord[]>(),
       ])
-      setFacturas(facturasData)
       setProductos(productosData)
+      setClientes(clientesData)
     }
 
     void loadAdminPage()
   }, [router])
+
+  const loadInvoices = useCallback(async () => {
+    const facturasData = await fetchAdminInvoices<Factura[]>({
+      estado: filtroEstado === "todos" ? undefined : filtroEstado,
+      q: busqueda.trim() || undefined,
+      fechaInicial: fechaInicial || undefined,
+      fechaFinal: fechaFinal || undefined,
+    })
+    setFacturas(facturasData)
+  }, [filtroEstado, busqueda, fechaInicial, fechaFinal])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const timeoutId = window.setTimeout(() => {
+      void loadInvoices()
+    }, 250)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [isAuthenticated, loadInvoices])
 
   const handleLogout = () => {
     void logoutAdminSession(router)
@@ -100,14 +136,10 @@ export default function AdminFacturasPage() {
 
   const handleSaveFactura = async (factura: Factura) => {
     try {
-      const savedFactura = await saveAdminInvoice<Factura>(factura, editingFactura?.id)
-      setFacturas((currentFacturas) =>
-        editingFactura
-          ? currentFacturas.map((f) => (f.id === savedFactura.id ? savedFactura : f))
-          : [savedFactura, ...currentFacturas],
-      )
+      await saveAdminInvoice<Factura>(factura, editingFactura?.id)
       setShowCreator(false)
       setEditingFactura(null)
+      void loadInvoices()
     } catch (error) {
       alert("Error al guardar la factura")
     }
@@ -117,7 +149,7 @@ export default function AdminFacturasPage() {
     if (confirm("¿Estás seguro de que quieres eliminar esta factura?")) {
       try {
         await deleteAdminInvoice(id)
-        setFacturas((currentFacturas) => currentFacturas.filter((f) => f.id !== id))
+        void loadInvoices()
       } catch (error) {
         alert("Error al eliminar la factura")
       }
@@ -127,6 +159,46 @@ export default function AdminFacturasPage() {
   const handleEditFactura = (factura: Factura) => {
     setEditingFactura(factura)
     setShowCreator(true)
+  }
+
+  const handleGenerarPdfFactura = async (factura: Factura) => {
+    try {
+      const selectedClient = factura.clientId ? clientes.find((client) => client.id === factura.clientId) : null
+      const items = factura.productos.map((producto) => ({
+        name: producto.nombre,
+        description: producto.descripcion,
+        quantity: producto.cantidad,
+        unitPriceLabel: `$${producto.precio.toLocaleString("es-DO")}`,
+        lineTotalLabel: `$${(producto.precio * producto.cantidad).toLocaleString("es-DO")}`,
+      }))
+
+      await generateFinancialPdf({
+        fileName: `Factura_${factura.numero}_${factura.cliente.replace(/\s+/g, "_")}.pdf`,
+        title: "FACTURA",
+        referenceLabel: "Número",
+        referenceValue: factura.numero,
+        dateLabel: "Fecha",
+        dateValue: new Date(factura.fecha).toLocaleDateString("es-DO"),
+        customerName: selectedClient?.name || factura.cliente,
+        customerEmail: selectedClient?.email || factura.email,
+        customerPhone: selectedClient?.phone || factura.telefono || undefined,
+        customerCompanyName: selectedClient?.companyName || undefined,
+        customerIdentification: selectedClient?.identification || undefined,
+        customerAddress: selectedClient?.address || factura.direccion || undefined,
+        paymentMethodLabel: "Método de pago",
+        paymentMethodValue: factura.paymentMethod === "efectivo" ? "Efectivo" : "Transferencia",
+        items,
+        subtotalLabel: "Subtotal",
+        subtotalValue: `$${factura.subtotal.toLocaleString("es-DO")}`,
+        totalLabel: "TOTAL",
+        totalValue: `$${factura.total.toLocaleString("es-DO")}`,
+        notes: factura.notas,
+        footerText: "Gracias por su preferencia - JumTech RD | Soluciones Tecnológicas",
+      })
+    } catch (error) {
+      console.error("Error generando PDF de factura:", error)
+      alert("❌ Error al generar el PDF. Por favor intenta nuevamente.")
+    }
   }
 
   const handlePreviewFactura = (factura: Factura) => {
@@ -149,14 +221,7 @@ export default function AdminFacturasPage() {
     }
   }
 
-  const facturasFiltradas = facturas.filter((factura) => {
-    const matchEstado = filtroEstado === "todos" || factura.estado === filtroEstado
-    const matchBusqueda =
-      factura.cliente.toLowerCase().includes(busqueda.toLowerCase()) ||
-      factura.numero.includes(busqueda) ||
-      factura.email.toLowerCase().includes(busqueda.toLowerCase())
-    return matchEstado && matchBusqueda
-  })
+  const facturasFiltradas = facturas
 
   const getTotalFacturado = () => {
     return facturas.reduce((sum, factura) => sum + factura.total, 0)
@@ -203,6 +268,13 @@ export default function AdminFacturasPage() {
             </Link>
             <Link href="/admin/dashboard" className="text-gray-300 hover:text-white transition-colors text-sm">
               Dashboard
+            </Link>
+            <Link href="/admin/productos" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
+              <Package className="h-4 w-4" />
+              Productos
+            </Link>
+            <Link href="/admin/clientes" className="text-gray-300 hover:text-white transition-colors text-sm">
+              Clientes
             </Link>
             <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <FileText className="h-4 w-4" />Cotizaciones
@@ -253,6 +325,13 @@ export default function AdminFacturasPage() {
                 Dashboard
               </Link>
               <Link
+                href="/admin/clientes"
+                className="text-gray-300 hover:text-white transition-colors py-2 px-3 rounded-lg hover:bg-white/10"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Clientes
+              </Link>
+              <Link
                 href="/admin/cotizaciones"
                 className="text-gray-300 hover:text-white transition-colors py-2 px-3 rounded-lg hover:bg-white/10 flex items-center gap-2"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -301,10 +380,8 @@ export default function AdminFacturasPage() {
           {/* Header */}
           <div className="text-center mb-6 pt-4">
             <Badge className="mb-3 bg-purple-600/20 text-purple-400 border-purple-600/30">Gestion de Facturas</Badge>
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Sistema de Facturacion</h1>
-            <p className="text-sm md:text-lg text-gray-300 max-w-2xl mx-auto">
-              Crea, gestiona y descarga facturas profesionales
-            </p>
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Facturas</h1>
+            <p className="text-sm md:text-lg text-gray-300 max-w-2xl mx-auto">Crea, gestiona y descarga facturas</p>
           </div>
 
           {/* Stats Cards */}
@@ -375,7 +452,7 @@ export default function AdminFacturasPage() {
                 value={filtroEstado}
                 onChange={(e) => setFiltroEstado(e.target.value)}
                 aria-label="Filtrar facturas por estado"
-                className="px-3 py-2 bg-white/5 border border-gray-600 rounded-lg text-white text-sm min-w-0"
+                className="px-3 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white text-sm min-w-0 [&>option]:bg-slate-800 [&>option]:text-white"
               >
                 <option value="todos">Todos</option>
                 <option value="pendiente">Pendiente</option>
@@ -384,6 +461,39 @@ export default function AdminFacturasPage() {
                 <option value="cancelada">Cancelada</option>
               </select>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Fecha inicial</label>
+                <input
+                  type="date"
+                  value={fechaInicial}
+                  onChange={(e) => setFechaInicial(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Fecha final</label>
+                <input
+                  type="date"
+                  value={fechaFinal}
+                  onChange={(e) => setFechaFinal(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                />
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setFiltroEstado("todos")
+                setBusqueda("")
+                setFechaInicial("")
+                setFechaFinal("")
+              }}
+              className="border-gray-600 text-gray-300 hover:bg-white/10 bg-transparent"
+            >
+              Limpiar filtros
+            </Button>
             <Button onClick={() => setShowCreator(true)} className="bg-purple-600 hover:bg-purple-700 w-full">
               <Plus className="h-4 w-4 mr-2" />
               Nueva Factura
@@ -440,26 +550,30 @@ export default function AdminFacturasPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div className="flex items-center text-gray-300">
-                        <Calendar className="h-4 w-4 mr-2 text-purple-400" />
-                        Emisión: {new Date(factura.fecha).toLocaleDateString()}
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div className="flex items-center text-gray-300">
+                          <Calendar className="h-4 w-4 mr-2 text-purple-400" />
+                          Emisión: {new Date(factura.fecha).toLocaleDateString()}
+                        </div>
                       <div className="flex items-center text-gray-300">
                         <Calendar className="h-4 w-4 mr-2 text-purple-400" />
                         Vencimiento: {new Date(factura.vencimiento).toLocaleDateString()}
                       </div>
-                      <div className="flex items-center text-gray-300">
-                        <Receipt className="h-4 w-4 mr-2 text-purple-400" />
-                        {factura.productos.length} productos
+                        <div className="flex items-center text-gray-300">
+                          <Receipt className="h-4 w-4 mr-2 text-purple-400" />
+                          {factura.productos.length} productos
+                        </div>
+                        <div className="flex items-center text-gray-300">
+                          <DollarSign className="h-4 w-4 mr-2 text-purple-400" />
+                          Pago: {factura.paymentMethod === "efectivo" ? "Efectivo" : "Transferencia"}
+                        </div>
                       </div>
-                    </div>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handlePreviewFactura(factura)}
-                        className="border-gray-600 text-gray-300 hover:bg-white/10"
+                        className="border-sky-600 text-sky-400 hover:bg-sky-600/10"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Vista Previa
@@ -468,12 +582,16 @@ export default function AdminFacturasPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditFactura(factura)}
-                        className="border-gray-600 text-gray-300 hover:bg-white/10"
+                        className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Editar
                       </Button>
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                      <Button
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => handleGenerarPdfFactura(factura)}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Descargar PDF
                       </Button>

@@ -12,6 +12,28 @@ export async function fetchAdminProducts<T>() {
   return readJson<T>(response, 'products')
 }
 
+export async function fetchAdminClients<T>() {
+  const response = await fetch('/api/admin/clients', { cache: 'no-store' })
+  return readJson<T>(response, 'clients')
+}
+
+export async function saveAdminClient<T>(client: Record<string, unknown>, id?: string) {
+  const response = await fetch(id ? `/api/admin/clients/${id}` : '/api/admin/clients', {
+    method: id ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(client),
+  })
+  return readJson<T>(response, 'client')
+}
+
+export async function deleteAdminClient(id: string) {
+  const response = await fetch(`/api/admin/clients/${id}`, { method: 'DELETE' })
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || 'Request failed')
+  }
+}
+
 export async function saveAdminProduct<T extends { id?: string }>(product: T, id?: string) {
   const response = await fetch(id ? `/api/admin/products/${id}` : '/api/admin/products', {
     method: id ? 'PUT' : 'POST',
@@ -29,8 +51,20 @@ export async function deleteAdminProduct(id: string) {
   }
 }
 
-export async function fetchAdminInvoices<T>() {
-  const response = await fetch('/api/admin/invoices', { cache: 'no-store' })
+export async function fetchAdminInvoices<T>(filters?: {
+  estado?: string
+  q?: string
+  fechaInicial?: string
+  fechaFinal?: string
+}) {
+  const params = new URLSearchParams()
+  if (filters?.estado) params.set('estado', filters.estado)
+  if (filters?.q) params.set('q', filters.q)
+  if (filters?.fechaInicial) params.set('fechaInicial', filters.fechaInicial)
+  if (filters?.fechaFinal) params.set('fechaFinal', filters.fechaFinal)
+
+  const queryString = params.toString()
+  const response = await fetch(`/api/admin/invoices${queryString ? `?${queryString}` : ''}`, { cache: 'no-store' })
   return readJson<T>(response, 'invoices')
 }
 

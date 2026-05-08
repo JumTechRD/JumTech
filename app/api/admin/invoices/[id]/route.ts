@@ -2,46 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/middleware'
 import {
-  InvoiceItemRecord,
-  InvoiceRecord,
   normalizeInvoiceInput,
-  serializeInvoice,
+  type InvoiceRecord,
 } from '@/lib/admin-data'
+import { getInvoiceById, insertInvoiceItems } from '@/lib/admin-invoice-service'
 
 interface Params {
   params: Promise<{ id: string }>
-}
-
-async function getInvoice(db: any, id: string) {
-  const [invoice] = await db.$queryRaw<InvoiceRecord[]>`
-    SELECT * FROM "Invoice"
-    WHERE "id" = ${id}
-    LIMIT 1
-  `
-
-  if (!invoice) return null
-
-  const items = await db.$queryRaw<InvoiceItemRecord[]>`
-    SELECT * FROM "InvoiceItem"
-    WHERE "invoiceId" = ${id}
-    ORDER BY "position" ASC
-  `
-
-  return serializeInvoice(invoice, items)
-}
-
-async function insertInvoiceItems(db: any, invoiceId: string, productos: ReturnType<typeof normalizeInvoiceInput>['productos']) {
-  for (const producto of productos) {
-    await db.$executeRaw`
-      INSERT INTO "InvoiceItem" (
-        "id", "invoiceId", "nombre", "descripcion", "precio", "categoria", "imagen", "cantidad", "position"
-      )
-      VALUES (
-        ${crypto.randomUUID()}, ${invoiceId}, ${producto.nombre}, ${producto.descripcion}, ${producto.precio},
-        ${producto.categoria}, ${producto.imagen}, ${producto.cantidad}, ${producto.position}
-      )
-    `
-  }
 }
 
 export async function PUT(request: NextRequest, context: Params) {
@@ -57,7 +24,29 @@ export async function PUT(request: NextRequest, context: Params) {
       return NextResponse.json({ error: 'Missing required invoice fields' }, { status: 400 })
     }
 
+    if (invoice.clientId) {
+      const client = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT "id"
+        FROM "Client"
+        WHERE "id" = ${invoice.clientId}
+        LIMIT 1
+      `
+      if (client.length === 0) {
+        return NextResponse.json({ error: 'Selected client not found' }, { status: 404 })
+      }
+    }
+
     const updatedInvoice = await prisma.$transaction(async (tx) => {
+      const [existingInvoice] = await tx.$queryRaw<InvoiceRecord[]>`
+        SELECT * FROM "Invoice"
+        WHERE "id" = ${id}
+        LIMIT 1
+      `
+
+      if (!existingInvoice) return null
+
+      const sourceQuoteId = invoice.sourceQuoteId || existingInvoice.sourceQuoteId || null
+      const paymentMethod = invoice.paymentMethod || existingInvoice.paymentMethod || "transferencia"
       const updatedRecords = await tx.$queryRaw<InvoiceRecord[]>`
         UPDATE "Invoice"
         SET
@@ -66,6 +55,9 @@ export async function PUT(request: NextRequest, context: Params) {
           "email" = ${invoice.email},
           "telefono" = ${invoice.telefono},
           "direccion" = ${invoice.direccion},
+          "clientId" = ${invoice.clientId},
+          "sourceQuoteId" = ${sourceQuoteId},
+          "paymentMethod" = ${paymentMethod},
           "fecha" = ${invoice.fecha},
           "vencimiento" = ${invoice.vencimiento},
           "subtotal" = ${invoice.subtotal},
@@ -85,7 +77,7 @@ export async function PUT(request: NextRequest, context: Params) {
         WHERE "invoiceId" = ${id}
       `
       await insertInvoiceItems(tx, id, invoice.productos)
-      return getInvoice(tx, id)
+      return getInvoiceById(tx, id)
     })
 
     if (!updatedInvoice) {

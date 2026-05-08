@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus, Trash2, Save, Calculator, User, Package, Download, Edit3, Edit, Settings } from "lucide-react"
-import { fetchAdminProducts } from "@/lib/admin-api-client"
-import jsPDF from "jspdf"
+import { fetchAdminClients, fetchAdminProducts } from "@/lib/admin-api-client"
+import { ClientSelector } from "@/components/client-selector"
+import type { ClientRecord } from "@/lib/admin-clients"
+import { generateFinancialPdf } from "@/lib/pdf-documents"
 
 interface Producto {
   id: string
@@ -30,6 +32,7 @@ interface Cotizacion {
   cliente: string
   email: string
   telefono: string
+  clientId?: string | null
   fecha: string
   productos: ProductoEnCotizacion[]
   subtotal: number
@@ -40,6 +43,9 @@ interface Cotizacion {
   monedaPrincipal?: "USD" | "RD$"
   itbisActivo?: boolean
   porcentajeItbis?: number
+  companyName?: string
+  identification?: string
+  address?: string
 }
 
 interface CotizacionCreatorProps {
@@ -134,11 +140,16 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   const [showEditProducto, setShowEditProducto] = useState(false)
   const [productoEditando, setProductoEditando] = useState<ProductoEnCotizacion | null>(null)
   const [productosDisponibles, setProductosDisponibles] = useState<Producto[]>([])
+  const [clientes, setClientes] = useState<ClientRecord[]>([])
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [monedaPrincipal, setMonedaPrincipal] = useState<"USD" | "RD$">("RD$")
   const [tasaCambio, setTasaCambio] = useState(58) // Tasa USD a RD$
-  const [itbisActivo, setItbisActivo] = useState(true)
-  const [porcentajeItbis, setPorcentajeItbis] = useState(18)
+  const [itbisActivo, setItbisActivo] = useState(false)
+  const [porcentajeItbis, setPorcentajeItbis] = useState(0)
+  const [clientId, setClientId] = useState<string | null>(null)
+  const [companyName, setCompanyName] = useState("")
+  const [identification, setIdentification] = useState("")
+  const [address, setAddress] = useState("")
 
   // Estados para producto manual
   const [nombreManual, setNombreManual] = useState("")
@@ -159,21 +170,26 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   useEffect(() => {
     let isMounted = true
 
-    const cargarProductos = async () => {
+    const cargarDatos = async () => {
       try {
-        const productosData = await fetchAdminProducts<Producto[]>()
+        const [productosData, clientsData] = await Promise.all([
+          fetchAdminProducts<Producto[]>(),
+          fetchAdminClients<ClientRecord[]>(),
+        ])
         const productosActivos = productosData.filter((p) => p.activo !== false)
         if (isMounted) {
           setProductosDisponibles([...productosActivos, ...productosDisponiblesInicial])
+          setClientes(clientsData)
         }
       } catch (error) {
         if (isMounted) {
           setProductosDisponibles(productosDisponiblesInicial)
+          setClientes([])
         }
       }
     }
 
-    void cargarProductos()
+    void cargarDatos()
 
     return () => {
       isMounted = false
@@ -194,8 +210,12 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
         })),
       )
       setMonedaPrincipal(editingCotizacion.monedaPrincipal || "RD$")
-      setItbisActivo(editingCotizacion.itbisActivo ?? true)
-      setPorcentajeItbis(editingCotizacion.porcentajeItbis || 18)
+      setItbisActivo(false)
+      setPorcentajeItbis(0)
+      setClientId(editingCotizacion.clientId || null)
+      setCompanyName(editingCotizacion.companyName || "")
+      setIdentification(editingCotizacion.identification || "")
+      setAddress(editingCotizacion.address || "")
     } else {
       // Reset form y generar número automático
       const now = new Date()
@@ -207,10 +227,25 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
       setNotas("")
       setProductosSeleccionados([])
       setMonedaPrincipal("RD$")
-      setItbisActivo(true)
-      setPorcentajeItbis(18)
+      setItbisActivo(false)
+      setPorcentajeItbis(0)
+      setClientId(null)
+      setCompanyName("")
+      setIdentification("")
+      setAddress("")
     }
   }, [editingCotizacion])
+
+  useEffect(() => {
+    if (!clientId) return
+
+    const selectedClient = clientes.find((client) => client.id === clientId)
+    if (!selectedClient) return
+
+    setCompanyName(selectedClient.companyName || "")
+    setIdentification(selectedClient.identification || "")
+    setAddress(selectedClient.address || "")
+  }, [clientId, clientes])
 
   const convertirPrecio = (precio: number, monedaOrigen: "USD" | "RD$", monedaDestino: "USD" | "RD$") => {
     if (monedaOrigen === monedaDestino) return precio
@@ -230,27 +265,19 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     return fecha.toLocaleDateString("es-DO")
   }
 
-  const cargarImagenComoDataUrl = (src: string) => {
-    return new Promise<string>((resolve, reject) => {
-      const img = new Image()
-      img.crossOrigin = "anonymous"
-      img.onload = () => {
-        const canvas = document.createElement("canvas")
-        canvas.width = img.width
-        canvas.height = img.height
-        const ctx = canvas.getContext("2d")
+  const handleSelectClient = (client: ClientRecord | null) => {
+    if (!client) {
+      setClientId(null)
+      return
+    }
 
-        if (!ctx) {
-          reject(new Error("No se pudo obtener el contexto del canvas"))
-          return
-        }
-
-        ctx.drawImage(img, 0, 0)
-        resolve(canvas.toDataURL("image/png"))
-      }
-      img.onerror = () => reject(new Error(`No se pudo cargar la imagen: ${src}`))
-      img.src = src
-    })
+    setClientId(client.id)
+    setCliente(client.name)
+    setEmail(client.email)
+    setTelefono(client.phone)
+    setCompanyName(client.companyName || "")
+    setIdentification(client.identification || "")
+    setAddress(client.address || "")
   }
 
   const generarPDF = async () => {
@@ -262,230 +289,44 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     setIsGeneratingPDF(true)
 
     try {
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
-
-      const pageWidth = doc.internal.pageSize.getWidth()
-      const pageHeight = doc.internal.pageSize.getHeight()
-      const margin = 15
-      const red: [number, number, number] = [190, 16, 24]
-      const darkText: [number, number, number] = [20, 20, 20]
-      const grayText: [number, number, number] = [90, 90, 90]
-      const lightGray: [number, number, number] = [245, 245, 245]
-      const lineGray: [number, number, number] = [215, 215, 215]
-      const contentWidth = pageWidth - margin * 2
-
-      doc.setFillColor(255, 255, 255)
-      doc.rect(0, 0, pageWidth, pageHeight, "F")
-
-      // Encabezado rojo principal
-      doc.setFillColor(...red)
-      doc.rect(0, 0, pageWidth, 38, "F")
-
-      // Caja de logo
-      doc.setFillColor(255, 255, 255)
-      doc.roundedRect(margin, 6, 40, 24, 2, 2, "F")
-      let logoDataUrl: string | null = null
-      try {
-        logoDataUrl = await cargarImagenComoDataUrl("/logopdf.png")
-      } catch (logoError) {
-        console.warn("No se pudo cargar logopdf.png para el PDF:", logoError)
-      }
-
-      if (logoDataUrl) {
-        doc.addImage(logoDataUrl, "PNG", margin + 1.5, 7.5, 37, 21.5, undefined, "FAST")
-      } else {
-        doc.setTextColor(35, 35, 35)
-        doc.setFont("helvetica", "bold")
-        doc.setFontSize(12)
-        doc.text("JUMTECH RD", margin + 4, 20)
-        doc.setFont("helvetica", "normal")
-        doc.setFontSize(8)
-        doc.text("Soluciones Tecnológicas", margin + 4, 26)
-      }
-
-      // Datos de empresa
-      doc.setTextColor(255, 255, 255)
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(12)
-      doc.text("Jumtech RD", margin + 46, 15)
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(8.5)
-      doc.text("Soluciones Tecnológicas Integrales", margin + 46, 20)
-      doc.text("Email: jumtechRD@gmail.com", margin + 46, 25)
-
-      // Título principal
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(16)
-      doc.text("COTIZACIÓN", pageWidth - margin, 21, { align: "right" })
-
-      let yPosition = 48
-      doc.setTextColor(...darkText)
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(11)
-      doc.text("Cotización:", margin, yPosition)
-      doc.setFont("helvetica", "normal")
-      doc.text(numeroFactura, margin + 24, yPosition)
-      doc.setFont("helvetica", "bold")
-      doc.text("Fecha:", pageWidth - margin - 42, yPosition)
-      doc.setFont("helvetica", "normal")
-      doc.text(formatearFecha(new Date()), pageWidth - margin - 25, yPosition)
-
-      yPosition += 8
-      doc.setFont("helvetica", "bold")
-      doc.text("CLIENTE:", margin, yPosition)
-      yPosition += 6
-      doc.setFont("helvetica", "bold")
-      doc.text(cliente, margin, yPosition)
-      yPosition += 5
-      doc.setFont("helvetica", "normal")
-      doc.text(`Email: ${email}`, margin, yPosition)
-      yPosition += 5
-      doc.text(`Tel: ${telefono || "No especificado"}`, margin, yPosition)
-
-      yPosition += 10
-      const tableTop = yPosition
-      const colDescWidth = 110
-      const colCantWidth = 20
-      const colPrecioWidth = 25
-      const colTotalWidth = contentWidth - colDescWidth - colCantWidth - colPrecioWidth
-
-      doc.setFillColor(...lightGray)
-      doc.rect(margin, tableTop, contentWidth, 8, "F")
-      doc.setDrawColor(...lineGray)
-      doc.rect(margin, tableTop, contentWidth, 8)
-
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(10)
-      doc.setTextColor(...darkText)
-      doc.text("DESCRIPCIÓN", margin + 2, tableTop + 5.5)
-      doc.text("CANT.", margin + colDescWidth + 2, tableTop + 5.5)
-      doc.text("PRECIO", margin + colDescWidth + colCantWidth + 2, tableTop + 5.5)
-      doc.text("TOTAL", margin + colDescWidth + colCantWidth + colPrecioWidth + 2, tableTop + 5.5)
-
-      yPosition = tableTop + 8
-      const bottomLimit = pageHeight - 65
-
-      for (let index = 0; index < productosSeleccionados.length; index++) {
-        const producto = productosSeleccionados[index]
+      const items = productosSeleccionados.map((producto) => {
         const precioEnMonedaPrincipal = convertirPrecio(producto.precio, producto.moneda || "RD$", monedaPrincipal)
-        const subtotalProducto = precioEnMonedaPrincipal * producto.cantidad
-        const porcentajeExtra = (producto.porcentajeExtra || 0) / 100
-        const totalConExtra = subtotalProducto * (1 + porcentajeExtra)
+        const totalConExtra =
+          precioEnMonedaPrincipal * producto.cantidad * (1 + (producto.porcentajeExtra || 0) / 100)
 
-        if (yPosition > bottomLimit) {
-          doc.addPage()
-          yPosition = margin
-          doc.setFillColor(...lightGray)
-          doc.rect(margin, yPosition, contentWidth, 8, "F")
-          doc.setDrawColor(...lineGray)
-          doc.rect(margin, yPosition, contentWidth, 8)
-          doc.setFont("helvetica", "bold")
-          doc.setFontSize(10)
-          doc.text("DESCRIPCIÓN", margin + 2, yPosition + 5.5)
-          doc.text("CANT.", margin + colDescWidth + 2, yPosition + 5.5)
-          doc.text("PRECIO", margin + colDescWidth + colCantWidth + 2, yPosition + 5.5)
-          doc.text("TOTAL", margin + colDescWidth + colCantWidth + colPrecioWidth + 2, yPosition + 5.5)
-          yPosition += 8
+        return {
+          name: producto.nombre,
+          description: producto.descripcion,
+          quantity: producto.cantidad,
+          unitPriceLabel: `${monedaPrincipal} ${formatearMonto(precioEnMonedaPrincipal)}`,
+          lineTotalLabel: `${monedaPrincipal} ${formatearMonto(totalConExtra)}`,
         }
-
-        const rowHeight = 14
-        if (index % 2 !== 0) {
-          doc.setFillColor(252, 252, 252)
-          doc.rect(margin, yPosition, contentWidth, rowHeight, "F")
-        }
-
-        doc.setDrawColor(...lineGray)
-        doc.rect(margin, yPosition, contentWidth, rowHeight)
-        doc.line(margin + colDescWidth, yPosition, margin + colDescWidth, yPosition + rowHeight)
-        doc.line(
-          margin + colDescWidth + colCantWidth,
-          yPosition,
-          margin + colDescWidth + colCantWidth,
-          yPosition + rowHeight,
-        )
-        doc.line(
-          margin + colDescWidth + colCantWidth + colPrecioWidth,
-          yPosition,
-          margin + colDescWidth + colCantWidth + colPrecioWidth,
-          yPosition + rowHeight,
-        )
-
-        const descripcion = doc.splitTextToSize(producto.nombre, colDescWidth - 4)
-        const descripcionSecundaria = doc.splitTextToSize(producto.descripcion || "", colDescWidth - 4)
-
-        doc.setTextColor(...darkText)
-        doc.setFont("helvetica", "bold")
-        doc.setFontSize(9)
-        doc.text(descripcion[0] || producto.nombre, margin + 2, yPosition + 5)
-
-        if (descripcionSecundaria[0]) {
-          doc.setFont("helvetica", "normal")
-          doc.setFontSize(8)
-          doc.setTextColor(...grayText)
-          doc.text(descripcionSecundaria[0], margin + 2, yPosition + 10)
-        }
-
-        doc.setTextColor(...darkText)
-        doc.setFont("helvetica", "normal")
-        doc.setFontSize(9)
-        doc.text(`${producto.cantidad}`, margin + colDescWidth + 10, yPosition + 8, { align: "center" })
-        doc.text(formatearMonto(precioEnMonedaPrincipal), margin + colDescWidth + colCantWidth + colPrecioWidth - 2, yPosition + 8, {
-          align: "right",
-        })
-        doc.text(`${monedaPrincipal} ${formatearMonto(totalConExtra)}`, margin + contentWidth - 2, yPosition + 8, {
-          align: "right",
-        })
-
-        yPosition += rowHeight
-      }
-
-      yPosition += 6
-      const subtotal = calcularSubtotal()
-      const impuestos = calcularImpuestos()
-      const total = calcularTotal()
-      const totalsXLabel = pageWidth - margin - 45
-      const totalsXValue = pageWidth - margin
-
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(11)
-      doc.setTextColor(...darkText)
-      doc.text("Subtotal:", totalsXLabel, yPosition, { align: "right" })
-      doc.text(`${monedaPrincipal} ${formatearMonto(subtotal)}`, totalsXValue, yPosition, { align: "right" })
-      yPosition += 7
-
-      doc.text(`ITBIS (${itbisActivo ? `${porcentajeItbis}%` : "0%"}):`, totalsXLabel, yPosition, { align: "right" })
-      doc.text(`${monedaPrincipal} ${formatearMonto(itbisActivo ? impuestos : 0)}`, totalsXValue, yPosition, { align: "right" })
-      yPosition += 8
-
-      doc.setFont("helvetica", "bold")
-      doc.setTextColor(...red)
-      doc.setFontSize(14)
-      doc.text("TOTAL:", totalsXLabel, yPosition, { align: "right" })
-      doc.text(`${monedaPrincipal} ${formatearMonto(total)}`, totalsXValue, yPosition, { align: "right" })
-
-      yPosition += 11
-      doc.setFillColor(236, 236, 236)
-      doc.rect(margin, yPosition, contentWidth, 18, "F")
-      doc.setFont("helvetica", "bold")
-      doc.setTextColor(...darkText)
-      doc.setFontSize(10)
-      doc.text("NOTAS:", margin + 2, yPosition + 6)
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(10)
-      const notasTexto = notas?.trim() || "Sin notas adicionales."
-      const notasLineas = doc.splitTextToSize(notasTexto, contentWidth - 6)
-      doc.text(notasLineas[0] || "Sin notas adicionales.", margin + 2, yPosition + 12)
-
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(10)
-      doc.setTextColor(150, 40, 40)
-      doc.text("Gracias por su confianza - Jumtech RD | Soluciones Tecnológicas", pageWidth / 2, pageHeight - 10, {
-        align: "center",
       })
 
-      // Descargar el PDF
+      const subtotal = calcularSubtotal()
       const fileName = `Cotizacion-${numeroFactura}-${cliente.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`
-      doc.save(fileName)
+      await generateFinancialPdf({
+        fileName,
+        title: "COTIZACIÓN",
+        referenceLabel: "Cotización",
+        referenceValue: numeroFactura,
+        dateLabel: "Fecha",
+        dateValue: formatearFecha(new Date()),
+        customerName: cliente,
+        customerEmail: email,
+        customerPhone: telefono || "No especificado",
+        customerCompanyName: companyName || undefined,
+        customerIdentification: identification || undefined,
+        customerAddress: address || undefined,
+        items,
+        subtotalLabel: "Subtotal",
+        subtotalValue: `${monedaPrincipal} ${formatearMonto(subtotal)}`,
+        totalLabel: "TOTAL",
+        totalValue: `${monedaPrincipal} ${formatearMonto(subtotal)}`,
+        notes: notas,
+        validityNote: "Esta cotización es válida por 15 días.",
+        footerText: "Gracias por su confianza - Jumtech RD | Soluciones Tecnológicas",
+      })
 
       alert("✅ Cotización generada exitosamente!")
     } catch (error) {
@@ -625,8 +466,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   }
 
   const calcularImpuestos = () => {
-    if (!itbisActivo) return 0
-    return calcularSubtotal() * (porcentajeItbis / 100)
+    return 0
   }
 
   const calcularTotal = () => {
@@ -645,16 +485,20 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
       cliente,
       email,
       telefono,
+      clientId,
       fecha: editingCotizacion?.fecha || new Date().toISOString(),
       productos: productosSeleccionados,
       subtotal: calcularSubtotal(),
-      impuestos: calcularImpuestos(),
+      impuestos: 0,
       total: calcularTotal(),
       estado: editingCotizacion?.estado || "pendiente",
       notas,
       monedaPrincipal,
-      itbisActivo,
-      porcentajeItbis,
+      itbisActivo: false,
+      porcentajeItbis: 0,
+      companyName: companyName || undefined,
+      identification: identification || undefined,
+      address: address || undefined,
     }
 
     onSave(cotizacion)
@@ -691,9 +535,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">
               {editingCotizacion ? "Editar Cotización" : "Nueva Cotización"}
             </Badge>
-            <CardTitle className="text-2xl md:text-3xl font-bold text-white mb-2">
-              Crear Cotización Profesional
-            </CardTitle>
+            <CardTitle className="text-2xl md:text-3xl font-bold text-white mb-2">Crear Cotización</CardTitle>
             <p className="text-gray-300">Completa los datos del cliente y selecciona los productos</p>
           </div>
         </CardHeader>
@@ -717,13 +559,13 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
             </div>
           </div>
 
-          {/* Configuración de Moneda e ITBIS */}
+          {/* Configuración de Moneda */}
           <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <Settings className="h-5 w-5 mr-2 text-green-400" />
               Configuración Financiera
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Moneda Principal</label>
                 <select
@@ -747,39 +589,11 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                   step="0.01"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">ITBIS</label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={itbisActivo}
-                    onChange={(e) => setItbisActivo(e.target.checked)}
-                    className="w-4 h-4 text-green-600 bg-gray-700 border-gray-600 rounded focus:ring-green-500"
-                  />
-                  <span className="text-gray-300 text-sm">Aplicar ITBIS</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">% ITBIS</label>
-                <input
-                  type="number"
-                  value={porcentajeItbis}
-                  onChange={(e) => setPorcentajeItbis(Number.parseFloat(e.target.value) || 18)}
-                  disabled={!itbisActivo}
-                  className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                  placeholder="18"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                />
-              </div>
             </div>
             <div className="mt-4 text-sm text-gray-400">
               <p>
                 1 USD = {tasaCambio} RD$ | 1 RD$ = {(1 / tasaCambio).toFixed(4)} USD
               </p>
-              {itbisActivo && <p>ITBIS: {porcentajeItbis}% aplicado a todos los productos</p>}
-              {!itbisActivo && <p>ITBIS: Exento de impuestos</p>}
             </div>
           </div>
 
@@ -789,7 +603,16 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
               <User className="h-5 w-5 mr-2 text-red-400" />
               Información del Cliente
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="mb-4">
+              <ClientSelector
+                clients={clientes}
+                selectedClientId={clientId}
+                onSelect={handleSelectClient}
+                label="Cliente reutilizable"
+                description="Busca y selecciona un cliente para completar nombre, correo, teléfono y datos fiscales."
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Nombre Completo *</label>
                 <input
@@ -818,6 +641,36 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                   onChange={(e) => setTelefono(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
                   placeholder="+1 (809) 000-0000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Empresa</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Nombre de la empresa"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Identificación</label>
+                <input
+                  type="text"
+                  value={identification}
+                  onChange={(e) => setIdentification(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="RNC, cédula o ID"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Dirección</label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Dirección del cliente"
                 />
               </div>
             </div>
@@ -1023,20 +876,6 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                     {monedaPrincipal} {calcularTotalExtra().toLocaleString()}
                   </span>
                 </div>
-                {itbisActivo && (
-                  <div className="flex justify-between text-gray-300">
-                    <span>ITBIS ({porcentajeItbis}%):</span>
-                    <span>
-                      {monedaPrincipal} {calcularImpuestos().toLocaleString()}
-                    </span>
-                  </div>
-                )}
-                {!itbisActivo && (
-                  <div className="flex justify-between text-gray-300">
-                    <span>ITBIS:</span>
-                    <span className="text-green-400">Exento</span>
-                  </div>
-                )}
                 <div className="border-t border-gray-700 pt-3">
                   <div className="flex justify-between text-white font-bold text-lg">
                     <span>Total a Cobrar:</span>

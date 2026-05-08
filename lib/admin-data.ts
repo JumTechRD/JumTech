@@ -35,6 +35,9 @@ export interface InvoiceRecord {
   email: string
   telefono: string
   direccion: string
+  clientId: Nullable<string>
+  sourceQuoteId: Nullable<string>
+  paymentMethod: string
   fecha: Date | string
   vencimiento: Date | string
   subtotal: number
@@ -63,6 +66,11 @@ export interface AdminQuoteRecord {
   cliente: string
   email: string
   telefono: string
+  clientId: Nullable<string>
+  generatedInvoice?: Nullable<{
+    id: string
+    numero: string
+  }>
   fecha: Date | string
   subtotal: number
   impuestos: number
@@ -206,12 +214,16 @@ export function serializeProduct(product: ProductRecord) {
 }
 
 export function normalizeInvoiceInput(body: Record<string, unknown>) {
+  const paymentMethod = toStringValue(body.paymentMethod, "transferencia").toLowerCase()
   return {
     numero: toStringValue(body.numero),
     cliente: toStringValue(body.cliente),
     email: toStringValue(body.email),
     telefono: toStringValue(body.telefono),
     direccion: toStringValue(body.direccion),
+    clientId: toOptionalString(body.clientId),
+    sourceQuoteId: toOptionalString(body.sourceQuoteId),
+    paymentMethod: paymentMethod === "efectivo" ? "efectivo" : "transferencia",
     fecha: toDateValue(body.fecha),
     vencimiento: toDateValue(body.vencimiento),
     subtotal: toNumberValue(body.subtotal),
@@ -247,6 +259,9 @@ export function serializeInvoice(invoice: InvoiceRecord, items: InvoiceItemRecor
     email: invoice.email,
     telefono: invoice.telefono,
     direccion: invoice.direccion,
+    clientId: invoice.clientId || undefined,
+    sourceQuoteId: invoice.sourceQuoteId || undefined,
+    paymentMethod: invoice.paymentMethod || "transferencia",
     fecha: toIso(invoice.fecha),
     vencimiento: toIso(invoice.vencimiento),
     productos: items
@@ -274,6 +289,7 @@ export function normalizeAdminQuoteInput(body: Record<string, unknown>) {
     cliente: toStringValue(body.cliente),
     email: toStringValue(body.email),
     telefono: toStringValue(body.telefono),
+    clientId: toOptionalString(body.clientId),
     fecha: toDateValue(body.fecha),
     subtotal: toNumberValue(body.subtotal),
     impuestos: toNumberValue(body.impuestos),
@@ -312,6 +328,7 @@ export function serializeAdminQuote(quote: AdminQuoteRecord, items: AdminQuoteIt
     cliente: quote.cliente,
     email: quote.email,
     telefono: quote.telefono,
+    clientId: quote.clientId || undefined,
     fecha: toIso(quote.fecha),
     productos: items
       .sort((a, b) => a.position - b.position)

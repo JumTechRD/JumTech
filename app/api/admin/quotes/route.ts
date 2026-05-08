@@ -96,15 +96,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required quote fields' }, { status: 400 })
     }
 
+    if (quote.clientId) {
+      const client = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT "id"
+        FROM "Client"
+        WHERE "id" = ${quote.clientId}
+        LIMIT 1
+      `
+      if (client.length === 0) {
+        return NextResponse.json({ error: 'Selected client not found' }, { status: 404 })
+      }
+    }
+
     const createdQuote = await prisma.$transaction(async (tx) => {
       const [record] = await tx.$queryRaw<AdminQuoteRecord[]>`
         INSERT INTO "AdminQuote" (
-          "id", "numeroFactura", "cliente", "email", "telefono", "fecha", "subtotal", "impuestos",
+          "id", "numeroFactura", "cliente", "email", "telefono", "clientId", "fecha", "subtotal", "impuestos",
           "total", "estado", "notas", "monedaPrincipal", "itbisActivo", "porcentajeItbis", "updatedAt"
         )
         VALUES (
           ${crypto.randomUUID()}, ${quote.numeroFactura}, ${quote.cliente}, ${quote.email}, ${quote.telefono},
-          ${quote.fecha}, ${quote.subtotal}, ${quote.impuestos}, ${quote.total}, ${quote.estado},
+          ${quote.clientId}, ${quote.fecha}, ${quote.subtotal}, ${quote.impuestos}, ${quote.total}, ${quote.estado},
           ${quote.notas}, ${quote.monedaPrincipal}, ${quote.itbisActivo}, ${quote.porcentajeItbis}, ${new Date()}
         )
         RETURNING *

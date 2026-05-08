@@ -23,6 +23,9 @@ interface Factura {
   email: string
   telefono: string
   direccion: string
+  clientId?: string | null
+  sourceQuoteId?: string | null
+  paymentMethod?: "transferencia" | "efectivo"
   fecha: string
   vencimiento: string
   productos: ProductoEnFactura[]
@@ -31,6 +34,8 @@ interface Factura {
   total: number
   estado: "pendiente" | "pagada" | "vencida" | "cancelada"
   notas?: string
+  companyName?: string
+  identification?: string
 }
 
 interface FacturaPreviewProps {
@@ -94,6 +99,9 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
             <p>
               <strong>Vencimiento:</strong> {new Date(factura.vencimiento).toLocaleDateString("es-DO")}
             </p>
+            <p>
+              <strong>Método de pago:</strong> {factura.paymentMethod === "efectivo" ? "Efectivo" : "Transferencia"}
+            </p>
           </div>
         </div>
 
@@ -101,6 +109,8 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-bold text-lg mb-2">FACTURAR A:</h3>
           <p className="font-semibold">{factura.cliente}</p>
+          {factura.companyName && <p>🏢 {factura.companyName}</p>}
+          {factura.identification && <p>🪪 {factura.identification}</p>}
           {factura.email && <p>📧 {factura.email}</p>}
           {factura.telefono && <p>📱 {factura.telefono}</p>}
           {factura.direccion && <p>📍 {factura.direccion}</p>}
@@ -144,10 +154,6 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
             <div className="flex justify-between py-2">
               <span>Subtotal:</span>
               <span>${factura.subtotal.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span>ITBIS (18%):</span>
-              <span>${factura.impuestos.toLocaleString()}</span>
             </div>
             <div className="border-t-2 border-gray-300 pt-2">
               <div className="flex justify-between py-2 text-xl font-bold text-red-600">

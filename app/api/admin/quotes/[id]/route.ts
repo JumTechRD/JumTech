@@ -7,6 +7,7 @@ import {
   normalizeAdminQuoteInput,
   serializeAdminQuote,
 } from '@/lib/admin-data'
+import { createInvoiceFromQuote } from '@/lib/admin-invoice-service'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -63,7 +64,27 @@ export async function PUT(request: NextRequest, context: Params) {
       return NextResponse.json({ error: 'Missing required quote fields' }, { status: 400 })
     }
 
+    if (quote.clientId) {
+      const client = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT "id"
+        FROM "Client"
+        WHERE "id" = ${quote.clientId}
+        LIMIT 1
+      `
+      if (client.length === 0) {
+        return NextResponse.json({ error: 'Selected client not found' }, { status: 404 })
+      }
+    }
+
     const updatedQuote = await prisma.$transaction(async (tx) => {
+      const [existingQuote] = await tx.$queryRaw<AdminQuoteRecord[]>`
+        SELECT * FROM "AdminQuote"
+        WHERE "id" = ${id}
+        LIMIT 1
+      `
+
+      if (!existingQuote) return null
+
       const updatedRecords = await tx.$queryRaw<AdminQuoteRecord[]>`
         UPDATE "AdminQuote"
         SET
@@ -71,6 +92,7 @@ export async function PUT(request: NextRequest, context: Params) {
           "cliente" = ${quote.cliente},
           "email" = ${quote.email},
           "telefono" = ${quote.telefono},
+          "clientId" = ${quote.clientId},
           "fecha" = ${quote.fecha},
           "subtotal" = ${quote.subtotal},
           "impuestos" = ${quote.impuestos},
@@ -92,6 +114,34 @@ export async function PUT(request: NextRequest, context: Params) {
         WHERE "adminQuoteId" = ${id}
       `
       await insertAdminQuoteItems(tx, id, quote.productos)
+
+      if (quote.estado === "aprobada") {
+        const [clientRow] =
+          quote.clientId
+            ? await tx.$queryRaw<{ address: string | null }[]>`
+                SELECT "address"
+                FROM "Client"
+                WHERE "id" = ${quote.clientId}
+                LIMIT 1
+              `
+            : []
+
+        await createInvoiceFromQuote(tx, {
+          id: existingQuote.id,
+          numeroFactura: quote.numeroFactura,
+          cliente: quote.cliente,
+          email: quote.email,
+          telefono: quote.telefono,
+          clientId: quote.clientId,
+          direccion: clientRow?.address || "",
+          notas: quote.notas,
+          subtotal: quote.subtotal,
+          total: quote.total,
+          impuestos: quote.impuestos,
+          productos: quote.productos,
+        })
+      }
+
       return getAdminQuote(tx, id)
     })
 

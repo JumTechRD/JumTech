@@ -362,6 +362,9 @@ export default function AdminUsersPage() {
             <Link href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">
               Dashboard
             </Link>
+            <Link href="/admin/clientes" className="text-gray-300 hover:text-white text-sm">
+              Clientes
+            </Link>
             <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white text-sm flex items-center gap-1">
               <FileText className="h-4 w-4" />
               Cotizaciones

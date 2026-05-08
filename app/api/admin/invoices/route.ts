@@ -3,53 +3,59 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/middleware'
 import {
-  InvoiceItemRecord,
-  InvoiceRecord,
+  type InvoiceItemRecord,
   normalizeInvoiceInput,
+  type InvoiceRecord,
   serializeInvoice,
 } from '@/lib/admin-data'
-
-async function getInvoice(db: any, id: string) {
-  const [invoice] = await db.$queryRaw<InvoiceRecord[]>`
-    SELECT * FROM "Invoice"
-    WHERE "id" = ${id}
-    LIMIT 1
-  `
-
-  if (!invoice) return null
-
-  const items = await db.$queryRaw<InvoiceItemRecord[]>`
-    SELECT * FROM "InvoiceItem"
-    WHERE "invoiceId" = ${id}
-    ORDER BY "position" ASC
-  `
-
-  return serializeInvoice(invoice, items)
-}
-
-async function insertInvoiceItems(db: any, invoiceId: string, productos: ReturnType<typeof normalizeInvoiceInput>['productos']) {
-  for (const producto of productos) {
-    await db.$executeRaw`
-      INSERT INTO "InvoiceItem" (
-        "id", "invoiceId", "nombre", "descripcion", "precio", "categoria", "imagen", "cantidad", "position"
-      )
-      VALUES (
-        ${crypto.randomUUID()}, ${invoiceId}, ${producto.nombre}, ${producto.descripcion}, ${producto.precio},
-        ${producto.categoria}, ${producto.imagen}, ${producto.cantidad}, ${producto.position}
-      )
-    `
-  }
-}
+import { getInvoiceById, getInvoiceBySourceQuoteId, insertInvoiceItems } from '@/lib/admin-invoice-service'
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request)
   if (!auth.isAuthorized) return auth.response
 
   try {
-    const invoices = await prisma.$queryRaw<InvoiceRecord[]>`
-      SELECT * FROM "Invoice"
-      ORDER BY "fecha" DESC
-    `
+    const estado = request.nextUrl.searchParams.get('estado')?.trim()
+    const q = request.nextUrl.searchParams.get('q')?.trim()
+    const fechaInicial = request.nextUrl.searchParams.get('fechaInicial')?.trim()
+    const fechaFinal = request.nextUrl.searchParams.get('fechaFinal')?.trim()
+
+    const whereClauses = []
+
+    if (estado && estado !== 'todos') {
+      whereClauses.push(Prisma.sql`"estado" = ${estado}`)
+    }
+
+    if (q) {
+      const like = `%${q}%`
+      whereClauses.push(
+        Prisma.sql`(
+          "cliente" ILIKE ${like}
+          OR "numero" ILIKE ${like}
+          OR "email" ILIKE ${like}
+        )`,
+      )
+    }
+
+    if (fechaInicial) {
+      whereClauses.push(Prisma.sql`"fecha"::date >= ${fechaInicial}`)
+    }
+
+    if (fechaFinal) {
+      whereClauses.push(Prisma.sql`"fecha"::date <= ${fechaFinal}`)
+    }
+
+    const invoices =
+      whereClauses.length > 0
+        ? await prisma.$queryRaw<InvoiceRecord[]>(Prisma.sql`
+            SELECT * FROM "Invoice"
+            WHERE ${Prisma.join(whereClauses, " AND ")}
+            ORDER BY "fecha" DESC
+          `)
+        : await prisma.$queryRaw<InvoiceRecord[]>`
+            SELECT * FROM "Invoice"
+            ORDER BY "fecha" DESC
+          `
 
     const invoiceIds = invoices.map((invoice) => invoice.id)
     const items =
@@ -90,22 +96,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required invoice fields' }, { status: 400 })
     }
 
+    if (invoice.clientId) {
+      const client = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT "id"
+        FROM "Client"
+        WHERE "id" = ${invoice.clientId}
+        LIMIT 1
+      `
+      if (client.length === 0) {
+        return NextResponse.json({ error: 'Selected client not found' }, { status: 404 })
+      }
+    }
+
+    if (invoice.sourceQuoteId) {
+      const existingInvoice = await getInvoiceBySourceQuoteId(prisma, invoice.sourceQuoteId)
+      if (existingInvoice) {
+        return NextResponse.json({ invoice: existingInvoice }, { status: 200 })
+      }
+    }
+
     const createdInvoice = await prisma.$transaction(async (tx) => {
       const [record] = await tx.$queryRaw<InvoiceRecord[]>`
         INSERT INTO "Invoice" (
-          "id", "numero", "cliente", "email", "telefono", "direccion", "fecha", "vencimiento",
-          "subtotal", "impuestos", "total", "estado", "notas", "updatedAt"
+          "id", "numero", "cliente", "email", "telefono", "direccion", "clientId", "sourceQuoteId",
+          "paymentMethod", "fecha", "vencimiento", "subtotal", "impuestos", "total", "estado", "notas", "updatedAt"
         )
         VALUES (
           ${crypto.randomUUID()}, ${invoice.numero}, ${invoice.cliente}, ${invoice.email}, ${invoice.telefono},
-          ${invoice.direccion}, ${invoice.fecha}, ${invoice.vencimiento}, ${invoice.subtotal},
-          ${invoice.impuestos}, ${invoice.total}, ${invoice.estado}, ${invoice.notas}, ${new Date()}
+          ${invoice.direccion}, ${invoice.clientId}, ${invoice.sourceQuoteId}, ${invoice.paymentMethod},
+          ${invoice.fecha}, ${invoice.vencimiento}, ${invoice.subtotal}, ${invoice.impuestos},
+          ${invoice.total}, ${invoice.estado}, ${invoice.notas}, ${new Date()}
         )
         RETURNING *
       `
 
       await insertInvoiceItems(tx, record.id, invoice.productos)
-      return getInvoice(tx, record.id)
+      return getInvoiceById(tx, record.id)
     })
 
     return NextResponse.json({ invoice: createdInvoice }, { status: 201 })
