@@ -121,7 +121,7 @@ export default function ProductosPage() {
               alt="JumTech RD"
               width={180}
               height={54}
-              className="h-10 sm:h-12 w-auto object-contain [mix-blend-mode:screen]"
+              className="h-10 sm:h-12 w-auto object-contain"
               priority
             />
           </div>

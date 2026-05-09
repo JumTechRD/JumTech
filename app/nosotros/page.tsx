@@ -41,7 +41,7 @@ export default function AboutPage() {
               alt="JumTech RD"
               width={200}
               height={60}
-              className="h-10 sm:h-12 w-auto object-contain [mix-blend-mode:screen]"
+              className="h-10 sm:h-12 w-auto object-contain"
               priority
             />
           </div>
