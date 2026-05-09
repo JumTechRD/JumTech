@@ -642,7 +642,7 @@ export default function AdminUsersPage() {
                     <div key={user.id} className="rounded-xl border border-slate-800 bg-slate-950/65 p-4 md:p-5 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <p className="text-slate-100 font-semibold text-base break-all">{user.email}</p>
-                        <Badge className={user.role === "ADMIN" ? "bg-rose-500/15 text-rose-200 border-rose-500/30" : "bg-slate-500/20 text-slate-200 border-slate-500/30"}>
+                        <Badge className={user.role === "ADMIN" ? "bg-red-500/15 text-red-200 border-red-500/30" : "bg-slate-500/20 text-slate-200 border-slate-500/30"}>
                           {user.role}
                         </Badge>
                       </div>

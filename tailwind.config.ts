@@ -13,6 +13,13 @@ const config: Config = {
   theme: {
   	extend: {
   		colors: {
+        brand: {
+          DEFAULT: 'hsl(var(--brand-red))',
+          hover: 'hsl(var(--brand-red-hover))',
+          glow: 'hsl(var(--brand-red-glow))',
+          soft: 'hsl(var(--brand-red-soft))',
+          deep: 'hsl(var(--brand-red-deep))',
+        },
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -62,7 +69,33 @@ const config: Config = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+        red: {
+          50: '#fff1f2',
+          100: '#ffe1e3',
+          200: '#ffc4c8',
+          300: '#ff98a0',
+          400: '#ff6772',
+          500: '#e31d34',
+          600: '#c9152a',
+          700: '#a71222',
+          800: '#820d1b',
+          900: '#640a15',
+          950: '#43060d',
+        },
+        rose: {
+          50: '#fff1f2',
+          100: '#ffe1e3',
+          200: '#ffc4c8',
+          300: '#ff98a0',
+          400: '#ff6772',
+          500: '#e31d34',
+          600: '#c9152a',
+          700: '#a71222',
+          800: '#820d1b',
+          900: '#640a15',
+          950: '#43060d',
+        }
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
