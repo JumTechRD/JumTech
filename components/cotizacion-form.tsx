@@ -160,26 +160,6 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
               </select>
             </div>
 
-            {/* Presupuesto */}
-            <div>
-              <label htmlFor="presupuesto" className="block text-sm font-medium text-gray-300 mb-2">
-                Presupuesto Estimado
-              </label>
-              <select
-                id="presupuesto"
-                name="presupuesto"
-                className="w-full px-4 py-3 bg-slate-800/90 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent [&>option]:bg-slate-800 [&>option]:text-white"
-              >
-                <option value="">Selecciona un rango</option>
-                <option value="menos-1000">Menos de $1,000 USD</option>
-                <option value="1000-5000">$1,000 - $5,000 USD</option>
-                <option value="5000-10000">$5,000 - $10,000 USD</option>
-                <option value="10000-25000">$10,000 - $25,000 USD</option>
-                <option value="mas-25000">Más de $25,000 USD</option>
-                <option value="por-definir">Por definir</option>
-              </select>
-            </div>
-
             {/* Urgencia */}
             <div>
               <label htmlFor="urgencia" className="block text-sm font-medium text-gray-300 mb-2">

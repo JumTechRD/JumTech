@@ -50,6 +50,10 @@ interface Cotizacion {
   email: string
   telefono: string
   clientId?: string | null
+  tipoServicio?: string
+  urgencia?: string
+  descripcionProyecto?: string
+  ubicacionProyecto?: string
   fecha: string
   productos: ProductoEnCotizacion[]
   subtotal: number
@@ -401,6 +405,8 @@ export default function CotizacionesPage() {
                         <h3 className="text-base font-semibold text-white">{cotizacion.cliente}</h3>
                         <p className="text-gray-400 text-xs">{cotizacion.email}</p>
                         {cotizacion.telefono && <p className="text-gray-400 text-xs">{cotizacion.telefono}</p>}
+                        {cotizacion.tipoServicio && <p className="text-blue-300 text-xs mt-1">{cotizacion.tipoServicio}</p>}
+                        {cotizacion.urgencia && <p className="text-amber-300 text-xs">{cotizacion.urgencia}</p>}
                       </div>
                       <div className="flex items-center gap-2 justify-between sm:justify-end">
                         <Badge className={getEstadoColor(cotizacion.estado)}>{cotizacion.estado}</Badge>
@@ -422,6 +428,14 @@ export default function CotizacionesPage() {
                           {cotizacion.monedaPrincipal || "RD$"} {cotizacion.subtotal.toLocaleString()}
                         </strong>
                       </p>
+                      {cotizacion.descripcionProyecto && (
+                        <p className="text-xs text-gray-400 mb-2 break-words">
+                          {cotizacion.descripcionProyecto}
+                        </p>
+                      )}
+                      {cotizacion.ubicacionProyecto && (
+                        <p className="text-xs text-gray-500 mb-2">{cotizacion.ubicacionProyecto}</p>
+                      )}
                       <div className="flex flex-wrap gap-2">
                         {cotizacion.productos.slice(0, 3).map((producto) => (
                           <Badge

@@ -31,6 +31,32 @@ async function getAdminQuote(db: any, id: string) {
   return serializeAdminQuote(quote, items)
 }
 
+function mergeQuoteFields(
+  existingQuote: AdminQuoteRecord,
+  quote: ReturnType<typeof normalizeAdminQuoteInput>,
+) {
+  return {
+    numeroFactura: quote.numeroFactura ?? existingQuote.numeroFactura,
+    cliente: quote.cliente || existingQuote.cliente,
+    email: quote.email || existingQuote.email,
+    telefono: quote.telefono || existingQuote.telefono,
+    clientId: quote.clientId ?? existingQuote.clientId,
+    tipoServicio: quote.tipoServicio ?? existingQuote.tipoServicio,
+    urgencia: quote.urgencia ?? existingQuote.urgencia,
+    descripcionProyecto: quote.descripcionProyecto ?? existingQuote.descripcionProyecto,
+    ubicacionProyecto: quote.ubicacionProyecto ?? existingQuote.ubicacionProyecto,
+    fecha: quote.fecha,
+    subtotal: quote.subtotal,
+    impuestos: quote.impuestos,
+    total: quote.total,
+    estado: quote.estado,
+    notas: quote.notas ?? existingQuote.notas,
+    monedaPrincipal: quote.monedaPrincipal ?? existingQuote.monedaPrincipal,
+    itbisActivo: quote.itbisActivo,
+    porcentajeItbis: quote.porcentajeItbis ?? existingQuote.porcentajeItbis,
+  }
+}
+
 async function insertAdminQuoteItems(
   db: any,
   adminQuoteId: string,
@@ -85,23 +111,29 @@ export async function PUT(request: NextRequest, context: Params) {
 
       if (!existingQuote) return null
 
+      const mergedQuote = mergeQuoteFields(existingQuote, quote)
+
       const updatedRecords = await tx.$queryRaw<AdminQuoteRecord[]>`
         UPDATE "AdminQuote"
         SET
-          "numeroFactura" = ${quote.numeroFactura},
-          "cliente" = ${quote.cliente},
-          "email" = ${quote.email},
-          "telefono" = ${quote.telefono},
-          "clientId" = ${quote.clientId},
-          "fecha" = ${quote.fecha},
-          "subtotal" = ${quote.subtotal},
-          "impuestos" = ${quote.impuestos},
-          "total" = ${quote.total},
-          "estado" = ${quote.estado},
-          "notas" = ${quote.notas},
-          "monedaPrincipal" = ${quote.monedaPrincipal},
-          "itbisActivo" = ${quote.itbisActivo},
-          "porcentajeItbis" = ${quote.porcentajeItbis},
+          "numeroFactura" = ${mergedQuote.numeroFactura},
+          "cliente" = ${mergedQuote.cliente},
+          "email" = ${mergedQuote.email},
+          "telefono" = ${mergedQuote.telefono},
+          "clientId" = ${mergedQuote.clientId},
+          "tipoServicio" = ${mergedQuote.tipoServicio},
+          "urgencia" = ${mergedQuote.urgencia},
+          "descripcionProyecto" = ${mergedQuote.descripcionProyecto},
+          "ubicacionProyecto" = ${mergedQuote.ubicacionProyecto},
+          "fecha" = ${mergedQuote.fecha},
+          "subtotal" = ${mergedQuote.subtotal},
+          "impuestos" = ${mergedQuote.impuestos},
+          "total" = ${mergedQuote.total},
+          "estado" = ${mergedQuote.estado},
+          "notas" = ${mergedQuote.notas},
+          "monedaPrincipal" = ${mergedQuote.monedaPrincipal},
+          "itbisActivo" = ${mergedQuote.itbisActivo},
+          "porcentajeItbis" = ${mergedQuote.porcentajeItbis},
           "updatedAt" = ${new Date()}
         WHERE "id" = ${id}
         RETURNING *
@@ -128,16 +160,16 @@ export async function PUT(request: NextRequest, context: Params) {
 
         await createInvoiceFromQuote(tx, {
           id: existingQuote.id,
-          numeroFactura: quote.numeroFactura,
-          cliente: quote.cliente,
-          email: quote.email,
-          telefono: quote.telefono,
-          clientId: quote.clientId,
+          numeroFactura: mergedQuote.numeroFactura,
+          cliente: mergedQuote.cliente,
+          email: mergedQuote.email,
+          telefono: mergedQuote.telefono,
+          clientId: mergedQuote.clientId,
           direccion: clientRow?.address || "",
-          notas: quote.notas,
-          subtotal: quote.subtotal,
-          total: quote.total,
-          impuestos: quote.impuestos,
+          notas: mergedQuote.notas,
+          subtotal: mergedQuote.subtotal,
+          total: mergedQuote.total,
+          impuestos: mergedQuote.impuestos,
           productos: quote.productos,
         })
       }

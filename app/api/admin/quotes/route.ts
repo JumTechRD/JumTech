@@ -111,13 +111,16 @@ export async function POST(request: NextRequest) {
     const createdQuote = await prisma.$transaction(async (tx) => {
       const [record] = await tx.$queryRaw<AdminQuoteRecord[]>`
         INSERT INTO "AdminQuote" (
-          "id", "numeroFactura", "cliente", "email", "telefono", "clientId", "fecha", "subtotal", "impuestos",
-          "total", "estado", "notas", "monedaPrincipal", "itbisActivo", "porcentajeItbis", "updatedAt"
+          "id", "numeroFactura", "cliente", "email", "telefono", "clientId", "tipoServicio", "urgencia",
+          "descripcionProyecto", "ubicacionProyecto", "fecha", "subtotal", "impuestos", "total", "estado",
+          "notas", "monedaPrincipal", "itbisActivo", "porcentajeItbis", "updatedAt"
         )
         VALUES (
           ${crypto.randomUUID()}, ${quote.numeroFactura}, ${quote.cliente}, ${quote.email}, ${quote.telefono},
-          ${quote.clientId}, ${quote.fecha}, ${quote.subtotal}, ${quote.impuestos}, ${quote.total}, ${quote.estado},
-          ${quote.notas}, ${quote.monedaPrincipal}, ${quote.itbisActivo}, ${quote.porcentajeItbis}, ${new Date()}
+          ${quote.clientId}, ${quote.tipoServicio}, ${quote.urgencia}, ${quote.descripcionProyecto},
+          ${quote.ubicacionProyecto}, ${quote.fecha}, ${quote.subtotal}, ${quote.impuestos}, ${quote.total},
+          ${quote.estado}, ${quote.notas}, ${quote.monedaPrincipal}, ${quote.itbisActivo},
+          ${quote.porcentajeItbis}, ${new Date()}
         )
         RETURNING *
       `

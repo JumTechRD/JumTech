@@ -67,6 +67,10 @@ export interface AdminQuoteRecord {
   email: string
   telefono: string
   clientId: Nullable<string>
+  tipoServicio: Nullable<string>
+  urgencia: Nullable<string>
+  descripcionProyecto: Nullable<string>
+  ubicacionProyecto: Nullable<string>
   generatedInvoice?: Nullable<{
     id: string
     numero: string
@@ -290,6 +294,10 @@ export function normalizeAdminQuoteInput(body: Record<string, unknown>) {
     email: toStringValue(body.email),
     telefono: toStringValue(body.telefono),
     clientId: toOptionalString(body.clientId),
+    tipoServicio: toOptionalString(body.tipoServicio),
+    urgencia: toOptionalString(body.urgencia),
+    descripcionProyecto: toOptionalString(body.descripcionProyecto),
+    ubicacionProyecto: toOptionalString(body.ubicacionProyecto),
     fecha: toDateValue(body.fecha),
     subtotal: toNumberValue(body.subtotal),
     impuestos: toNumberValue(body.impuestos),
@@ -329,6 +337,10 @@ export function serializeAdminQuote(quote: AdminQuoteRecord, items: AdminQuoteIt
     email: quote.email,
     telefono: quote.telefono,
     clientId: quote.clientId || undefined,
+    tipoServicio: quote.tipoServicio || undefined,
+    urgencia: quote.urgencia || undefined,
+    descripcionProyecto: quote.descripcionProyecto || undefined,
+    ubicacionProyecto: quote.ubicacionProyecto || undefined,
     fecha: toIso(quote.fecha),
     productos: items
       .sort((a, b) => a.position - b.position)

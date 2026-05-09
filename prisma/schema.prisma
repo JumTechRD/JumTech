@@ -163,6 +163,10 @@ model AdminQuote {
   email             String
   telefono          String
   clientId          String?
+  tipoServicio      String?
+  urgencia          String?
+  descripcionProyecto String?
+  ubicacionProyecto String?
   fecha             DateTime
   subtotal          Float
   impuestos         Float
