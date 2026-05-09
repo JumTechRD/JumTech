@@ -3,6 +3,34 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/middleware'
 import { normalizeProductInput, ProductRecord, serializeProduct } from '@/lib/admin-data'
 
+function buildProductData(product: ReturnType<typeof normalizeProductInput>) {
+  return {
+    nombre: product.nombre,
+    descripcion: product.descripcion,
+    precio: product.precio,
+    categoria: product.categoria,
+    imagen: product.imagen ?? undefined,
+    stock: product.stock,
+    rating: product.rating,
+    especificaciones: product.especificaciones,
+    activo: product.activo,
+    fechaCreacion: product.fechaCreacion,
+    precioCompra: product.precioCompra ?? undefined,
+    margenGanancia: product.margenGanancia ?? undefined,
+    proveedor: product.proveedor ?? undefined,
+    codigoBarras: product.codigoBarras ?? undefined,
+    sku: product.sku ?? undefined,
+    peso: product.peso ?? undefined,
+    dimensiones: product.dimensiones ?? undefined,
+    garantia: product.garantia ?? undefined,
+    ubicacion: product.ubicacion ?? undefined,
+    stockMinimo: product.stockMinimo ?? undefined,
+    stockMaximo: product.stockMaximo ?? undefined,
+    vendido: product.vendido,
+    ultimaVenta: product.ultimaVenta ?? undefined,
+  }
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request)
   if (!auth.isAuthorized) return auth.response
@@ -24,36 +52,23 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdmin(request)
   if (!auth.isAuthorized) return auth.response
 
+  let productData: ReturnType<typeof normalizeProductInput> | null = null
+
   try {
     const body = (await request.json()) as Record<string, unknown>
-    const product = normalizeProductInput(body)
+    productData = normalizeProductInput(body)
 
-    if (!product.nombre || !product.descripcion || !product.categoria) {
+    if (!productData.nombre || !productData.descripcion || !productData.categoria) {
       return NextResponse.json({ error: 'Missing required product fields' }, { status: 400 })
     }
 
-    const now = new Date()
-    const [createdProduct] = await prisma.$queryRaw<ProductRecord[]>`
-      INSERT INTO "Product" (
-        "id", "nombre", "descripcion", "precio", "categoria", "imagen", "stock", "rating",
-        "especificaciones", "activo", "fechaCreacion", "fechaActualizacion", "precioCompra",
-        "margenGanancia", "proveedor", "codigoBarras", "sku", "peso", "dimensiones",
-        "garantia", "ubicacion", "stockMinimo", "stockMaximo", "vendido", "ultimaVenta"
-      )
-      VALUES (
-        ${crypto.randomUUID()}, ${product.nombre}, ${product.descripcion}, ${product.precio}, ${product.categoria},
-        ${product.imagen}, ${product.stock}, ${product.rating}, ${product.especificaciones}, ${product.activo},
-        ${product.fechaCreacion}, ${now}, ${product.precioCompra}, ${product.margenGanancia},
-        ${product.proveedor}, ${product.codigoBarras}, ${product.sku}, ${product.peso},
-        ${product.dimensiones ? JSON.stringify(product.dimensiones) : null}::jsonb, ${product.garantia},
-        ${product.ubicacion}, ${product.stockMinimo}, ${product.stockMaximo}, ${product.vendido}, ${product.ultimaVenta}
-      )
-      RETURNING *
-    `
+    const createdProduct = await prisma.product.create({
+      data: buildProductData(productData),
+    })
 
-    return NextResponse.json({ product: serializeProduct(createdProduct) }, { status: 201 })
+    return NextResponse.json({ product: serializeProduct(createdProduct as ProductRecord) }, { status: 201 })
   } catch (error) {
-    console.error('Error creating product:', error)
+    console.error('Error creating product:', { error, product: productData })
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
   }
 }

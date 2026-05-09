@@ -676,12 +676,13 @@ async function postAdminData(url, payload) {
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data.error || `Error cargando ${url}`);
+    throw new Error(data.error || `Error cargando ${url} (${response.status})`);
   }
 
   return response.json();
