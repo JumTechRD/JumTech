@@ -341,7 +341,13 @@ export default function ReportesPage() {
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Image src="/images/logo-nuevo.jpeg" alt="JumTech RD" width={36} height={36} className="rounded-lg" />
+            <Image
+              src="/images/logo-nuevo-transparente.png"
+              alt="JumTech RD"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
             <div>
               <span className="text-base font-bold text-white">JumTech RD</span>
               <Badge className="ml-2 bg-green-600/20 text-green-400 border-green-600/30 text-xs hidden sm:inline-flex">Reportes</Badge>

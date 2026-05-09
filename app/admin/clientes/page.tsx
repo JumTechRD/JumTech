@@ -189,7 +189,13 @@ export default function ClientesPage() {
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Image src="/images/logo-nuevo.jpeg" alt="JumTech RD Logo" width={36} height={36} className="rounded-lg" />
+            <Image
+              src="/images/logo-nuevo-transparente.png"
+              alt="JumTech RD Logo"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
             <div>
               <span className="text-base font-bold text-white">JumTech RD</span>
               <Badge className="ml-2 bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs hidden sm:inline-flex">

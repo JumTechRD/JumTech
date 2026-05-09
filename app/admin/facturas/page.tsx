@@ -249,7 +249,7 @@ export default function AdminFacturasPage() {
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Image
-              src="/images/logo-nuevo.jpeg"
+              src="/images/logo-nuevo-transparente.png"
               alt="JumTech RD Logo"
               width={36}
               height={36}

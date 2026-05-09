@@ -60,11 +60,11 @@ export default function AdminLoginPage() {
           <CardHeader className="text-center">
             <div className="mb-6">
               <Image
-                src="/images/logo-nuevo.jpeg"
+                src="/images/logo-nuevo-transparente.png"
                 alt="JumTech RD Logo"
                 width={80}
                 height={80}
-                className="mx-auto rounded-xl bg-white/5 backdrop-blur-sm p-3"
+                className="mx-auto rounded-xl bg-white/5 backdrop-blur-sm p-2"
               />
             </div>
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">Administración</Badge>

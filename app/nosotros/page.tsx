@@ -37,7 +37,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center">
             <Image
-              src="/images/jum-negro.jpeg"
+              src="/images/logo-nuevo-transparente.png"
               alt="JumTech RD"
               width={200}
               height={60}

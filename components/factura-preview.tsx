@@ -64,8 +64,14 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
       <CardHeader className="bg-red-600 text-white p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-              <Image src="/images/jumtech-logo-new.png" alt="JumTech RD" width={40} height={40} className="rounded" />
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+              <Image
+                src="/images/logo-nuevo-transparente.png"
+                alt="JumTech RD"
+                width={40}
+                height={40}
+                className="rounded object-contain"
+              />
             </div>
             <div>
               <h1 className="text-2xl font-bold">JumTech RD</h1>

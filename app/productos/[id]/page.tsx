@@ -151,11 +151,11 @@ export default function ProductoDetailPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Image
-              src="/images/jum-negro.jpeg"
+              src="/images/logo-nuevo-transparente.png"
               alt="JumTech RD Logo"
               width={180}
               height={54}
-              className="h-10 sm:h-12 w-auto object-contain [mix-blend-mode:screen]"
+              className="h-10 sm:h-12 w-auto object-contain"
             />
           </div>
           

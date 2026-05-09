@@ -40,7 +40,7 @@ export const metadata: Metadata = {
       'Expertos en tecnología en República Dominicana. Cámaras, redes, mantenimiento, desarrollo de software y más.',
     images: [
       {
-        url: '/images/jumtech-logo-oficial.png',
+        url: '/images/logo-nuevo-transparente.png',
         width: 800,
         height: 600,
         alt: 'JumTech RD Logo',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     title: 'JumTech RD — Soluciones Tecnológicas Integrales',
     description:
       'Expertos en tecnología en República Dominicana. Cámaras, redes, mantenimiento, desarrollo de software y más.',
-    images: ['/images/jumtech-logo-oficial.png'],
+    images: ['/images/logo-nuevo-transparente.png'],
   },
   robots: {
     index: true,

@@ -79,7 +79,7 @@ export async function generateFinancialPdf(data: PdfDocumentData) {
   doc.roundedRect(margin, 6, 40, 24, 2, 2, "F")
 
   try {
-    const logoDataUrl = await loadImageAsDataUrl("/logopdf.png")
+    const logoDataUrl = await loadImageAsDataUrl("/images/logo-nuevo-transparente.png")
     doc.addImage(logoDataUrl, "PNG", margin + 1.5, 7.5, 37, 21.5, undefined, "FAST")
   } catch (error) {
     doc.setTextColor(35, 35, 35)

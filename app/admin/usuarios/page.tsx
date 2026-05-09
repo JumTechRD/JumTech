@@ -345,7 +345,13 @@ export default function AdminUsersPage() {
       <nav className="fixed top-0 w-full bg-[#080d17]/85 backdrop-blur-xl border-b border-slate-800/70 z-50">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Image src="/images/logo-nuevo.jpeg" alt="JumTech RD Logo" width={36} height={36} className="rounded-lg" />
+            <Image
+              src="/images/logo-nuevo-transparente.png"
+              alt="JumTech RD Logo"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
             <div>
               <span className="text-base font-semibold text-white tracking-tight">JumTech RD</span>
               <Badge className="ml-2 bg-indigo-500/15 text-indigo-300 border-indigo-500/30 text-xs hidden sm:inline-flex">
