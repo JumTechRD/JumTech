@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/middleware'
 import { normalizeProductInput, ProductRecord, serializeProduct } from '@/lib/admin-data'
 
-function buildProductData(product: ReturnType<typeof normalizeProductInput>) {
+type NormalizedProductInput = ReturnType<typeof normalizeProductInput>
+
+function buildProductData(product: NormalizedProductInput): Prisma.ProductCreateInput {
   return {
     nombre: product.nombre,
     descripcion: product.descripcion,
@@ -31,6 +34,30 @@ function buildProductData(product: ReturnType<typeof normalizeProductInput>) {
   }
 }
 
+function logCreateProductError(error: unknown, productData: NormalizedProductInput | null) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    console.error('Error creating product: prisma-known-request-error', {
+      code: error.code,
+      meta: error.meta,
+      productData,
+    })
+    return
+  }
+
+  if (error instanceof Prisma.PrismaClientValidationError) {
+    console.error('Error creating product: prisma-validation-error', {
+      message: error.message,
+      productData,
+    })
+    return
+  }
+
+  console.error('Error creating product: unknown-error', {
+    error,
+    productData,
+  })
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request)
   if (!auth.isAuthorized) return auth.response
@@ -52,7 +79,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdmin(request)
   if (!auth.isAuthorized) return auth.response
 
-  let productData: ReturnType<typeof normalizeProductInput> | null = null
+  let productData: NormalizedProductInput | null = null
 
   try {
     const body = (await request.json()) as Record<string, unknown>
@@ -68,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ product: serializeProduct(createdProduct as ProductRecord) }, { status: 201 })
   } catch (error) {
-    console.error('Error creating product:', { error, product: productData })
+    logCreateProductError(error, productData)
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
   }
 }
