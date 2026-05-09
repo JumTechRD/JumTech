@@ -236,7 +236,7 @@ export default function AdminFacturasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl"></div>
@@ -262,7 +262,7 @@ export default function AdminFacturasPage() {
           </div>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <Home className="h-4 w-4" />Ver Sitio
             </Link>
@@ -296,7 +296,7 @@ export default function AdminFacturasPage() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="lg:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
           >
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -304,7 +304,7 @@ export default function AdminFacturasPage() {
         
         {/* Mobile Navigation Menu */}
         <div
-          className={`md:hidden transition-all duration-300 ease-in-out ${
+          className={`lg:hidden transition-all duration-300 ease-in-out ${
             isMobileMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
           }`}
         >
@@ -375,7 +375,7 @@ export default function AdminFacturasPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="pt-20 pb-16 px-4 relative z-10">
+      <div className="pt-20 pb-24 lg:pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           {/* Header */}
           <div className="text-center mb-6 pt-4">
@@ -437,7 +437,7 @@ export default function AdminFacturasPage() {
 
           {/* Filters and Search */}
           <div className="flex flex-col gap-3 mb-5">
-            <div className="flex gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
@@ -452,7 +452,7 @@ export default function AdminFacturasPage() {
                 value={filtroEstado}
                 onChange={(e) => setFiltroEstado(e.target.value)}
                 aria-label="Filtrar facturas por estado"
-                className="px-3 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white text-sm min-w-0 [&>option]:bg-slate-800 [&>option]:text-white"
+                className="w-full px-3 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white text-sm min-w-0 [&>option]:bg-slate-800 [&>option]:text-white"
               >
                 <option value="todos">Todos</option>
                 <option value="pendiente">Pendiente</option>
@@ -529,23 +529,23 @@ export default function AdminFacturasPage() {
                   className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-300"
                 >
                   <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center space-x-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 items-center space-x-4">
                         <div className="p-3 bg-purple-600/20 rounded-lg">
                           <Receipt className="h-6 w-6 text-purple-400" />
                         </div>
-                        <div>
-                          <CardTitle className="text-white flex items-center">Factura #{factura.numero}</CardTitle>
+                        <div className="min-w-0">
+                          <CardTitle className="flex items-center break-words text-white">Factura #{factura.numero}</CardTitle>
                           <p className="text-gray-400 mt-1 flex items-center">
                             <User className="h-4 w-4 mr-1" />
                             {factura.cliente}
                           </p>
-                          <p className="text-gray-500 text-sm">{factura.email}</p>
+                          <p className="break-all text-gray-500 text-sm">{factura.email}</p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <Badge className={getEstadoColor(factura.estado)}>{factura.estado}</Badge>
-                        <p className="text-2xl font-bold text-purple-400 mt-2">${factura.total.toLocaleString()}</p>
+                        <p className="text-xl sm:text-2xl font-bold text-purple-400 mt-2">${factura.total.toLocaleString()}</p>
                       </div>
                     </div>
                   </CardHeader>
@@ -568,12 +568,12 @@ export default function AdminFacturasPage() {
                           Pago: {factura.paymentMethod === "efectivo" ? "Efectivo" : "Transferencia"}
                         </div>
                       </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handlePreviewFactura(factura)}
-                        className="border-sky-600 text-sky-400 hover:bg-sky-600/10"
+                        className="flex-1 border-sky-600 text-sky-400 hover:bg-sky-600/10 sm:flex-none"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Vista Previa
@@ -582,14 +582,14 @@ export default function AdminFacturasPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditFactura(factura)}
-                        className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
+                        className="flex-1 border-emerald-600 text-emerald-400 hover:bg-emerald-600/10 sm:flex-none"
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Editar
                       </Button>
                       <Button
                         size="sm"
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 sm:flex-none"
                         onClick={() => handleGenerarPdfFactura(factura)}
                       >
                         <Download className="h-4 w-4 mr-2" />
@@ -599,7 +599,7 @@ export default function AdminFacturasPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteFactura(factura.id)}
-                        className="border-red-600 text-red-400 hover:bg-red-600/10"
+                        className="flex-1 border-red-600 text-red-400 hover:bg-red-600/10 sm:flex-none"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Eliminar
@@ -629,8 +629,8 @@ export default function AdminFacturasPage() {
 
       {/* Preview Modal */}
       {showPreview && previewFactura && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="relative max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto p-2 sm:items-center sm:p-4">
+          <div className="relative max-w-5xl w-full max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[90vh]">
             <Button
               onClick={() => setShowPreview(false)}
               className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700"
@@ -638,7 +638,9 @@ export default function AdminFacturasPage() {
             >
               <X className="h-4 w-4" />
             </Button>
-            <FacturaPreview factura={previewFactura} />
+            <div className="overflow-x-auto">
+              <FacturaPreview factura={previewFactura} />
+            </div>
           </div>
         </div>
       )}

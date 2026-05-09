@@ -346,7 +346,7 @@ export default function HomePage() {
   }, [isMobileMenuOpen])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden">
       {/* Enhanced Background blur effects with red gradients */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Large red gradient blurs */}
@@ -499,12 +499,12 @@ export default function HomePage() {
               <Logo size="xl" className="justify-center" />
             </div>
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight">
             <span className="bg-gradient-to-r from-red-400 via-red-500 to-red-300 bg-clip-text text-transparent">
               Soluciones tecnológicas que conectan
             </span>
           </h1>
-          <p className="text-xl mb-8 max-w-3xl mx-auto leading-relaxed backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10">
+          <p className="text-base sm:text-xl mb-8 max-w-3xl mx-auto leading-relaxed backdrop-blur-sm bg-white/5 rounded-2xl p-4 sm:p-6 border border-white/10">
             <span className="text-red-400 font-semibold">Protegen</span>{" "}
             <span className="text-gray-300">
               y transforman tu mundo digital, con la confianza y calidad que nos distingue en
@@ -515,7 +515,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              className="bg-red-600 hover:bg-red-700 text-lg px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
+              className="w-full bg-red-600 hover:bg-red-700 text-base sm:w-auto sm:text-lg sm:px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
               asChild
             >
               <Link href="/servicios">
@@ -525,7 +525,7 @@ export default function HomePage() {
             </Button>
             <Button
               size="lg"
-              className="bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300 text-lg px-8 py-3"
+              className="w-full bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300 text-base sm:w-auto sm:text-lg sm:px-8 py-3"
               asChild
             >
               <Link href="/productos">
@@ -544,8 +544,8 @@ export default function HomePage() {
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30 backdrop-blur-sm">
               Nuestros Servicios
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Servicios Especializados</h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">Servicios Especializados</h2>
+            <p className="text-base sm:text-xl text-gray-300 max-w-2xl mx-auto mb-8">
               Ofrecemos soluciones tecnológicas integrales para impulsar tu negocio
             </p>
           </div>
@@ -555,7 +555,7 @@ export default function HomePage() {
           <div className="text-center mt-12">
             <Button
               size="lg"
-              className="bg-red-600 hover:bg-red-700 text-lg px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
+              className="w-full bg-red-600 hover:bg-red-700 text-base sm:w-auto sm:text-lg sm:px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
               asChild
             >
               <Link href="/servicios">
@@ -572,13 +572,13 @@ export default function HomePage() {
         <div className="container mx-auto">
           <div className="text-center lg:text-left">
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30 backdrop-blur-sm">Sobre Nosotros</Badge>
-            <h2 className="text-4xl font-bold text-white mb-6">Expertos en Tecnología</h2>
-            <p className="text-lg text-gray-300 mb-6 leading-relaxed max-w-3xl mx-auto lg:mx-0">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">Expertos en Tecnología</h2>
+            <p className="text-base sm:text-lg text-gray-300 mb-6 leading-relaxed max-w-3xl mx-auto lg:mx-0">
               En JumTechRD somos especialistas en soluciones tecnológicas integrales diseñadas para impulsar la
               eficiencia de tu empresa y mejorar la conectividad en el hogar. Nuestro compromiso es ofrecer servicios
               confiables, innovadores y adaptados a las necesidades actuales del mercado dominicano.
             </p>
-            <p className="text-lg text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto lg:mx-0">
               Nuestro equipo de profesionales altamente capacitados se dedica a ofrecer servicios de calidad,
               garantizando la satisfacción total de nuestros clientes y el éxito de sus proyectos tecnológicos.
             </p>
@@ -597,8 +597,8 @@ export default function HomePage() {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30 backdrop-blur-sm">Contáctanos</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Estamos listos para ayudarte</h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">Estamos listos para ayudarte</h2>
+            <p className="text-base sm:text-xl text-gray-300 max-w-2xl mx-auto">
               Contáctanos hoy mismo y descubre cómo podemos transformar tu negocio con nuestras soluciones tecnológicas
             </p>
           </div>
@@ -615,9 +615,9 @@ export default function HomePage() {
                 <CardTitle className="text-white">Correo Electrónico</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300 mb-4">jumtechRD@gmail.com</p>
+                <p className="text-gray-300 mb-4 break-all">jumtechRD@gmail.com</p>
                 <Button
-                  className="bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300"
+                  className="w-full bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300 sm:w-auto"
                   asChild
                 >
                   <a href="mailto:jumtechRD@gmail.com">Enviar Email</a>
@@ -638,7 +638,7 @@ export default function HomePage() {
               <CardContent>
                 <p className="text-gray-300 mb-4">+1 (809) 984-8283</p>
                 <Button
-                  className="bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300"
+                  className="w-full bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300 sm:w-auto"
                   asChild
                 >
                   <a href="https://wa.me/18099848283" target="_blank" rel="noopener noreferrer">
@@ -661,7 +661,7 @@ export default function HomePage() {
               <CardContent>
                 <p className="text-gray-300 mb-4">@jumtechrd</p>
                 <Button
-                  className="bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300"
+                  className="w-full bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300 sm:w-auto"
                   asChild
                 >
                   <a
@@ -681,7 +681,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="py-12 px-4 bg-black/30 backdrop-blur-sm border-t border-gray-700/50 relative z-10">
         <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <Logo size="lg" />
             <p className="text-gray-400 text-center md:text-right">
               © 2024 JumTech RD. Todos los derechos reservados.

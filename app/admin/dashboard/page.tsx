@@ -194,7 +194,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -219,7 +219,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <Home className="h-4 w-4" />Ver Sitio
             </Link>
@@ -246,7 +246,7 @@ export default function AdminDashboardPage() {
             </Button>
           </div>
           {/* Mobile logout */}
-          <div className="flex md:hidden">
+          <div className="flex lg:hidden">
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
               <LogOut className="h-5 w-5" />
             </Button>
@@ -255,21 +255,21 @@ export default function AdminDashboardPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="pt-24 pb-24 md:pb-16 px-4 relative z-10">
+      <div className="pt-24 pb-24 lg:pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">Panel de Administración</Badge>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Dashboard Principal</h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Dashboard Principal</h1>
+            <p className="text-base sm:text-xl text-gray-300 max-w-2xl mx-auto">
               Gestiona productos, cotizaciones, facturas y el inventario de tu tienda
             </p>
           </div>
 
           {/* Quick Actions — 2 cols mobile, 4 cols desktop */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-red-500/50 transition-all cursor-pointer">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 text-center sm:p-6">
                 <Link href="/admin/productos" className="block">
                   <div className="p-4 bg-red-600/20 rounded-full w-fit mx-auto mb-4">
                     <Package className="h-8 w-8 text-red-400" />
@@ -281,7 +281,7 @@ export default function AdminDashboardPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-blue-500/50 transition-all cursor-pointer">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 text-center sm:p-6">
                 <Link href="/admin/cotizaciones">
                   <div className="p-4 bg-blue-600/20 rounded-full w-fit mx-auto mb-4">
                     <FileText className="h-8 w-8 text-blue-400" />
@@ -293,7 +293,7 @@ export default function AdminDashboardPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all cursor-pointer">
-              <CardContent className="p-6 text-center" onClick={() => setShowFacturaCreator(true)}>
+              <CardContent className="p-4 text-center sm:p-6" onClick={() => setShowFacturaCreator(true)}>
                 <div className="p-4 bg-purple-600/20 rounded-full w-fit mx-auto mb-4">
                   <Receipt className="h-8 w-8 text-purple-400" />
                 </div>
@@ -303,7 +303,7 @@ export default function AdminDashboardPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-green-500/50 transition-all cursor-pointer">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 text-center sm:p-6">
                 <Link href="/admin/reportes" className="block">
                   <div className="p-4 bg-green-600/20 rounded-full w-fit mx-auto mb-4">
                     <BarChart3 className="h-8 w-8 text-green-400" />
@@ -316,7 +316,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
@@ -339,7 +339,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">Total Facturado</p>
-                    <p className="text-2xl font-bold text-white">${getTotalFacturado().toLocaleString()}</p>
+                    <p className="break-words text-xl sm:text-2xl font-bold text-white">${getTotalFacturado().toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -392,8 +392,8 @@ export default function AdminDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Facturas Recientes */}
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Facturas Recientes</h2>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Facturas Recientes</h2>
                 <Button
                   onClick={() => setShowFacturaCreator(true)}
                   className="bg-purple-600 hover:bg-purple-700"
@@ -411,17 +411,17 @@ export default function AdminDashboardPage() {
                     className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-300"
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center space-x-3">
                           <div className="p-2 bg-purple-600/20 rounded-lg">
                             <Receipt className="h-5 w-5 text-purple-400" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h3 className="text-white font-semibold">#{factura.numero}</h3>
-                            <p className="text-gray-400 text-sm">{factura.cliente}</p>
+                            <p className="text-gray-400 text-sm break-words">{factura.cliente}</p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <Badge className={getEstadoColor(factura.estado)}>{factura.estado}</Badge>
                           <p className="text-green-400 font-semibold">${factura.total.toLocaleString()}</p>
                         </div>
@@ -442,8 +442,8 @@ export default function AdminDashboardPage() {
 
             {/* Cotizaciones Recientes */}
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Cotizaciones Recientes</h2>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Cotizaciones Recientes</h2>
                 <Button asChild className="bg-blue-600 hover:bg-blue-700" size="sm">
                   <Link href="/admin/cotizaciones">
                     <Plus className="h-4 w-4 mr-2" />
@@ -459,19 +459,19 @@ export default function AdminDashboardPage() {
                     className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-blue-500/50 transition-all duration-300"
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center space-x-3">
                           <div className="p-2 bg-blue-600/20 rounded-lg">
                             <FileText className="h-5 w-5 text-blue-400" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h3 className="text-white font-semibold">
                               {cotizacion.numeroFactura || `COT-${cotizacion.id.slice(-4)}`}
                             </h3>
-                            <p className="text-gray-400 text-sm">{cotizacion.cliente}</p>
+                            <p className="text-gray-400 text-sm break-words">{cotizacion.cliente}</p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <Badge className={getEstadoColor(cotizacion.estado)}>{cotizacion.estado}</Badge>
                           <p className="text-blue-400 font-semibold">${cotizacion.total.toLocaleString()}</p>
                         </div>
@@ -527,28 +527,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/90 border-t border-gray-800/50 flex justify-around py-2 z-50">
-        <Link href="/admin/dashboard" className="flex flex-col items-center text-red-400 text-xs gap-1">
-          <Home className="h-5 w-5" /><span>Inicio</span>
-        </Link>
-        <Link href="/admin/productos" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <Package className="h-5 w-5" /><span>Productos</span>
-        </Link>
-        <Link href="/admin/cotizaciones" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <FileText className="h-5 w-5" /><span>Cotizaciones</span>
-        </Link>
-        <Link href="/admin/facturas" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <Receipt className="h-5 w-5" /><span>Facturas</span>
-        </Link>
-        <Link href="/admin/reportes" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <BarChart3 className="h-5 w-5" /><span>Reportes</span>
-        </Link>
-        <Link href="/admin/usuarios" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <Users className="h-5 w-5" /><span>Usuarios</span>
-        </Link>
       </div>
 
       {/* Factura Creator Modal */}

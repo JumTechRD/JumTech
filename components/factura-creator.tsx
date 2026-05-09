@@ -292,8 +292,8 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-5xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+      <Card className="w-full max-w-5xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[90vh]">
         <CardHeader className="relative">
           <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors">
             <X className="h-6 w-6" />
@@ -302,19 +302,19 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
             <Badge className="mb-4 bg-purple-600/20 text-purple-400 border-purple-600/30">
               {editingFactura ? "Editar Factura" : "Nueva Factura"}
             </Badge>
-            <CardTitle className="text-2xl md:text-3xl font-bold text-white mb-2">Crear Factura</CardTitle>
+            <CardTitle className="text-xl md:text-3xl font-bold text-white mb-2">Crear Factura</CardTitle>
             <p className="text-gray-300">Completa los datos y genera una factura con PDF</p>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-6">
           {/* Información de Factura */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <FileText className="h-5 w-5 mr-2 text-purple-400" />
               Información de Factura
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Número de Factura</label>
                 <input
@@ -372,7 +372,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
           </div>
 
           {/* Información del Cliente */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <User className="h-5 w-5 mr-2 text-purple-400" />
               Información del Cliente
@@ -451,8 +451,8 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
           </div>
 
           {/* Productos */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="text-lg font-semibold text-white flex items-center">
                 <Package className="h-5 w-5 mr-2 text-purple-400" />
                 Productos y Servicios
@@ -480,17 +480,17 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                 {productosSeleccionados.map((producto) => (
                   <div
                     key={producto.id}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-gray-700/30"
+                    className="flex flex-col gap-4 p-4 bg-white/5 rounded-lg border border-gray-700/30 lg:flex-row lg:items-center lg:justify-between"
                   >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-white">{producto.nombre}</h4>
-                      <p className="text-sm text-gray-400">{producto.descripcion}</p>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
+                      <p className="break-words text-sm text-gray-400">{producto.descripcion}</p>
                       <Badge className="mt-1 bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">
                         {producto.categoria}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:items-center lg:space-x-4">
+                      <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
                           className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
@@ -505,7 +505,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                           +
                         </button>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="text-white font-medium">
                           ${(producto.precio * producto.cantidad).toLocaleString()}
                         </p>
@@ -525,7 +525,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
           </div>
 
           {/* Notas */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4">Notas y Términos</h3>
             <textarea
               value={notas}
@@ -538,7 +538,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
 
           {/* Resumen */}
           {productosSeleccionados.length > 0 && (
-            <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+            <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <Calculator className="h-5 w-5 mr-2 text-purple-400" />
                 Resumen de Factura
@@ -605,8 +605,8 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
 
       {/* Modal de Productos */}
       {showProductos && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+          <Card className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[80vh]">
             <CardHeader className="relative">
               <button
                 onClick={() => setShowProductos(false)}
@@ -627,14 +627,14 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                       onClick={() => agregarProducto(producto)}
                     >
                       <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium text-white">{producto.nombre}</h4>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-2">
+                          <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
                           <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">
                             {producto.categoria}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-400 mb-3">{producto.descripcion}</p>
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <span className="text-lg font-bold text-purple-400">
                               ${producto.precio.toLocaleString()}

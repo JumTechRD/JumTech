@@ -179,7 +179,7 @@ export default function ClientesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl"></div>
         <div className="absolute top-1/3 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -198,7 +198,7 @@ export default function ClientesPage() {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <Home className="h-4 w-4" />
               Ver Sitio
@@ -234,7 +234,7 @@ export default function ClientesPage() {
         </div>
       </nav>
 
-      <div className="pt-20 pb-16 px-4 relative z-10">
+      <div className="pt-20 pb-24 lg:pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           <div className="text-center mb-6 pt-4">
             <Badge className="mb-3 bg-blue-600/20 text-blue-400 border-blue-600/30">Gestión de Clientes</Badge>
@@ -254,7 +254,7 @@ export default function ClientesPage() {
           </div>
 
           <div className="flex flex-col gap-3 mb-5">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -264,7 +264,7 @@ export default function ClientesPage() {
                   className="pl-10 bg-white/5 border-gray-600 text-white placeholder-gray-400 text-sm"
                 />
               </div>
-              <Button onClick={handleNewClient} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={handleNewClient} className="bg-blue-600 hover:bg-blue-700 text-white sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo
               </Button>
@@ -284,7 +284,7 @@ export default function ClientesPage() {
                 ) : (
                   filteredClients.map((client) => (
                     <div key={client.id} className="rounded-lg border border-gray-700/40 bg-white/5 p-4">
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <p className="font-semibold text-white">{client.name}</p>
                           <p className="text-sm text-gray-300 break-all">{client.email}</p>
@@ -292,7 +292,7 @@ export default function ClientesPage() {
                           {client.companyName && <p className="text-xs text-gray-500">{client.companyName}</p>}
                           {client.identification && <p className="text-xs text-gray-500">ID: {client.identification}</p>}
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
                           <Button
                             type="button"
                             variant="outline"
@@ -391,7 +391,7 @@ export default function ClientesPage() {
                     placeholder="Notas internas"
                   />
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <Button
                     type="button"
                     onClick={handleSaveClient}

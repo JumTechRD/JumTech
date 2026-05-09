@@ -23,7 +23,7 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden">
       {/* Background blur effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -138,7 +138,7 @@ export default function AboutPage() {
       <section className="pt-24 pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           <div className="flex items-center mb-8">
-            <Button variant="ghost" className="text-gray-300 hover:text-white mr-4" asChild>
+            <Button variant="ghost" className="max-w-full text-gray-300 hover:text-white" asChild>
               <Link href="/">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Volver al Inicio
@@ -153,13 +153,13 @@ export default function AboutPage() {
                 <Logo size="xl" className="justify-center" />
               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
               Sobre
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-red-600 to-red-700">
                 JumTech RD
               </span>
             </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10">
+            <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed backdrop-blur-sm bg-white/5 rounded-2xl p-4 sm:p-6 border border-white/10">
               Conoce más sobre nuestra empresa, nuestra misión, visión y los valores que nos guían en cada proyecto
               tecnológico.
             </p>
@@ -174,15 +174,15 @@ export default function AboutPage() {
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30 backdrop-blur-sm">
               Nuestra Historia
             </Badge>
-            <h2 className="text-4xl font-bold text-white mb-6">Expertos en Tecnología</h2>
-            <p className="text-lg text-gray-300 mb-6 leading-relaxed max-w-4xl mx-auto lg:mx-0">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">Expertos en Tecnología</h2>
+            <p className="text-base sm:text-lg text-gray-300 mb-6 leading-relaxed max-w-4xl mx-auto lg:mx-0">
             En JumTechRD somos especialistas en soluciones tecnológicas integrales diseñadas para impulsar la eficiencia de tu empresa y mejorar la conectividad en el hogar. Nuestro compromiso es ofrecer servicios confiables, innovadores y adaptados a las necesidades actuales del mercado dominicano.
             </p>
-            <p className="text-lg text-gray-300 mb-8 leading-relaxed max-w-4xl mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed max-w-4xl mx-auto lg:mx-0">
               Nuestro equipo de profesionales altamente capacitados se dedica a ofrecer servicios de calidad,
               garantizando la satisfacción total de nuestros clientes y el éxito de sus proyectos tecnológicos.
             </p>
-            <p className="text-lg text-gray-300 mb-8 leading-relaxed max-w-4xl mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed max-w-4xl mx-auto lg:mx-0">
               Desde nuestros inicios, hemos trabajado incansablemente para mantenernos a la vanguardia de las
               tecnologías emergentes, ofreciendo soluciones innovadoras que se adaptan a las necesidades específicas de
               cada cliente.
@@ -198,8 +198,8 @@ export default function AboutPage() {
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30 backdrop-blur-sm">
               Nuestros Pilares
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Misión, Visión y Valores</h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">Misión, Visión y Valores</h2>
+            <p className="text-base sm:text-xl text-gray-300 max-w-2xl mx-auto">
               Los principios fundamentales que guían nuestro trabajo y definen quiénes somos
             </p>
           </div>
@@ -262,9 +262,9 @@ export default function AboutPage() {
           </div>
 
           {/* Detailed Values Section */}
-          <div className="bg-white/5 backdrop-blur-sm border-gray-700/50 rounded-2xl p-8">
+          <div className="bg-white/5 backdrop-blur-sm border-gray-700/50 rounded-2xl p-4 sm:p-8">
             <div className="text-center mb-8">
-              <h3 className="text-3xl font-bold text-white mb-4"> Nuestros Valores </h3>
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4"> Nuestros Valores </h3>
               <p className="text-gray-300">Los principios que nos definen y nos impulsan hacia la excelencia</p>
             </div>
 
@@ -336,14 +336,14 @@ export default function AboutPage() {
       {/* Call to Action */}
       <section className="py-16 px-4 bg-black/20 backdrop-blur-sm relative z-10">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">¿Listo para trabajar con nosotros?</h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6">¿Listo para trabajar con nosotros?</h2>
+          <p className="text-base sm:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             Descubre cómo nuestros valores y experiencia pueden impulsar tu proyecto tecnológico
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              className="bg-red-600 hover:bg-red-700 text-lg px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
+              className="w-full bg-red-600 hover:bg-red-700 text-base sm:w-auto sm:text-lg sm:px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
               asChild
             >
               <Link href="/servicios">
@@ -353,7 +353,7 @@ export default function AboutPage() {
             </Button>
             <Button
               size="lg"
-              className="bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300"
+              className="w-full bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300 sm:w-auto"
               asChild
             >
               <Link href="/#contacto">Contactar Ahora</Link>
@@ -365,7 +365,7 @@ export default function AboutPage() {
       {/* Footer */}
       <footer className="py-12 px-4 bg-black/30 backdrop-blur-sm border-t border-gray-700/50 relative z-10">
         <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <Logo size="lg" />
             <p className="text-gray-400 text-center md:text-right">© 2024 JumTech RD. Todos los derechos reservados.</p>
           </div>

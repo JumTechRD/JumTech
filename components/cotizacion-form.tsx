@@ -48,30 +48,30 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+      <Card className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[90vh]">
         <CardHeader className="relative">
           <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors">
             <X className="h-6 w-6" />
           </button>
           <div className="text-center">
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">Solicitar Cotización</Badge>
-            <CardTitle className="text-2xl md:text-3xl font-bold text-white mb-2">Cotiza tu Proyecto</CardTitle>
+            <CardTitle className="text-xl md:text-3xl font-bold text-white mb-2">Cotiza tu Proyecto</CardTitle>
             <p className="text-gray-300">Completa el formulario y te contactaremos en menos de 24 horas</p>
           </div>
         </CardHeader>
 
         <CardContent>
           {submitStatus === "success" && (
-            <div className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
+            <div className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-start">
+              <CheckCircle className="h-5 w-5 text-green-400 mr-3 mt-0.5 shrink-0" />
               <p className="text-green-300">{message}</p>
             </div>
           )}
 
           {submitStatus === "error" && (
-            <div className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-center">
-              <AlertCircle className="h-5 w-5 text-red-400 mr-3" />
+            <div className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-start">
+              <AlertCircle className="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" />
               <p className="text-red-300">{message}</p>
             </div>
           )}

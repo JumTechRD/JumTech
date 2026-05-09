@@ -525,8 +525,8 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
 
   // Reemplazar la sección de Resumen con el nuevo formato:
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-6xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+      <Card className="w-full max-w-6xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[90vh]">
         <CardHeader className="relative">
           <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors">
             <X className="h-6 w-6" />
@@ -535,14 +535,14 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">
               {editingCotizacion ? "Editar Cotización" : "Nueva Cotización"}
             </Badge>
-            <CardTitle className="text-2xl md:text-3xl font-bold text-white mb-2">Crear Cotización</CardTitle>
+            <CardTitle className="text-xl md:text-3xl font-bold text-white mb-2">Crear Cotización</CardTitle>
             <p className="text-gray-300">Completa los datos del cliente y selecciona los productos</p>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-6">
           {/* Número de Factura */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <Package className="h-5 w-5 mr-2 text-blue-400" />
               Información de Cotización
@@ -560,7 +560,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
           </div>
 
           {/* Configuración de Moneda */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <Settings className="h-5 w-5 mr-2 text-green-400" />
               Configuración Financiera
@@ -598,7 +598,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
           </div>
 
           {/* Información del Cliente */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <User className="h-5 w-5 mr-2 text-red-400" />
               Información del Cliente
@@ -687,13 +687,13 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
           </div>
 
           {/* Productos */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="text-lg font-semibold text-white flex items-center">
                 <Package className="h-5 w-5 mr-2 text-red-400" />
                 Productos y Servicios
               </h3>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex">
                 <Button onClick={() => setShowProductos(true)} className="bg-red-600 hover:bg-red-700" size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Catálogo
@@ -709,7 +709,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
               <div className="text-center py-8">
                 <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-400 mb-4">No hay productos seleccionados</p>
-                <div className="flex justify-center gap-2">
+                <div className="flex flex-col justify-center gap-2 sm:flex-row">
                   <Button onClick={() => setShowProductos(true)} className="bg-red-600 hover:bg-red-700" size="sm">
                     Agregar del Catálogo
                   </Button>
@@ -727,20 +727,20 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                 {productosSeleccionados.map((producto) => (
                   <div
                     key={producto.id}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-gray-700/30"
+                    className="flex flex-col gap-4 p-4 bg-white/5 rounded-lg border border-gray-700/30 lg:flex-row lg:items-center lg:justify-between"
                   >
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-white">{producto.nombre}</h4>
+                        <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
                       </div>
-                      <p className="text-sm text-gray-400">{producto.descripcion}</p>
+                      <p className="break-words text-sm text-gray-400">{producto.descripcion}</p>
                       <Badge className="mt-1 bg-purple-600/20 text-purple-400 border-purple-600/30 text-xs">
                         {producto.categoria}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:items-center lg:space-x-4">
                       {/* Cantidad */}
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
                           className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
@@ -772,7 +772,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                       </div>
 
                       {/* Precio y Moneda */}
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <div className="flex items-center space-x-2 mb-1">
                           <select
                             value={producto.moneda || "RD$"}
@@ -852,7 +852,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
 
           {/* Resumen */}
           {productosSeleccionados.length > 0 && (
-            <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+            <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <Calculator className="h-5 w-5 mr-2 text-red-400" />
                 Resumen de Cotización ({monedaPrincipal})
@@ -931,8 +931,8 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
 
       {/* Modal de Productos del Catálogo */}
       {showProductos && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+          <Card className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[80vh]">
             <CardHeader className="relative">
               <button
                 onClick={() => setShowProductos(false)}
@@ -952,14 +952,14 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                     onClick={() => agregarProducto(producto)}
                   >
                     <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-white">{producto.nombre}</h4>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-2">
+                        <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
                         <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">
                           {producto.categoria}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-400 mb-3">{producto.descripcion}</p>
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <span className="text-lg font-bold text-red-400">RD$ {producto.precio.toLocaleString()}</span>
                         <Button size="sm" className="bg-red-600 hover:bg-red-700">
                           <Plus className="h-4 w-4 mr-1" />
@@ -977,8 +977,8 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
 
       {/* Modal de Producto Manual */}
       {showProductoManual && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50">
+        <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+          <Card className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto">
             <CardHeader className="relative">
               <button
                 onClick={() => setShowProductoManual(false)}
@@ -1045,7 +1045,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                   />
                 </div>
               </div>
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-col gap-4 pt-4 sm:flex-row">
                 <Button
                   variant="outline"
                   onClick={() => setShowProductoManual(false)}
@@ -1069,8 +1069,8 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
 
       {/* Modal de Editar Producto */}
       {showEditProducto && productoEditando && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50">
+        <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+          <Card className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto">
             <CardHeader className="relative">
               <button
                 onClick={() => setShowEditProducto(false)}
@@ -1102,7 +1102,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                   placeholder="Descripción del producto..."
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Cantidad *</label>
                   <input
@@ -1160,7 +1160,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                   />
                 </div>
               </div>
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-col gap-4 pt-4 sm:flex-row">
                 <Button
                   variant="outline"
                   onClick={() => setShowEditProducto(false)}

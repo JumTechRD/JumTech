@@ -104,7 +104,7 @@ export default function ProductosPage() {
   }, [productos, categoriaSeleccionada, busqueda])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -207,7 +207,7 @@ export default function ProductosPage() {
         <div className="container mx-auto">
           {/* Header */}
           <div className="flex items-center mb-8">
-            <Button variant="ghost" className="text-gray-300 hover:text-white mr-4" asChild>
+            <Button variant="ghost" className="max-w-full text-gray-300 hover:text-white" asChild>
               <Link href="/">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Volver al Inicio
@@ -217,13 +217,13 @@ export default function ProductosPage() {
 
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">Tienda</Badge>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
               Nuestros
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-red-600 to-red-700">
                 Productos
               </span>
             </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Encuentra los mejores productos tecnológicos con garantía y soporte técnico especializado
             </p>
           </div>
@@ -244,14 +244,14 @@ export default function ProductosPage() {
             </div>
 
             {/* Categories */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0 mb-6">
               {categorias.map((categoria) => {
                 const IconComponent = categoria.icon
                 return (
                   <button
                     key={categoria.id}
                     onClick={() => setCategoriaSeleccionada(categoria.id)}
-                    className={`flex items-center px-4 py-2 rounded-lg transition-all ${
+                    className={`flex flex-shrink-0 items-center px-4 py-2 rounded-lg transition-all ${
                       categoriaSeleccionada === categoria.id
                         ? "bg-red-600 text-white"
                         : "bg-white/5 text-gray-300 hover:bg-white/10"
@@ -268,7 +268,7 @@ export default function ProductosPage() {
           {/* Products Grid */}
           {productosFiltrados.length === 0 ? (
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50">
-              <CardContent className="p-12 text-center">
+              <CardContent className="p-6 text-center sm:p-12">
                 <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-white mb-2">No hay productos disponibles</h3>
                 <p className="text-gray-400 mb-6">
@@ -334,7 +334,7 @@ export default function ProductosPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-4">
                       <span className="text-2xl font-bold text-red-400">${producto.precio.toLocaleString()}</span>
                       <span className="text-sm text-gray-400">Stock: {producto.stock}</span>
                     </div>

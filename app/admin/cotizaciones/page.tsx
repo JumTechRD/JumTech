@@ -232,7 +232,7 @@ export default function CotizacionesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-x-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl"></div>
@@ -257,7 +257,7 @@ export default function CotizacionesPage() {
             </div>
           </div>
           {/* Desktop links */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white text-sm flex items-center gap-1">
               <Home className="h-4 w-4" />Ver Sitio
             </Link>
@@ -272,7 +272,7 @@ export default function CotizacionesPage() {
             </Button>
           </div>
           {/* Mobile: solo logout */}
-          <div className="flex md:hidden">
+          <div className="flex lg:hidden">
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
               <LogOut className="h-5 w-5" />
             </Button>
@@ -342,7 +342,7 @@ export default function CotizacionesPage() {
 
           {/* Filtros + botón nueva */}
           <div className="flex flex-col gap-3 mb-5">
-            <div className="flex gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -356,7 +356,7 @@ export default function CotizacionesPage() {
                 value={filterEstado}
                 onChange={(e) => setFilterEstado(e.target.value)}
                 aria-label="Filtrar cotizaciones por estado"
-                className="px-3 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white text-sm min-w-0 [&>option]:bg-slate-800 [&>option]:text-white"
+                className="w-full px-3 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white text-sm min-w-0 [&>option]:bg-slate-800 [&>option]:text-white"
               >
                 <option value="todos">Todos</option>
                 <option value="pendiente">Pendiente</option>
@@ -395,7 +395,7 @@ export default function CotizacionesPage() {
                   key={cotizacion.id}
                   className="bg-white/5 border-gray-700/50 hover:border-blue-500/50 transition-all"
                 >
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                       <div>
                         <h3 className="text-base font-semibold text-white">{cotizacion.cliente}</h3>
@@ -439,19 +439,19 @@ export default function CotizacionesPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <select
                         value={cotizacion.estado}
                         onChange={(e) => handleChangeEstado(cotizacion.id, e.target.value as Cotizacion["estado"])}
                         aria-label={`Cambiar estado de cotizacion ${cotizacion.id}`}
-                        className="px-2 py-1 bg-slate-800/90 border border-gray-600 rounded text-white text-xs flex-1 mr-2 [&>option]:bg-slate-800 [&>option]:text-white"
+                        className="w-full px-2 py-2 bg-slate-800/90 border border-gray-600 rounded text-white text-xs sm:flex-1 sm:mr-2 [&>option]:bg-slate-800 [&>option]:text-white"
                       >
                         <option value="pendiente">Pendiente</option>
                         <option value="enviada">Enviada</option>
                         <option value="aprobada">Aprobada</option>
                         <option value="rechazada">Rechazada</option>
                       </select>
-                      <div className="flex items-center gap-1">
+                      <div className="grid grid-cols-3 gap-1 sm:flex sm:items-center">
                         <Button
                           size="sm"
                           variant="outline"
@@ -489,25 +489,6 @@ export default function CotizacionesPage() {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/90 border-t border-gray-800/50 flex justify-around py-2 z-50">
-        <Link href="/admin/dashboard" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <Home className="h-5 w-5" /><span>Inicio</span>
-        </Link>
-        <Link href="/admin/productos" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <Package className="h-5 w-5" /><span>Productos</span>
-        </Link>
-        <Link href="/admin/cotizaciones" className="flex flex-col items-center text-blue-400 text-xs gap-1">
-          <FileText className="h-5 w-5" /><span>Cotizaciones</span>
-        </Link>
-        <Link href="/admin/facturas" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <Receipt className="h-5 w-5" /><span>Facturas</span>
-        </Link>
-        <Link href="/admin/reportes" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <BarChart3 className="h-5 w-5" /><span>Reportes</span>
-        </Link>
       </div>
 
       {/* Modal de Creación/Edición */}

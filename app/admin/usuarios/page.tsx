@@ -339,7 +339,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f1a] relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0f1a] relative overflow-x-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.08),transparent_35%),radial-gradient(circle_at_20%_30%,rgba(30,64,175,0.08),transparent_28%)]" />
 
       <nav className="fixed top-0 w-full bg-[#080d17]/85 backdrop-blur-xl border-b border-slate-800/70 z-50">
@@ -354,7 +354,7 @@ export default function AdminUsersPage() {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white text-sm flex items-center gap-1">
               <Home className="h-4 w-4" />
               Ver Sitio
@@ -379,7 +379,7 @@ export default function AdminUsersPage() {
             </Button>
           </div>
 
-          <div className="flex md:hidden">
+          <div className="flex lg:hidden">
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
               <LogOut className="h-5 w-5" />
             </Button>
@@ -505,7 +505,7 @@ export default function AdminUsersPage() {
 
                     <div className="space-y-2 rounded-lg border border-slate-800/80 bg-slate-900/40 p-3">
                       <Label className="text-slate-400 text-xs">Permiso adicional (opcional)</Label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
                         <Input
                           value={customPermission}
                           onChange={(event) => setCustomPermission(event.target.value)}
@@ -765,15 +765,15 @@ export default function AdminUsersPage() {
                   ))
                 )}
                 {!loading && sortedUsers.length > 0 && (
-                  <div className="pt-2 flex items-center justify-between">
+                <div className="pt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-xs text-slate-400">
                       Página {currentPage} de {totalPages}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex w-full gap-2 sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-slate-600 text-slate-200"
+                        className="flex-1 border-slate-600 text-slate-200 sm:flex-none"
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                       >
@@ -782,7 +782,7 @@ export default function AdminUsersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-slate-600 text-slate-200"
+                        className="flex-1 border-slate-600 text-slate-200 sm:flex-none"
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                       >

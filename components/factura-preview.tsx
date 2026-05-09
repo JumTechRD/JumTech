@@ -62,7 +62,7 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
     <Card className="w-full max-w-4xl mx-auto bg-white text-black">
       {/* Header */}
       <CardHeader className="bg-red-600 text-white p-6">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
               <Image src="/images/jumtech-logo-new.png" alt="JumTech RD" width={40} height={40} className="rounded" />
@@ -72,8 +72,8 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
               <p className="text-red-100">Soluciones Tecnológicas Integrales</p>
             </div>
           </div>
-          <div className="text-right">
-            <h2 className="text-3xl font-bold">FACTURA</h2>
+          <div className="text-left sm:text-right">
+            <h2 className="text-2xl sm:text-3xl font-bold">FACTURA</h2>
             <p className="text-red-100">#{factura.numero}</p>
           </div>
         </div>
@@ -118,39 +118,41 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
 
         {/* Tabla de productos */}
         <div className="mb-6">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border p-3 text-left">Descripción</th>
-                <th className="border p-3 text-center">Cant.</th>
-                <th className="border p-3 text-right">Precio</th>
-                <th className="border p-3 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {factura.productos.map((producto, index) => (
-                <tr key={producto.id} className={index % 2 === 0 ? "bg-gray-50" : ""}>
-                  <td className="border p-3">
-                    <div>
-                      <p className="font-semibold">{producto.nombre}</p>
-                      <p className="text-sm text-gray-600">{producto.descripcion}</p>
-                      <Badge className="mt-1 bg-blue-100 text-blue-800 text-xs">{producto.categoria}</Badge>
-                    </div>
-                  </td>
-                  <td className="border p-3 text-center">{producto.cantidad}</td>
-                  <td className="border p-3 text-right">${producto.precio.toLocaleString()}</td>
-                  <td className="border p-3 text-right font-semibold">
-                    ${(producto.precio * producto.cantidad).toLocaleString()}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-3 text-left">Descripción</th>
+                  <th className="border p-3 text-center">Cant.</th>
+                  <th className="border p-3 text-right">Precio</th>
+                  <th className="border p-3 text-right">Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {factura.productos.map((producto, index) => (
+                  <tr key={producto.id} className={index % 2 === 0 ? "bg-gray-50" : ""}>
+                    <td className="border p-3">
+                      <div>
+                        <p className="font-semibold">{producto.nombre}</p>
+                        <p className="text-sm text-gray-600">{producto.descripcion}</p>
+                        <Badge className="mt-1 bg-blue-100 text-blue-800 text-xs">{producto.categoria}</Badge>
+                      </div>
+                    </td>
+                    <td className="border p-3 text-center">{producto.cantidad}</td>
+                    <td className="border p-3 text-right">${producto.precio.toLocaleString()}</td>
+                    <td className="border p-3 text-right font-semibold">
+                      ${(producto.precio * producto.cantidad).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Totales */}
         <div className="flex justify-end mb-6">
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <div className="flex justify-between py-2">
               <span>Subtotal:</span>
               <span>${factura.subtotal.toLocaleString()}</span>
@@ -173,7 +175,7 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
         )}
 
         {/* Footer */}
-        <div className="text-center text-sm text-gray-500 border-t pt-4">
+        <div className="break-words text-center text-sm text-gray-500 border-t pt-4">
           <p>Gracias por su confianza - JumTech RD</p>
           <p>📧 jumtechRD@gmail.com | 📱 +1 (809) 984-8283 | 🌐 República Dominicana</p>
         </div>

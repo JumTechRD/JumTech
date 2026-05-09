@@ -19,8 +19,8 @@ export function AdminBottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800/50 z-50 safe-area-inset-bottom">
-      <div className="flex items-center justify-around py-2 px-1">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800/50 z-50 safe-area-inset-bottom">
+      <div className="flex items-stretch justify-start gap-1 overflow-x-auto px-2 py-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href || 
             (item.href !== "/" && pathname.startsWith(item.href))
@@ -30,7 +30,7 @@ export function AdminBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-lg transition-colors min-w-0 flex-1 ${
+              className={`flex min-w-[4.5rem] flex-none flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors ${
                 isActive
                   ? "text-red-400 bg-red-600/10"
                   : "text-gray-400 hover:text-white hover:bg-white/5"
