@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,20 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    const previousPaddingRight = document.body.style.paddingRight
+
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.body.style.paddingRight = previousPaddingRight
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -48,10 +62,15 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
-      <Card className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[90vh]">
+    <div className="fixed inset-0 z-[10000] flex items-start justify-center overflow-y-auto bg-black/80 p-2 pt-24 backdrop-blur-sm sm:items-start sm:p-4 sm:pt-24">
+      <Card className="relative w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain sm:max-h-[calc(100dvh-8rem)]">
         <CardHeader className="relative">
-          <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 z-20 rounded-full border border-white/10 bg-black/60 p-2 text-gray-300 hover:bg-black/80 hover:text-white transition-colors"
+            aria-label="Cerrar formulario de cotización"
+            type="button"
+          >
             <X className="h-6 w-6" />
           </button>
           <div className="text-center">
@@ -61,7 +80,7 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="pb-8">
           {submitStatus === "success" && (
             <div className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-start">
               <CheckCircle className="h-5 w-5 text-green-400 mr-3 mt-0.5 shrink-0" />
