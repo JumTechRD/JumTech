@@ -272,7 +272,7 @@ export default function ServicesPage() {
               <CardContent>
                 <p className="text-gray-300 mb-4">
                   Sistemas de videovigilancia profesionales con tecnología IP de última generación para proteger tu
-                  negocio o hogar las 24 horas del día.
+                  empresa las 24 horas del día.
                 </p>
                 <ul className="space-y-2 text-gray-300 mb-6">
                   <li className="flex items-start">

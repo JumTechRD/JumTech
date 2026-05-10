@@ -594,15 +594,22 @@ export default function HomePage() {
               <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30 backdrop-blur-sm">
                 Sobre Nosotros
               </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">Expertos en Tecnología</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+                Tecnología Estratégica para Empresas Modernas
+              </h2>
               <p className="text-base sm:text-lg text-gray-300 mb-6 leading-relaxed max-w-3xl mx-auto lg:mx-0">
-                En JumTechRD somos especialistas en soluciones tecnológicas integrales diseñadas para impulsar la
-                eficiencia de tu empresa y mejorar la conectividad en el hogar. Nuestro compromiso es ofrecer servicios
-                confiables, innovadores y adaptados a las necesidades actuales del mercado dominicano.
+                En JumTechRD desarrollamos soluciones tecnológicas integrales para pequeñas y medianas empresas que
+                buscan optimizar sus operaciones, fortalecer su conectividad y evolucionar digitalmente con confianza.
               </p>
               <p className="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto lg:mx-0">
-                Nuestro equipo de profesionales altamente capacitados se dedica a ofrecer servicios de calidad,
-                garantizando la satisfacción total de nuestros clientes y el éxito de sus proyectos tecnológicos.
+                Combinamos innovación, experiencia y tecnología para ofrecer servicios empresariales de alto nivel en
+                infraestructura de red, soporte IT, seguridad y soluciones digitales adaptadas a las exigencias del
+                mercado actual.
+              </p>
+              <p className="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto lg:mx-0">
+                Nuestro compromiso es convertirnos en un aliado tecnológico confiable para cada cliente, aportando
+                estabilidad, eficiencia y crecimiento a través de implementaciones modernas y soporte profesional
+                continuo.
               </p>
               <Button className="bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/25" asChild>
                 <Link href="/nosotros">
