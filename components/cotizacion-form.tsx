@@ -214,7 +214,7 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="flex-1 border-gray-600 text-gray-300 hover:bg-white/10"
+                className="flex-1 border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white hover:border-slate-500"
                 disabled={isSubmitting}
               >
                 Cancelar

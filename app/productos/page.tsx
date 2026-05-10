@@ -104,7 +104,7 @@ export default function ProductosPage() {
   }, [productos, categoriaSeleccionada, busqueda])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden pt-[80px]">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -113,11 +113,29 @@ export default function ProductosPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-[9999] isolate">
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none opacity-[0.09]">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                backgroundSize: "28px 28px",
+                maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.8), transparent 95%)",
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(227,29,52,0.14),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(227,29,52,0.08),transparent_20%),linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.06)_50%,transparent_65%)]" />
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1440 140" fill="none" aria-hidden="true">
+              <path d="M0 92C160 64 250 64 388 88C515 110 650 116 790 90C940 62 1060 58 1200 84C1310 104 1378 106 1440 96" stroke="rgba(227,29,52,0.55)" strokeWidth="1.1" strokeLinecap="round" />
+              <path d="M0 50C140 34 260 36 384 54C520 76 668 76 816 52C950 32 1080 30 1216 50C1308 63 1380 64 1440 56" stroke="rgba(148,163,184,0.28)" strokeWidth="0.9" strokeDasharray="7 10" />
+            </svg>
+          </div>
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(227,29,52,0.08),transparent_42%)]" />
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between relative z-10">
           <div className="flex items-center">
             <Image
-              src="/images/logo-nuevo-transparente.png"
+              src="/images/logo-nuevo.png"
               alt="JumTech RD"
               width={180}
               height={54}
@@ -152,8 +170,9 @@ export default function ProductosPage() {
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
+          </div>
         </div>
-        
+
         {/* Mobile Navigation Menu */}
         <div
           className={`md:hidden transition-all duration-300 ease-in-out ${
