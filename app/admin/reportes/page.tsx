@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
 import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
+import { fetchAdminInvoices, fetchAdminProducts, fetchAdminQuotes } from "@/lib/admin-api-client"
 
 interface Cotizacion {
   id: string
@@ -45,6 +46,7 @@ interface Factura {
   numero: string
   cliente: string
   email: string
+  telefono?: string
   fecha: string
   vencimiento: string
   productos: any[]
@@ -79,14 +81,14 @@ export default function ReportesPage() {
 
       setIsAuthenticated(true)
 
-      const c = localStorage.getItem("cotizaciones")
-      if (c) setCotizaciones(JSON.parse(c))
-
-      const f = localStorage.getItem("facturas")
-      if (f) setFacturas(JSON.parse(f))
-
-      const p = localStorage.getItem("productos")
-      if (p) setProductos(JSON.parse(p))
+      const [cotizacionesData, facturasData, productosData] = await Promise.all([
+        fetchAdminQuotes<Cotizacion[]>(),
+        fetchAdminInvoices<Factura[]>(),
+        fetchAdminProducts<Producto[]>(),
+      ])
+      setCotizaciones(cotizacionesData)
+      setFacturas(facturasData)
+      setProductos(productosData)
     }
 
     void loadAdminPage()
@@ -339,16 +341,23 @@ export default function ReportesPage() {
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Image src="/images/logo-nuevo.jpeg" alt="JumTech RD" width={36} height={36} className="rounded-lg" />
+            <Image
+              src="/images/logo-nuevo-transparente.png"
+              alt="JumTech RD"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
             <div>
               <span className="text-base font-bold text-white">JumTech RD</span>
               <Badge className="ml-2 bg-green-600/20 text-green-400 border-green-600/30 text-xs hidden sm:inline-flex">Reportes</Badge>
             </div>
           </div>
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white text-sm flex items-center gap-1"><Home className="h-4 w-4" />Ver Sitio</Link>
             <Link href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">Dashboard</Link>
+            <Link href="/admin/clientes" className="text-gray-300 hover:text-white text-sm">Clientes</Link>
             <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white text-sm flex items-center gap-1"><FileText className="h-4 w-4" />Cotizaciones</Link>
             <Link href="/admin/facturas" className="text-gray-300 hover:text-white text-sm flex items-center gap-1"><Receipt className="h-4 w-4" />Facturas</Link>
             <Link href="/admin/usuarios" className="text-gray-300 hover:text-white text-sm">Usuarios</Link>
@@ -357,20 +366,20 @@ export default function ReportesPage() {
             </Button>
           </div>
           {/* Mobile nav */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-2">
             <Link href="/admin/dashboard"><Button variant="ghost" size="sm" className="text-gray-300 p-2"><Home className="h-4 w-4" /></Button></Link>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
       </nav>
 
-      <div className="pt-20 pb-10 px-4 relative z-10">
+      <div className="pt-20 pb-24 lg:pb-10 px-4 relative z-10">
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
           <div className="text-center mb-8">
             <Badge className="mb-3 bg-green-600/20 text-green-400 border-green-600/30">Análisis de Actividad</Badge>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Reportes</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Reportes</h1>
             <p className="text-gray-400 text-sm md:text-base">Resumen completo de cotizaciones y facturas</p>
           </div>
 
@@ -485,9 +494,9 @@ export default function ReportesPage() {
                       { label: "Pendientes", val: cotizacionesPendientes, color: "text-yellow-400" },
                       { label: "Rechazadas", val: cotizaciones.filter(c => c.estado === "rechazada").length, color: "text-red-400" },
                     ].map(({ label, val, color }) => (
-                      <div key={label} className="flex justify-between items-center py-2 border-b border-gray-700/30 last:border-0">
+                      <div key={label} className="flex items-center justify-between gap-3 py-2 border-b border-gray-700/30 last:border-0">
                         <span className="text-gray-400 text-sm">{label}</span>
-                        <span className={`font-bold ${color}`}>{val}</span>
+                        <span className={`shrink-0 font-bold ${color}`}>{val}</span>
                       </div>
                     ))}
                     <div className="pt-2">
@@ -510,9 +519,9 @@ export default function ReportesPage() {
                       { label: "Pendientes", val: facturasPendientes, color: "text-yellow-400" },
                       { label: "Vencidas", val: facturas.filter(f => f.estado === "vencida").length, color: "text-orange-400" },
                     ].map(({ label, val, color }) => (
-                      <div key={label} className="flex justify-between items-center py-2 border-b border-gray-700/30 last:border-0">
+                      <div key={label} className="flex items-center justify-between gap-3 py-2 border-b border-gray-700/30 last:border-0">
                         <span className="text-gray-400 text-sm">{label}</span>
-                        <span className={`font-bold ${color}`}>{val}</span>
+                        <span className={`shrink-0 font-bold ${color}`}>{val}</span>
                       </div>
                     ))}
                     <div className="pt-2 space-y-2">
@@ -546,12 +555,12 @@ export default function ReportesPage() {
                 <Card key={c.id} className="bg-white/5 border-gray-700/50">
                   <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-white font-medium">{c.cliente}</p>
                         <p className="text-gray-400 text-xs">{c.numeroFactura || `COT-${c.id.slice(-6)}`} · {new Date(c.fecha).toLocaleDateString("es-DO")}</p>
                         <p className="text-gray-500 text-xs">{c.productos.length} productos</p>
                       </div>
-                      <div className="flex items-center gap-3 justify-between sm:justify-end">
+                      <div className="flex flex-wrap items-center gap-3 justify-between sm:justify-end">
                         <Badge className={estadoColor(c.estado)}>{c.estado}</Badge>
                         <p className="text-blue-400 font-bold">{c.monedaPrincipal || "RD$"} {c.total.toLocaleString()}</p>
                       </div>
@@ -577,12 +586,12 @@ export default function ReportesPage() {
                 <Card key={f.id} className="bg-white/5 border-gray-700/50">
                   <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-white font-medium">{f.cliente}</p>
                         <p className="text-gray-400 text-xs">{f.numero} · {new Date(f.fecha).toLocaleDateString("es-DO")}</p>
                         <p className="text-gray-500 text-xs">Vence: {new Date(f.vencimiento).toLocaleDateString("es-DO")}</p>
                       </div>
-                      <div className="flex items-center gap-3 justify-between sm:justify-end">
+                      <div className="flex flex-wrap items-center gap-3 justify-between sm:justify-end">
                         <Badge className={estadoColor(f.estado)}>{f.estado}</Badge>
                         <p className="text-purple-400 font-bold">RD$ {f.total.toLocaleString()}</p>
                       </div>
@@ -595,7 +604,7 @@ export default function ReportesPage() {
 
           {/* Bottom nav mobile */}
           <AdminBottomNav />
-          <div className="h-16 md:hidden" />
+          <div className="h-16 lg:hidden" />
         </div>
       </div>
     </div>

@@ -12,8 +12,6 @@ import {
   Package,
   DollarSign,
   TrendingUp,
-  Edit,
-  Trash2,
   LogOut,
   FileText,
   BarChart3,
@@ -21,10 +19,15 @@ import {
   Home,
   Users,
 } from "lucide-react"
-import { ProductoManager } from "@/components/producto-manager"
 import { FacturaCreator } from "@/components/factura-creator"
 import { AdminBottomNav } from "@/components/admin-bottom-nav"
 import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
+import {
+  fetchAdminInvoices,
+  fetchAdminProducts,
+  fetchAdminQuotes,
+  saveAdminInvoice,
+} from "@/lib/admin-api-client"
 
 interface Producto {
   id: string
@@ -36,6 +39,37 @@ interface Producto {
   stock: number
   rating: number
   especificaciones: string[]
+  activo: boolean
+  fechaCreacion: string
+  fechaActualizacion: string
+  precioCompra?: number
+  margenGanancia?: number
+  proveedor?: string
+  codigoBarras?: string
+  sku?: string
+  peso?: number
+  dimensiones?: {
+    largo: number
+    ancho: number
+    alto: number
+  }
+  garantia?: number
+  ubicacion?: string
+  stockMinimo?: number
+  stockMaximo?: number
+  vendido?: number
+  ultimaVenta?: string
+}
+
+interface ProductoEnFactura {
+  id: string
+  nombre: string
+  descripcion: string
+  precio: number
+  categoria: string
+  imagen?: string
+  stock?: number
+  cantidad: number
 }
 
 interface Factura {
@@ -45,9 +79,10 @@ interface Factura {
   email: string
   telefono: string
   direccion: string
+  clientId?: string | null
   fecha: string
   vencimiento: string
-  productos: (Producto & { cantidad: number })[]
+  productos: ProductoEnFactura[]
   subtotal: number
   impuestos: number
   total: number
@@ -61,6 +96,7 @@ interface Cotizacion {
   cliente: string
   email: string
   telefono: string
+  clientId?: string | null
   fecha: string
   productos: any[]
   subtotal: number
@@ -78,9 +114,7 @@ export default function AdminDashboardPage() {
   const [productos, setProductos] = useState<Producto[]>([])
   const [facturas, setFacturas] = useState<Factura[]>([])
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([])
-  const [showProductManager, setShowProductManager] = useState(false)
   const [showFacturaCreator, setShowFacturaCreator] = useState(false)
-  const [editingProduct, setEditingProduct] = useState<Producto | null>(null)
   const [editingFactura, setEditingFactura] = useState<Factura | null>(null)
   const router = useRouter()
 
@@ -91,23 +125,14 @@ export default function AdminDashboardPage() {
 
       setIsAuthenticated(true)
 
-      // Cargar productos
-      const savedProducts = localStorage.getItem("productos")
-      if (savedProducts) {
-        setProductos(JSON.parse(savedProducts))
-      }
-
-      // Cargar facturas
-      const savedFacturas = localStorage.getItem("facturas")
-      if (savedFacturas) {
-        setFacturas(JSON.parse(savedFacturas))
-      }
-
-      // Cargar cotizaciones
-      const savedCotizaciones = localStorage.getItem("cotizaciones")
-      if (savedCotizaciones) {
-        setCotizaciones(JSON.parse(savedCotizaciones))
-      }
+      const [productosData, facturasData, cotizacionesData] = await Promise.all([
+        fetchAdminProducts<Producto[]>(),
+        fetchAdminInvoices<Factura[]>(),
+        fetchAdminQuotes<Cotizacion[]>(),
+      ])
+      setProductos(productosData)
+      setFacturas(facturasData)
+      setCotizaciones(cotizacionesData)
     }
 
     void loadAdminPage()
@@ -117,64 +142,24 @@ export default function AdminDashboardPage() {
     void logoutAdminSession(router)
   }
 
-  const handleSaveProduct = (producto: Producto) => {
-    let updatedProducts
-    if (editingProduct) {
-      updatedProducts = productos.map((p) => (p.id === producto.id ? producto : p))
-    } else {
-      updatedProducts = [...productos, producto]
+  const handleSaveFactura = async (factura: Factura) => {
+    try {
+      const savedFactura = await saveAdminInvoice<Factura>(factura, editingFactura?.id)
+      setFacturas((currentFacturas) =>
+        editingFactura
+          ? currentFacturas.map((f) => (f.id === savedFactura.id ? savedFactura : f))
+          : [savedFactura, ...currentFacturas],
+      )
+      setShowFacturaCreator(false)
+      setEditingFactura(null)
+    } catch (error) {
+      alert("Error al guardar la factura")
     }
-    setProductos(updatedProducts)
-    localStorage.setItem("productos", JSON.stringify(updatedProducts))
-    setShowProductManager(false)
-    setEditingProduct(null)
-  }
-
-  const handleSaveFactura = (factura: Factura) => {
-    let updatedFacturas
-    if (editingFactura) {
-      updatedFacturas = facturas.map((f) => (f.id === factura.id ? factura : f))
-    } else {
-      updatedFacturas = [...facturas, factura]
-    }
-    setFacturas(updatedFacturas)
-    localStorage.setItem("facturas", JSON.stringify(updatedFacturas))
-    setShowFacturaCreator(false)
-    setEditingFactura(null)
-  }
-
-  const handleEditProduct = (producto: Producto) => {
-    setEditingProduct(producto)
-    setShowProductManager(true)
   }
 
   const handleEditFactura = (factura: Factura) => {
     setEditingFactura(factura)
     setShowFacturaCreator(true)
-  }
-
-  const handleDeleteProduct = (id: string) => {
-    if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-      const updatedProducts = productos.filter((p) => p.id !== id)
-      setProductos(updatedProducts)
-      localStorage.setItem("productos", JSON.stringify(updatedProducts))
-    }
-  }
-
-  const handleDeleteFactura = (id: string) => {
-    if (confirm("¿Estás seguro de que quieres eliminar esta factura?")) {
-      const updatedFacturas = facturas.filter((f) => f.id !== id)
-      setFacturas(updatedFacturas)
-      localStorage.setItem("facturas", JSON.stringify(updatedFacturas))
-    }
-  }
-
-  const getTotalValue = () => {
-    return productos.reduce((sum, producto) => sum + producto.precio * producto.stock, 0)
-  }
-
-  const getLowStockProducts = () => {
-    return productos.filter((producto) => producto.stock <= 5).length
   }
 
   const getTotalFacturado = () => {
@@ -187,10 +172,6 @@ export default function AdminDashboardPage() {
 
   const getTotalCotizaciones = () => {
     return cotizaciones.length
-  }
-
-  const getCotizacionesPendientes = () => {
-    return cotizaciones.filter((cot) => cot.estado === "pendiente").length
   }
 
   const getEstadoColor = (estado: string) => {
@@ -213,7 +194,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -226,7 +207,7 @@ export default function AdminDashboardPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Image
-              src="/images/logo-nuevo.jpeg"
+              src="/images/logo-nuevo-transparente.png"
               alt="JumTech RD Logo"
               width={50}
               height={50}
@@ -238,9 +219,15 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <Home className="h-4 w-4" />Ver Sitio
+            </Link>
+            <Link href="/admin/productos" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
+              <Package className="h-4 w-4" />Productos
+            </Link>
+            <Link href="/admin/clientes" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
+              <Users className="h-4 w-4" />Clientes
             </Link>
             <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <FileText className="h-4 w-4" />Cotizaciones
@@ -259,7 +246,7 @@ export default function AdminDashboardPage() {
             </Button>
           </div>
           {/* Mobile logout */}
-          <div className="flex md:hidden">
+          <div className="flex lg:hidden">
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
               <LogOut className="h-5 w-5" />
             </Button>
@@ -268,31 +255,33 @@ export default function AdminDashboardPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="pt-24 pb-24 md:pb-16 px-4 relative z-10">
+      <div className="pt-24 pb-24 lg:pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">Panel de Administración</Badge>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Dashboard Principal</h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Dashboard Principal</h1>
+            <p className="text-base sm:text-xl text-gray-300 max-w-2xl mx-auto">
               Gestiona productos, cotizaciones, facturas y el inventario de tu tienda
             </p>
           </div>
 
           {/* Quick Actions — 2 cols mobile, 4 cols desktop */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-red-500/50 transition-all cursor-pointer">
-              <CardContent className="p-6 text-center" onClick={() => setShowProductManager(true)}>
-                <div className="p-4 bg-red-600/20 rounded-full w-fit mx-auto mb-4">
-                  <Plus className="h-8 w-8 text-red-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Agregar Producto</h3>
-                <p className="text-gray-400">Añadir nuevo producto al inventario</p>
+              <CardContent className="p-4 text-center sm:p-6">
+                <Link href="/admin/productos" className="block">
+                  <div className="p-4 bg-red-600/20 rounded-full w-fit mx-auto mb-4">
+                    <Package className="h-8 w-8 text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Productos</h3>
+                  <p className="text-gray-400">Gestionar inventario</p>
+                </Link>
               </CardContent>
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-blue-500/50 transition-all cursor-pointer">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 text-center sm:p-6">
                 <Link href="/admin/cotizaciones">
                   <div className="p-4 bg-blue-600/20 rounded-full w-fit mx-auto mb-4">
                     <FileText className="h-8 w-8 text-blue-400" />
@@ -304,17 +293,17 @@ export default function AdminDashboardPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all cursor-pointer">
-              <CardContent className="p-6 text-center" onClick={() => setShowFacturaCreator(true)}>
+              <CardContent className="p-4 text-center sm:p-6" onClick={() => setShowFacturaCreator(true)}>
                 <div className="p-4 bg-purple-600/20 rounded-full w-fit mx-auto mb-4">
                   <Receipt className="h-8 w-8 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">Nueva Factura</h3>
-                <p className="text-gray-400">Crear factura profesional</p>
+                <p className="text-gray-400">Crear factura</p>
               </CardContent>
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-green-500/50 transition-all cursor-pointer">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 text-center sm:p-6">
                 <Link href="/admin/reportes" className="block">
                   <div className="p-4 bg-green-600/20 rounded-full w-fit mx-auto mb-4">
                     <BarChart3 className="h-8 w-8 text-green-400" />
@@ -327,7 +316,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
@@ -350,7 +339,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">Total Facturado</p>
-                    <p className="text-2xl font-bold text-white">${getTotalFacturado().toLocaleString()}</p>
+                    <p className="break-words text-xl sm:text-2xl font-bold text-white">${getTotalFacturado().toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -403,8 +392,8 @@ export default function AdminDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Facturas Recientes */}
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Facturas Recientes</h2>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Facturas Recientes</h2>
                 <Button
                   onClick={() => setShowFacturaCreator(true)}
                   className="bg-purple-600 hover:bg-purple-700"
@@ -422,17 +411,17 @@ export default function AdminDashboardPage() {
                     className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-300"
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center space-x-3">
                           <div className="p-2 bg-purple-600/20 rounded-lg">
                             <Receipt className="h-5 w-5 text-purple-400" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h3 className="text-white font-semibold">#{factura.numero}</h3>
-                            <p className="text-gray-400 text-sm">{factura.cliente}</p>
+                            <p className="text-gray-400 text-sm break-words">{factura.cliente}</p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <Badge className={getEstadoColor(factura.estado)}>{factura.estado}</Badge>
                           <p className="text-green-400 font-semibold">${factura.total.toLocaleString()}</p>
                         </div>
@@ -453,8 +442,8 @@ export default function AdminDashboardPage() {
 
             {/* Cotizaciones Recientes */}
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Cotizaciones Recientes</h2>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Cotizaciones Recientes</h2>
                 <Button asChild className="bg-blue-600 hover:bg-blue-700" size="sm">
                   <Link href="/admin/cotizaciones">
                     <Plus className="h-4 w-4 mr-2" />
@@ -470,19 +459,19 @@ export default function AdminDashboardPage() {
                     className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-blue-500/50 transition-all duration-300"
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center space-x-3">
                           <div className="p-2 bg-blue-600/20 rounded-lg">
                             <FileText className="h-5 w-5 text-blue-400" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h3 className="text-white font-semibold">
                               {cotizacion.numeroFactura || `COT-${cotizacion.id.slice(-4)}`}
                             </h3>
-                            <p className="text-gray-400 text-sm">{cotizacion.cliente}</p>
+                            <p className="text-gray-400 text-sm break-words">{cotizacion.cliente}</p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <Badge className={getEstadoColor(cotizacion.estado)}>{cotizacion.estado}</Badge>
                           <p className="text-blue-400 font-semibold">${cotizacion.total.toLocaleString()}</p>
                         </div>
@@ -502,93 +491,15 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Products Management */}
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-white">Gestión de Productos</h2>
-            <Button onClick={() => setShowProductManager(true)} className="bg-red-600 hover:bg-red-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Producto
-            </Button>
-          </div>
-
-          {/* Products List */}
-          <div className="grid grid-cols-1 gap-6">
-            {productos.length === 0 ? (
-              <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50">
-                <CardContent className="p-12 text-center">
-                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-white mb-2">No hay productos</h3>
-                  <p className="text-gray-400 mb-6">Comienza agregando tu primer producto al inventario</p>
-                  <Button onClick={() => setShowProductManager(true)} className="bg-red-600 hover:bg-red-700">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Producto
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              productos.slice(0, 5).map((producto) => (
-                <Card
-                  key={producto.id}
-                  className="bg-white/5 backdrop-blur-sm border-gray-700/50 hover:border-red-500/50 transition-all duration-300"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="relative w-16 h-16 rounded-lg overflow-hidden">
-                          <Image
-                            src={producto.imagen || "/placeholder.svg"}
-                            alt={producto.nombre}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">{producto.nombre}</h3>
-                          <p className="text-gray-400">{producto.descripcion}</p>
-                          <div className="flex items-center space-x-4 mt-2">
-                            <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/30">
-                              {producto.categoria}
-                            </Badge>
-                            <span className="text-green-400 font-semibold">${producto.precio.toLocaleString()}</span>
-                            <span className="text-gray-400">Stock: {producto.stock}</span>
-                            {producto.stock <= 5 && (
-                              <Badge className="bg-yellow-600/20 text-yellow-400 border-yellow-600/30">
-                                Stock Bajo
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditProduct(producto)}
-                          className="border-gray-600 text-gray-300 hover:bg-white/10"
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteProduct(producto.id)}
-                          className="border-red-600 text-red-400 hover:bg-red-600/10"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-
           {/* Enlaces rápidos */}
           <div className="mt-12 text-center">
             <div className="flex flex-wrap justify-center gap-4">
+              <Button asChild className="bg-red-600 hover:bg-red-700">
+                <Link href="/admin/productos">
+                  <Package className="h-4 w-4 mr-2" />
+                  Ver Productos
+                </Link>
+              </Button>
               <Button asChild className="bg-blue-600 hover:bg-blue-700">
                 <Link href="/admin/cotizaciones">
                   <FileText className="h-4 w-4 mr-2" />
@@ -617,38 +528,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/90 border-t border-gray-800/50 flex justify-around py-2 z-50">
-        <Link href="/admin/dashboard" className="flex flex-col items-center text-red-400 text-xs gap-1">
-          <Home className="h-5 w-5" /><span>Inicio</span>
-        </Link>
-        <Link href="/admin/cotizaciones" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <FileText className="h-5 w-5" /><span>Cotizaciones</span>
-        </Link>
-        <Link href="/admin/facturas" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <Receipt className="h-5 w-5" /><span>Facturas</span>
-        </Link>
-        <Link href="/admin/reportes" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <BarChart3 className="h-5 w-5" /><span>Reportes</span>
-        </Link>
-        <Link href="/admin/usuarios" className="flex flex-col items-center text-gray-400 hover:text-white text-xs gap-1">
-          <Users className="h-5 w-5" /><span>Usuarios</span>
-        </Link>
-      </div>
-
-      {/* Product Manager Modal */}
-      {showProductManager && (
-        <ProductoManager
-          isOpen={showProductManager}
-          onClose={() => {
-            setShowProductManager(false)
-            setEditingProduct(null)
-          }}
-          onSave={handleSaveProduct}
-          editingProduct={editingProduct}
-        />
-      )}
 
       {/* Factura Creator Modal */}
       {showFacturaCreator && (

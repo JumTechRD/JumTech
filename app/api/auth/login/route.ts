@@ -4,39 +4,39 @@ import { generateToken, verifyPassword } from '@/lib/auth'
 
 const AUTH_COOKIE_NAME = 'admin_session'
 
+function parseCredentials(body: unknown) {
+  if (!body || typeof body !== 'object') return null
+
+  const record = body as Record<string, unknown>
+  const email = typeof record.email === 'string' ? record.email.trim().toLowerCase() : ''
+  const password = typeof record.password === 'string' ? record.password : ''
+
+  if (!email || !password) return null
+
+  return { email, password }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
-
-    // Validation
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      )
+    const credentials = parseCredentials(await request.json().catch(() => null))
+    if (!credentials) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: credentials.email },
     })
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
     // Verify password
-    const isPasswordValid = await verifyPassword(password, user.password)
+    const isPasswordValid = await verifyPassword(credentials.password, user.password)
 
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
     // Generate JWT token
@@ -66,9 +66,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Error logging in:', error)
-    return NextResponse.json(
-      { error: 'Failed to login' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to login' }, { status: 500 })
   }
 }

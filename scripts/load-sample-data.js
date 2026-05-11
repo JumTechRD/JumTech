@@ -672,20 +672,33 @@ const facturasEjemplo = [
   }
 ];
 
+async function postAdminData(url, payload) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `Error cargando ${url} (${response.status})`);
+  }
+
+  return response.json();
+}
+
 // Función para cargar todos los datos
-function loadAllSampleData() {
+async function loadAllSampleData() {
   console.log("Cargando datos de ejemplo...");
   
-  // Cargar productos
-  localStorage.setItem("productos", JSON.stringify(productosEjemplo));
+  await Promise.all(productosEjemplo.map((producto) => postAdminData("/api/admin/products", producto)));
   console.log("✅ Productos cargados:", productosEjemplo.length);
   
-  // Cargar cotizaciones
-  localStorage.setItem("cotizaciones", JSON.stringify(cotizacionesEjemplo));
+  await Promise.all(cotizacionesEjemplo.map((cotizacion) => postAdminData("/api/admin/quotes", cotizacion)));
   console.log("✅ Cotizaciones cargadas:", cotizacionesEjemplo.length);
   
-  // Cargar facturas
-  localStorage.setItem("facturas", JSON.stringify(facturasEjemplo));
+  await Promise.all(facturasEjemplo.map((factura) => postAdminData("/api/admin/invoices", factura)));
   console.log("✅ Facturas cargadas:", facturasEjemplo.length);
   
   console.log("🎉 Todos los datos de ejemplo han sido cargados exitosamente!");
@@ -708,4 +721,3 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { loadAllSampleData, productosEjemplo, cotizacionesEjemplo, facturasEjemplo };
 }
-

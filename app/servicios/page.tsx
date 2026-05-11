@@ -22,7 +22,7 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden pt-[80px]">
       {/* Background blur effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -32,15 +32,33 @@ export default function ServicesPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-[9999] isolate">
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none opacity-[0.09]">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                backgroundSize: "28px 28px",
+                maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.8), transparent 95%)",
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(227,29,52,0.14),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(227,29,52,0.08),transparent_20%),linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.06)_50%,transparent_65%)]" />
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1440 140" fill="none" aria-hidden="true">
+              <path d="M0 92C160 64 250 64 388 88C515 110 650 116 790 90C940 62 1060 58 1200 84C1310 104 1378 106 1440 96" stroke="rgba(227,29,52,0.55)" strokeWidth="1.1" strokeLinecap="round" />
+              <path d="M0 50C140 34 260 36 384 54C520 76 668 76 816 52C950 32 1080 30 1216 50C1308 63 1380 64 1440 56" stroke="rgba(148,163,184,0.28)" strokeWidth="0.9" strokeDasharray="7 10" />
+            </svg>
+          </div>
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(227,29,52,0.08),transparent_42%)]" />
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between relative z-10">
           <div className="flex items-center">
             <Image
-              src="/images/jum-negro.jpeg"
+              src="/images/logo-nuevo.png"
               alt="JumTech RD"
               width={200}
               height={60}
-              className="h-10 sm:h-12 w-auto object-contain [mix-blend-mode:screen]"
+              className="h-10 sm:h-12 w-auto object-contain"
               priority
             />
           </div>
@@ -74,8 +92,9 @@ export default function ServicesPage() {
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
+          </div>
         </div>
-        
+
         {/* Mobile Navigation Menu */}
         <div
           className={`md:hidden transition-all duration-300 ease-in-out ${
@@ -137,7 +156,7 @@ export default function ServicesPage() {
       <section className="pt-24 pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           <div className="flex items-center mb-8">
-            <Button variant="ghost" className="text-gray-300 hover:text-white mr-4" asChild>
+            <Button variant="ghost" className="max-w-full text-gray-300 hover:text-white" asChild>
               <Link href="/">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Volver al Inicio
@@ -152,13 +171,13 @@ export default function ServicesPage() {
                 <Logo size="xl" className="justify-center" />
               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
               Nuestros
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-red-600 to-red-700">
                 Servicios
               </span>
             </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10">
+            <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed backdrop-blur-sm bg-white/5 rounded-2xl p-4 sm:p-6 border border-white/10">
               Soluciones tecnológicas integrales diseñadas para impulsar tu negocio hacia el futuro digital
             </p>
           </div>
@@ -197,23 +216,23 @@ export default function ServicesPage() {
                   óptimo rendimiento y prolongando su vida útil.
                 </p>
                 <ul className="space-y-2 text-gray-300 mb-6">
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Limpieza y optimización del sistema
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Actualización de hardware y software
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Reparación de componentes
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Respaldo y recuperación de datos
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Instalación de software especializado
                   </li>
@@ -253,26 +272,26 @@ export default function ServicesPage() {
               <CardContent>
                 <p className="text-gray-300 mb-4">
                   Sistemas de videovigilancia profesionales con tecnología IP de última generación para proteger tu
-                  negocio o hogar las 24 horas del día.
+                  empresa las 24 horas del día.
                 </p>
                 <ul className="space-y-2 text-gray-300 mb-6">
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Sistemas de vigilancia IP de alta definición
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Configuración de NVR y grabación
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Monitoreo remoto desde dispositivos móviles
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Cámaras de alta resolución 4K
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Soporte técnico especializado 24/7
                   </li>
@@ -315,23 +334,23 @@ export default function ServicesPage() {
                   internacionales para garantizar conectividad óptima.
                 </p>
                 <ul className="space-y-2 text-gray-300 mb-6">
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Diseño personalizado de redes
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Instalación de puntos de red certificados
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Certificación de cableado Cat6/Cat6A
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Instalación de fibra óptica
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Mantenimiento preventivo de redes
                   </li>
@@ -374,23 +393,23 @@ export default function ServicesPage() {
                   empresa para optimizar procesos y aumentar la productividad.
                 </p>
                 <ul className="space-y-2 text-gray-300 mb-6">
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Aplicaciones web personalizadas
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Sistemas ERP para PyMEs
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Integración con sistemas existentes
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Aplicaciones móviles nativas
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Soporte y mantenimiento continuo
                   </li>
@@ -433,23 +452,23 @@ export default function ServicesPage() {
                   problemas para garantizar conectividad estable y segura.
                 </p>
                 <ul className="space-y-2 text-gray-300 mb-6">
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Administración de redes empresariales
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Configuración de routers y switches
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Optimización de rendimiento de red
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Monitoreo continuo de rendimiento
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Diagnóstico y solución de problemas
                   </li>
@@ -492,23 +511,23 @@ export default function ServicesPage() {
                   medidas preventivas y respuesta a incidentes.
                 </p>
                 <ul className="space-y-2 text-gray-300 mb-6">
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Auditorías de seguridad completas
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Protección contra malware y ransomware
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Configuración de firewalls avanzados
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Plan de respuesta a incidentes
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                     Capacitación en seguridad para empleados
                   </li>
@@ -529,15 +548,15 @@ export default function ServicesPage() {
       {/* Call to Action */}
       <section className="py-16 px-4 relative z-10">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">¿Necesitas una solución personalizada?</h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6">¿Necesitas una solución personalizada?</h2>
+          <p className="text-base sm:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             Contáctanos para una consulta gratuita y descubre cómo podemos ayudarte a alcanzar tus objetivos
             tecnológicos
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              className="bg-red-600 hover:bg-red-700 text-lg px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
+              className="w-full bg-red-600 hover:bg-red-700 text-base sm:w-auto sm:text-lg sm:px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
               asChild
             >
               <Link href="/#contacto">
@@ -547,7 +566,7 @@ export default function ServicesPage() {
             </Button>
             <Button
               size="lg"
-              className="bg-red-600 hover:bg-red-700 text-lg px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
+              className="w-full bg-red-600 hover:bg-red-700 text-base sm:w-auto sm:text-lg sm:px-8 py-3 shadow-lg shadow-red-600/25 backdrop-blur-sm"
               variant="outline"
               asChild
             >
@@ -560,7 +579,7 @@ export default function ServicesPage() {
       {/* Footer */}
       <footer className="py-12 px-4 bg-black/30 backdrop-blur-sm border-t border-gray-700/50 relative z-10">
         <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <Logo size="lg" />
             <p className="text-gray-400 text-center md:text-right">© 2024 JumTech RD. Todos los derechos reservados.</p>
           </div>

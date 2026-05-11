@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden flex items-start justify-center px-4 py-8 sm:items-center">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -55,27 +55,27 @@ export default function AdminLoginPage() {
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-red-400/15 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md px-4">
+      <div className="relative z-10 w-full max-w-md">
         <Card className="bg-slate-900/95 backdrop-blur-sm border-gray-700/50">
           <CardHeader className="text-center">
             <div className="mb-6">
               <Image
-                src="/images/logo-nuevo.jpeg"
+                src="/images/logo-nuevo-transparente.png"
                 alt="JumTech RD Logo"
                 width={80}
                 height={80}
-                className="mx-auto rounded-xl bg-white/5 backdrop-blur-sm p-3"
+                className="mx-auto rounded-xl bg-white/5 backdrop-blur-sm p-2"
               />
             </div>
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">Administración</Badge>
-            <CardTitle className="text-2xl font-bold text-white">Panel de Cotizaciones</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl font-bold text-white">Panel de Cotizaciones</CardTitle>
             <p className="text-gray-300">Acceso exclusivo para administradores</p>
           </CardHeader>
 
           <CardContent>
             {error && (
-              <div className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-center">
-                <AlertCircle className="h-5 w-5 text-red-400 mr-3" />
+              <div className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-start">
+                <AlertCircle className="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" />
                 <p className="text-red-300">{error}</p>
               </div>
             )}

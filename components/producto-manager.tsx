@@ -249,8 +249,8 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+      <Card className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[90vh]">
         <CardHeader className="relative">
           <button
             onClick={onClose}
@@ -263,7 +263,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">
               {editingProduct ? "Editar Producto" : "Nuevo Producto"}
             </Badge>
-            <CardTitle className="text-2xl md:text-3xl font-bold text-white mb-2">Gestión de Productos</CardTitle>
+            <CardTitle className="text-xl md:text-3xl font-bold text-white mb-2">Gestión de Productos</CardTitle>
             <p className="text-gray-300">
               {editingProduct ? "Actualiza la información del producto" : "Completa la información del nuevo producto"}
             </p>
@@ -272,13 +272,13 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
 
         <CardContent className="space-y-6">
           {/* Estado del Producto */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <AlertCircle className="h-5 w-5 mr-2 text-red-400" />
               Estado del Producto
             </h3>
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2 cursor-pointer">
+            <div className="flex items-start sm:items-center sm:space-x-4">
+              <label className="flex cursor-pointer items-start gap-2">
                 <input
                   type="checkbox"
                   checked={activo}
@@ -292,7 +292,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
           </div>
 
           {/* Información Básica */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <Package className="h-5 w-5 mr-2 text-red-400" />
               Información Básica
@@ -349,7 +349,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
           </div>
 
           {/* Precio y Stock */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <DollarSign className="h-5 w-5 mr-2 text-red-400" />
               Precio y Stock
@@ -390,7 +390,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
           </div>
 
           {/* Imagen */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <ImageIcon className="h-5 w-5 mr-2 text-red-400" />
               Imagen del Producto
@@ -443,12 +443,12 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
           </div>
 
           {/* Especificaciones */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <Tag className="h-5 w-5 mr-2 text-red-400" />
               Especificaciones Técnicas
             </h3>
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-col gap-2 mb-4 sm:flex-row">
               <input
                 type="text"
                 value={nuevaEspecificacion}
@@ -483,7 +483,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
           </div>
 
           {/* Información Comercial */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <DollarSign className="h-5 w-5 mr-2 text-red-400" />
               Información Comercial
@@ -547,7 +547,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
           </div>
 
           {/* Información Física */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <Package className="h-5 w-5 mr-2 text-red-400" />
               Información Física
@@ -581,7 +581,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
             </div>
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-300 mb-2">Dimensiones (cm)</label>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Largo</label>
                   <input
@@ -626,7 +626,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
           </div>
 
           {/* Gestión de Inventario */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <AlertCircle className="h-5 w-5 mr-2 text-red-400" />
               Gestión de Inventario

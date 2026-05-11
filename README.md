@@ -28,3 +28,13 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+## Environment
+
+Copy `.env.example` and set these values before running the app or the deploy pipeline:
+
+- `DATABASE_URL`: required. Prisma is configured for PostgreSQL, so this must be a PostgreSQL connection string.
+- `JWT_SECRET`: required. Used to sign and verify admin auth tokens.
+- `NEXT_PUBLIC_APP_URL`: optional. Only needed if a deployment needs an explicit public origin.
+
+The build does not depend on local seed data. Product and admin data are loaded at runtime through the API layer.

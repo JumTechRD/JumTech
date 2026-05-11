@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ import {
   Menu,
   X,
 } from "lucide-react"
+import { fetchPublicProduct } from "@/lib/admin-api-client"
 
 interface Producto {
   id: string
@@ -79,28 +80,22 @@ const categorias = [
 
 export default function ProductoDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const [producto, setProducto] = useState<Producto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    const cargarProducto = () => {
+    const productId = Array.isArray(params.id) ? params.id[0] : params.id
+    if (!productId) {
+      setError("Producto no encontrado")
+      setLoading(false)
+      return
+    }
+
+    const cargarProducto = async () => {
       try {
-        const productosGuardados = localStorage.getItem("productos")
-        if (productosGuardados) {
-          const productos = JSON.parse(productosGuardados)
-          const productoEncontrado = productos.find((p: Producto) => p.id === params.id)
-          
-          if (productoEncontrado) {
-            setProducto(productoEncontrado)
-          } else {
-            setError("Producto no encontrado")
-          }
-        } else {
-          setError("No hay productos disponibles")
-        }
+        setProducto(await fetchPublicProduct<Producto>(productId))
       } catch (err) {
         setError("Error al cargar el producto")
       } finally {
@@ -108,7 +103,7 @@ export default function ProductoDetailPage() {
       }
     }
 
-    cargarProducto()
+    void cargarProducto()
   }, [params.id])
 
   const categoriaInfo = categorias.find(cat => cat.id === producto?.categoria)
@@ -143,7 +138,7 @@ export default function ProductoDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden pt-[80px]">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -152,15 +147,33 @@ export default function ProductoDetailPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-[9999] isolate">
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none opacity-[0.09]">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                backgroundSize: "28px 28px",
+                maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.8), transparent 95%)",
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(227,29,52,0.14),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(227,29,52,0.08),transparent_20%),linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.06)_50%,transparent_65%)]" />
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1440 140" fill="none" aria-hidden="true">
+              <path d="M0 92C160 64 250 64 388 88C515 110 650 116 790 90C940 62 1060 58 1200 84C1310 104 1378 106 1440 96" stroke="rgba(227,29,52,0.55)" strokeWidth="1.1" strokeLinecap="round" />
+              <path d="M0 50C140 34 260 36 384 54C520 76 668 76 816 52C950 32 1080 30 1216 50C1308 63 1380 64 1440 56" stroke="rgba(148,163,184,0.28)" strokeWidth="0.9" strokeDasharray="7 10" />
+            </svg>
+          </div>
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(227,29,52,0.08),transparent_42%)]" />
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between relative z-10">
           <div className="flex items-center space-x-2">
             <Image
-              src="/images/jum-negro.jpeg"
+              src="/images/logo-nuevo.png"
               alt="JumTech RD Logo"
               width={180}
               height={54}
-              className="h-10 sm:h-12 w-auto object-contain [mix-blend-mode:screen]"
+              className="h-10 sm:h-12 w-auto object-contain"
             />
           </div>
           
@@ -190,6 +203,7 @@ export default function ProductoDetailPage() {
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
+          </div>
         </div>
         
         {/* Mobile Navigation Menu */}
@@ -244,24 +258,24 @@ export default function ProductoDetailPage() {
       <div className="pt-24 pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           {/* Breadcrumb */}
-          <div className="flex items-center mb-8">
-            <Button variant="ghost" className="text-gray-300 hover:text-white mr-4" asChild>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center mb-8">
+            <Button variant="ghost" className="max-w-full text-gray-300 hover:text-white sm:mr-4" asChild>
               <Link href="/productos">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Volver a Productos
               </Link>
             </Button>
-            <div className="text-sm text-gray-400">
+            <div className="min-w-0 text-sm text-gray-400">
               <Link href="/productos" className="hover:text-white">Productos</Link>
               <span className="mx-2">/</span>
-              <span className="text-white">{producto.nombre}</span>
+              <span className="text-white break-words">{producto.nombre}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Product Image */}
             <div className="space-y-4">
-              <div className="relative h-96 lg:h-[500px] overflow-hidden rounded-2xl bg-gray-800">
+              <div className="relative h-72 sm:h-96 lg:h-[500px] overflow-hidden rounded-2xl bg-gray-800">
                 <Image
                   src={producto.imagen || "/placeholder.svg"}
                   alt={producto.nombre}
@@ -310,8 +324,8 @@ export default function ProductoDetailPage() {
                     {categoriaInfo?.nombre || producto.categoria}
                   </Badge>
                 </div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-white mb-4">{producto.nombre}</h1>
-                <p className="text-lg text-gray-300 leading-relaxed">{producto.descripcion}</p>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 break-words">{producto.nombre}</h1>
+                <p className="text-base sm:text-lg text-gray-300 leading-relaxed">{producto.descripcion}</p>
               </div>
 
               {/* Rating */}
@@ -333,8 +347,8 @@ export default function ProductoDetailPage() {
 
               {/* Price */}
               <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
-                <div className="flex items-baseline space-x-2 mb-2">
-                  <span className="text-4xl font-bold text-red-400">RD$ {producto.precio.toLocaleString()}</span>
+                <div className="flex flex-wrap items-baseline gap-2 mb-2">
+                  <span className="text-3xl sm:text-4xl font-bold text-red-400">RD$ {producto.precio.toLocaleString()}</span>
                   {producto.precioCompra && (
                     <span className="text-lg text-gray-400">
                       (Margen: {producto.margenGanancia?.toFixed(1)}%)
@@ -377,41 +391,41 @@ export default function ProductoDetailPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {producto.sku && (
-                      <div className="flex justify-between">
+                      <div className="flex items-start justify-between gap-3">
                         <span className="text-gray-400">SKU:</span>
-                        <span className="text-white">{producto.sku}</span>
+                        <span className="text-right text-white break-words">{producto.sku}</span>
                       </div>
                     )}
                     {producto.proveedor && (
-                      <div className="flex justify-between">
+                      <div className="flex items-start justify-between gap-3">
                         <span className="text-gray-400">Proveedor:</span>
-                        <span className="text-white">{producto.proveedor}</span>
+                        <span className="text-right text-white break-words">{producto.proveedor}</span>
                       </div>
                     )}
                     {producto.garantia && (
-                      <div className="flex justify-between">
+                      <div className="flex items-start justify-between gap-3">
                         <span className="text-gray-400">Garantía:</span>
                         <span className="text-white">{producto.garantia} meses</span>
                       </div>
                     )}
                     {producto.peso && (
-                      <div className="flex justify-between">
+                      <div className="flex items-start justify-between gap-3">
                         <span className="text-gray-400">Peso:</span>
                         <span className="text-white">{producto.peso} kg</span>
                       </div>
                     )}
                     {producto.dimensiones && (
-                      <div className="flex justify-between">
+                      <div className="flex items-start justify-between gap-3">
                         <span className="text-gray-400">Dimensiones:</span>
-                        <span className="text-white">
+                        <span className="text-right text-white break-words">
                           {producto.dimensiones.largo} × {producto.dimensiones.ancho} × {producto.dimensiones.alto} cm
                         </span>
                       </div>
                     )}
                     {producto.ubicacion && (
-                      <div className="flex justify-between">
+                      <div className="flex items-start justify-between gap-3">
                         <span className="text-gray-400">Ubicación:</span>
-                        <span className="text-white flex items-center">
+                        <span className="flex items-center text-right text-white break-words">
                           <MapPin className="h-4 w-4 mr-1" />
                           {producto.ubicacion}
                         </span>

@@ -1,17 +1,36 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Database, Download, RefreshCw } from "lucide-react"
 import Link from "next/link"
+import { saveAdminInvoice, saveAdminProduct, saveAdminQuote } from "@/lib/admin-api-client"
+import { ensureAdminSession } from "@/lib/admin-session-client"
 
 export default function LoadDataPage() {
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
 
-  const loadSampleData = () => {
+  useEffect(() => {
+    const verifySession = async () => {
+      const isSessionValid = await ensureAdminSession(router)
+      if (isSessionValid) {
+        setIsAuthenticated(true)
+      }
+    }
+
+    void verifySession()
+  }, [router])
+
+  const loadSampleData = async () => {
+    const isSessionValid = await ensureAdminSession(router)
+    if (!isSessionValid) return
+
     setIsLoading(true)
     
     // Productos de ejemplo con datos completos
@@ -686,21 +705,26 @@ export default function LoadDataPage() {
       }
     ];
 
-    // Simular carga
-    setTimeout(() => {
-      // Cargar productos
-      localStorage.setItem("productos", JSON.stringify(productosEjemplo));
-      
-      // Cargar cotizaciones
-      localStorage.setItem("cotizaciones", JSON.stringify(cotizacionesEjemplo));
-      
-      // Cargar facturas
-      localStorage.setItem("facturas", JSON.stringify(facturasEjemplo));
-      
+    try {
+      await Promise.all(productosEjemplo.map((producto) => saveAdminProduct(producto)))
+      await Promise.all(cotizacionesEjemplo.map((cotizacion) => saveAdminQuote(cotizacion)))
+      await Promise.all(facturasEjemplo.map((factura) => saveAdminInvoice(factura)))
+
       setIsLoading(false);
       setIsLoaded(true);
-    }, 2000);
+    } catch (error) {
+      setIsLoading(false);
+      alert(error instanceof Error ? error.message : "No se pudieron cargar los datos. Inicia sesión como administrador e intenta de nuevo.");
+    }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black flex items-center justify-center p-4">
+        <p className="text-white">Validando sesión...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black flex items-center justify-center p-4">
@@ -795,8 +819,6 @@ export default function LoadDataPage() {
     </div>
   );
 }
-
-
 
 
 

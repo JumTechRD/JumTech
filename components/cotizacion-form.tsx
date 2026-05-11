@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,20 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    const previousPaddingRight = document.body.style.paddingRight
+
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.body.style.paddingRight = previousPaddingRight
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -48,30 +62,35 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[10000] flex items-start justify-center overflow-y-auto bg-black/80 p-2 pt-24 backdrop-blur-sm sm:items-start sm:p-4 sm:pt-24">
+      <Card className="relative w-full max-w-2xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain sm:max-h-[calc(100dvh-8rem)]">
         <CardHeader className="relative">
-          <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 z-20 rounded-full border border-white/10 bg-black/60 p-2 text-gray-300 hover:bg-black/80 hover:text-white transition-colors"
+            aria-label="Cerrar formulario de cotización"
+            type="button"
+          >
             <X className="h-6 w-6" />
           </button>
           <div className="text-center">
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">Solicitar Cotización</Badge>
-            <CardTitle className="text-2xl md:text-3xl font-bold text-white mb-2">Cotiza tu Proyecto</CardTitle>
+            <CardTitle className="text-xl md:text-3xl font-bold text-white mb-2">Cotiza tu Proyecto</CardTitle>
             <p className="text-gray-300">Completa el formulario y te contactaremos en menos de 24 horas</p>
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="pb-8">
           {submitStatus === "success" && (
-            <div className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
+            <div className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-start">
+              <CheckCircle className="h-5 w-5 text-green-400 mr-3 mt-0.5 shrink-0" />
               <p className="text-green-300">{message}</p>
             </div>
           )}
 
           {submitStatus === "error" && (
-            <div className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-center">
-              <AlertCircle className="h-5 w-5 text-red-400 mr-3" />
+            <div className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-start">
+              <AlertCircle className="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" />
               <p className="text-red-300">{message}</p>
             </div>
           )}
@@ -160,26 +179,6 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
               </select>
             </div>
 
-            {/* Presupuesto */}
-            <div>
-              <label htmlFor="presupuesto" className="block text-sm font-medium text-gray-300 mb-2">
-                Presupuesto Estimado
-              </label>
-              <select
-                id="presupuesto"
-                name="presupuesto"
-                className="w-full px-4 py-3 bg-slate-800/90 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent [&>option]:bg-slate-800 [&>option]:text-white"
-              >
-                <option value="">Selecciona un rango</option>
-                <option value="menos-1000">Menos de $1,000 USD</option>
-                <option value="1000-5000">$1,000 - $5,000 USD</option>
-                <option value="5000-10000">$5,000 - $10,000 USD</option>
-                <option value="10000-25000">$10,000 - $25,000 USD</option>
-                <option value="mas-25000">Más de $25,000 USD</option>
-                <option value="por-definir">Por definir</option>
-              </select>
-            </div>
-
             {/* Urgencia */}
             <div>
               <label htmlFor="urgencia" className="block text-sm font-medium text-gray-300 mb-2">
@@ -234,7 +233,7 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="flex-1 border-gray-600 text-gray-300 hover:bg-white/10"
+                className="flex-1 border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white hover:border-slate-500"
                 disabled={isSubmitting}
               >
                 Cancelar

@@ -1,16 +1,20 @@
-import bcrypt from 'bcryptjs'
 import { jwtVerify, SignJWT } from 'jose'
 
-const jwtSecretValue = process.env.JWT_SECRET
-if (!jwtSecretValue) {
-  throw new Error('Missing JWT_SECRET environment variable')
-}
-
 function getJwtSecret(): Uint8Array {
+  const jwtSecretValue = process.env.JWT_SECRET
+  if (!jwtSecretValue) {
+    throw new Error('Missing JWT_SECRET environment variable')
+  }
+
   return new TextEncoder().encode(jwtSecretValue)
 }
 
+async function getBcrypt() {
+  return (await import('bcryptjs')).default
+}
+
 export async function hashPassword(password: string): Promise<string> {
+  const bcrypt = await getBcrypt()
   const salt = await bcrypt.genSalt(10)
   return bcrypt.hash(password, salt)
 }
@@ -19,6 +23,7 @@ export async function verifyPassword(
   password: string,
   hashedPassword: string
 ): Promise<boolean> {
+  const bcrypt = await getBcrypt()
   return bcrypt.compare(password, hashedPassword)
 }
 

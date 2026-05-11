@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react"
 import { Logo } from "@/components/logo"
+import { fetchPublicProducts } from "@/lib/admin-api-client"
 
 interface Producto {
   id: string
@@ -58,62 +59,27 @@ export default function ProductosPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    // Cargar productos desde localStorage
-    const productosGuardados = localStorage.getItem("productos")
-    if (productosGuardados) {
-      const productosData = JSON.parse(productosGuardados)
-      setProductos(productosData)
-      setProductosFiltrados(productosData)
-    } else {
-      // Productos de ejemplo si no hay datos guardados
-      const productosEjemplo: Producto[] = [
-        {
-          id: "1",
-          nombre: "Laptop Dell Inspiron 15",
-          descripcion: "Laptop para uso profesional y personal",
-          precio: 45000,
-          categoria: "laptops",
-          imagen: "/placeholder.svg?height=300&width=300&text=Dell+Laptop",
-          stock: 5,
-          rating: 4.5,
-          especificaciones: ["Intel i5", "8GB RAM", "256GB SSD", "15.6 pulgadas"],
-        },
-        {
-          id: "2",
-          nombre: 'Monitor Samsung 24"',
-          descripcion: "Monitor Full HD para oficina",
-          precio: 12000,
-          categoria: "monitores",
-          imagen: "/placeholder.svg?height=300&width=300&text=Samsung+Monitor",
-          stock: 8,
-          rating: 4.3,
-          especificaciones: ["24 pulgadas", "Full HD", "IPS", "HDMI"],
-        },
-        {
-          id: "3",
-          nombre: "iPhone 15",
-          descripcion: "Último modelo de Apple",
-          precio: 85000,
-          categoria: "celulares",
-          imagen: "/placeholder.svg?height=300&width=300&text=iPhone+15",
-          stock: 3,
-          rating: 4.8,
-          especificaciones: ["128GB", "Cámara 48MP", "5G", "iOS 17"],
-        },
-        {
-          id: "4",
-          nombre: "Cámara IP Hikvision",
-          descripcion: "Cámara de seguridad 4K",
-          precio: 8500,
-          categoria: "camaras",
-          imagen: "/placeholder.svg?height=300&width=300&text=Hikvision+Camera",
-          stock: 12,
-          rating: 4.6,
-          especificaciones: ["4K", "Visión nocturna", "IP67", "PoE"],
-        },
-      ]
-      setProductos(productosEjemplo)
-      setProductosFiltrados(productosEjemplo)
+    let isMounted = true
+
+    const cargarProductos = async () => {
+      try {
+        const productosData = await fetchPublicProducts<Producto[]>()
+        if (isMounted) {
+          setProductos(productosData)
+          setProductosFiltrados(productosData)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setProductos([])
+          setProductosFiltrados([])
+        }
+      }
+    }
+
+    void cargarProductos()
+
+    return () => {
+      isMounted = false
     }
   }, [])
 
@@ -138,7 +104,7 @@ export default function ProductosPage() {
   }, [productos, categoriaSeleccionada, busqueda])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black relative overflow-x-hidden pt-[80px]">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-600/20 rounded-full blur-3xl"></div>
@@ -147,15 +113,33 @@ export default function ProductosPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-[9999] isolate">
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none opacity-[0.09]">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                backgroundSize: "28px 28px",
+                maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.8), transparent 95%)",
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(227,29,52,0.14),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(227,29,52,0.08),transparent_20%),linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.06)_50%,transparent_65%)]" />
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1440 140" fill="none" aria-hidden="true">
+              <path d="M0 92C160 64 250 64 388 88C515 110 650 116 790 90C940 62 1060 58 1200 84C1310 104 1378 106 1440 96" stroke="rgba(227,29,52,0.55)" strokeWidth="1.1" strokeLinecap="round" />
+              <path d="M0 50C140 34 260 36 384 54C520 76 668 76 816 52C950 32 1080 30 1216 50C1308 63 1380 64 1440 56" stroke="rgba(148,163,184,0.28)" strokeWidth="0.9" strokeDasharray="7 10" />
+            </svg>
+          </div>
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(227,29,52,0.08),transparent_42%)]" />
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between relative z-10">
           <div className="flex items-center">
             <Image
-              src="/images/jum-negro.jpeg"
+              src="/images/logo-nuevo.png"
               alt="JumTech RD"
               width={180}
               height={54}
-              className="h-10 sm:h-12 w-auto object-contain [mix-blend-mode:screen]"
+              className="h-10 sm:h-12 w-auto object-contain"
               priority
             />
           </div>
@@ -186,8 +170,9 @@ export default function ProductosPage() {
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
+          </div>
         </div>
-        
+
         {/* Mobile Navigation Menu */}
         <div
           className={`md:hidden transition-all duration-300 ease-in-out ${
@@ -241,7 +226,7 @@ export default function ProductosPage() {
         <div className="container mx-auto">
           {/* Header */}
           <div className="flex items-center mb-8">
-            <Button variant="ghost" className="text-gray-300 hover:text-white mr-4" asChild>
+            <Button variant="ghost" className="max-w-full text-gray-300 hover:text-white" asChild>
               <Link href="/">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Volver al Inicio
@@ -251,13 +236,13 @@ export default function ProductosPage() {
 
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-red-600/20 text-red-400 border-red-600/30">Tienda</Badge>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
               Nuestros
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-red-600 to-red-700">
                 Productos
               </span>
             </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Encuentra los mejores productos tecnológicos con garantía y soporte técnico especializado
             </p>
           </div>
@@ -278,14 +263,14 @@ export default function ProductosPage() {
             </div>
 
             {/* Categories */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0 mb-6">
               {categorias.map((categoria) => {
                 const IconComponent = categoria.icon
                 return (
                   <button
                     key={categoria.id}
                     onClick={() => setCategoriaSeleccionada(categoria.id)}
-                    className={`flex items-center px-4 py-2 rounded-lg transition-all ${
+                    className={`flex flex-shrink-0 items-center px-4 py-2 rounded-lg transition-all ${
                       categoriaSeleccionada === categoria.id
                         ? "bg-red-600 text-white"
                         : "bg-white/5 text-gray-300 hover:bg-white/10"
@@ -302,7 +287,7 @@ export default function ProductosPage() {
           {/* Products Grid */}
           {productosFiltrados.length === 0 ? (
             <Card className="bg-white/5 backdrop-blur-sm border-gray-700/50">
-              <CardContent className="p-12 text-center">
+              <CardContent className="p-6 text-center sm:p-12">
                 <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-white mb-2">No hay productos disponibles</h3>
                 <p className="text-gray-400 mb-6">
@@ -368,7 +353,7 @@ export default function ProductosPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-4">
                       <span className="text-2xl font-bold text-red-400">${producto.precio.toLocaleString()}</span>
                       <span className="text-sm text-gray-400">Stock: {producto.stock}</span>
                     </div>

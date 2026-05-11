@@ -4,8 +4,12 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X, Plus, Trash2, Save, Calculator, User, Package, Download, FileText } from "lucide-react"
-import jsPDF from "jspdf"
+import { fetchAdminClients } from "@/lib/admin-api-client"
+import { ClientSelector } from "@/components/client-selector"
+import type { ClientRecord } from "@/lib/admin-clients"
+import { generateFinancialPdf } from "@/lib/pdf-documents"
 
 interface Producto {
   id: string
@@ -28,6 +32,9 @@ interface Factura {
   email: string
   telefono: string
   direccion: string
+  clientId?: string | null
+  sourceQuoteId?: string | null
+  paymentMethod?: "transferencia" | "efectivo"
   fecha: string
   vencimiento: string
   productos: ProductoEnFactura[]
@@ -36,6 +43,8 @@ interface Factura {
   total: number
   estado: "pendiente" | "pagada" | "vencida" | "cancelada"
   notas?: string
+  companyName?: string
+  identification?: string
 }
 
 interface FacturaCreatorProps {
@@ -54,9 +63,14 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
   const [direccion, setDireccion] = useState("")
   const [fecha, setFecha] = useState("")
   const [vencimiento, setVencimiento] = useState("")
+  const [paymentMethod, setPaymentMethod] = useState<"transferencia" | "efectivo">("transferencia")
   const [productosSeleccionados, setProductosSeleccionados] = useState<ProductoEnFactura[]>([])
   const [estado, setEstado] = useState<"pendiente" | "pagada" | "vencida" | "cancelada">("pendiente")
   const [notas, setNotas] = useState("")
+  const [clientes, setClientes] = useState<ClientRecord[]>([])
+  const [clientId, setClientId] = useState<string | null>(null)
+  const [companyName, setCompanyName] = useState("")
+  const [identification, setIdentification] = useState("")
   const [showProductos, setShowProductos] = useState(false)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
@@ -72,6 +86,10 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       setProductosSeleccionados(editingFactura.productos)
       setEstado(editingFactura.estado)
       setNotas(editingFactura.notas || "")
+      setClientId(editingFactura.clientId || null)
+      setCompanyName(editingFactura.companyName || "")
+      setIdentification(editingFactura.identification || "")
+      setPaymentMethod(editingFactura.paymentMethod || "transferencia")
     } else {
       // Reset form y generar número automático
       const now = new Date()
@@ -91,8 +109,44 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       setProductosSeleccionados([])
       setEstado("pendiente")
       setNotas("")
+      setClientId(null)
+      setCompanyName("")
+      setIdentification("")
+      setPaymentMethod("transferencia")
     }
   }, [editingFactura, isOpen])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadClients = async () => {
+      try {
+        const clientsData = await fetchAdminClients<ClientRecord[]>()
+        if (isMounted) {
+          setClientes(clientsData)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setClientes([])
+        }
+      }
+    }
+
+    void loadClients()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!clientId) return
+    const selectedClient = clientes.find((client) => client.id === clientId)
+    if (!selectedClient) return
+
+    setCompanyName(selectedClient.companyName || "")
+    setIdentification(selectedClient.identification || "")
+  }, [clientId, clientes])
 
   if (!isOpen) return null
 
@@ -120,12 +174,27 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
     setProductosSeleccionados(productosSeleccionados.filter((p) => p.id !== id))
   }
 
+  const handleSelectClient = (client: ClientRecord | null) => {
+    if (!client) {
+      setClientId(null)
+      return
+    }
+
+    setClientId(client.id)
+    setCliente(client.name)
+    setEmail(client.email)
+    setTelefono(client.phone)
+    setDireccion(client.address || "")
+    setCompanyName(client.companyName || "")
+    setIdentification(client.identification || "")
+  }
+
   const calcularSubtotal = () => {
     return productosSeleccionados.reduce((sum, producto) => sum + producto.precio * producto.cantidad, 0)
   }
 
   const calcularImpuestos = () => {
-    return calcularSubtotal() * 0.18 // 18% ITBIS en RD
+    return 0
   }
 
   const calcularTotal = () => {
@@ -136,164 +205,38 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
     setIsGeneratingPDF(true)
 
     try {
-      const doc = new jsPDF()
+      const items = productosSeleccionados.map((producto) => ({
+        name: producto.nombre,
+        description: producto.descripcion,
+        quantity: producto.cantidad,
+        unitPriceLabel: `$${producto.precio.toLocaleString()}`,
+        lineTotalLabel: `$${(producto.precio * producto.cantidad).toLocaleString()}`,
+      }))
 
-      // Configuración de colores corporativos
-      const primaryColor = [211, 38, 48] // Rojo corporativo #D32630
-      const secondaryColor = [47, 47, 47] // Gris oscuro corporativo #2F2F2F
-      const textColor = [31, 41, 55] // Gray-800
-
-      // Header con logo y datos de empresa
-      doc.setFillColor(...primaryColor)
-      doc.rect(0, 0, 210, 40, "F")
-
-      // Logo placeholder (en un caso real cargarías la imagen)
-      doc.setFillColor(255, 255, 255)
-      doc.rect(15, 10, 20, 20, "F")
-      doc.setTextColor(...primaryColor)
-      doc.setFontSize(8)
-      doc.text("LOGO", 23, 22)
-
-      // Datos de empresa
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(20)
-      doc.setFont("helvetica", "bold")
-      doc.text("JumTech RD", 45, 20)
-
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "normal")
-      doc.text("Soluciones Tecnológicas Integrales", 45, 27)
-      doc.text("Email: jumtechRD@gmail.com", 45, 33)
-      doc.text("Tel: +1 (809) 984-8283", 45, 37)
-
-      // Título FACTURA
-      doc.setTextColor(...primaryColor)
-      doc.setFontSize(24)
-      doc.setFont("helvetica", "bold")
-      doc.text("FACTURA", 150, 25)
-
-      // Información de factura
-      doc.setTextColor(...textColor)
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "normal")
-      doc.text(`Número: ${numero}`, 150, 35)
-
-      // Datos del cliente
-      let yPos = 60
-      doc.setFontSize(12)
-      doc.setFont("helvetica", "bold")
-      doc.text("FACTURAR A:", 15, yPos)
-
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "normal")
-      yPos += 8
-      doc.text(cliente, 15, yPos)
-      yPos += 6
-      if (direccion) {
-        doc.text(direccion, 15, yPos)
-        yPos += 6
-      }
-      if (telefono) {
-        doc.text(`Tel: ${telefono}`, 15, yPos)
-        yPos += 6
-      }
-      if (email) {
-        doc.text(`Email: ${email}`, 15, yPos)
-      }
-
-      // Fechas
-      doc.setFont("helvetica", "bold")
-      doc.text("FECHA:", 150, 60)
-      doc.text("VENCIMIENTO:", 150, 68)
-
-      doc.setFont("helvetica", "normal")
-      doc.text(new Date(fecha).toLocaleDateString(), 175, 60)
-      doc.text(new Date(vencimiento).toLocaleDateString(), 175, 68)
-
-      // Estado
-      doc.setFont("helvetica", "bold")
-      doc.text("ESTADO:", 150, 76)
-      doc.setFont("helvetica", "normal")
-      doc.text(estado.toUpperCase(), 175, 76)
-
-      // Tabla de productos
-      yPos = 100
-
-      // Header de tabla
-      doc.setFillColor(...secondaryColor)
-      doc.rect(15, yPos - 5, 180, 10, "F")
-
-      doc.setTextColor(255, 255, 255)
-      doc.setFont("helvetica", "bold")
-      doc.text("DESCRIPCIÓN", 20, yPos)
-      doc.text("CANT.", 130, yPos)
-      doc.text("PRECIO", 150, yPos)
-      doc.text("TOTAL", 175, yPos)
-
-      // Productos
-      doc.setTextColor(...textColor)
-      doc.setFont("helvetica", "normal")
-      yPos += 15
-
-      productosSeleccionados.forEach((producto) => {
-        // Nombre del producto
-        doc.setFont("helvetica", "bold")
-        doc.text(producto.nombre, 20, yPos)
-
-        // Descripción
-        doc.setFont("helvetica", "normal")
-        doc.setFontSize(8)
-        doc.text(producto.descripcion, 20, yPos + 4)
-
-        // Cantidad, precio y total
-        doc.setFontSize(10)
-        doc.text(producto.cantidad.toString(), 135, yPos)
-        doc.text(`$${producto.precio.toLocaleString()}`, 150, yPos)
-        doc.text(`$${(producto.precio * producto.cantidad).toLocaleString()}`, 175, yPos)
-
-        yPos += 15
+      const subtotal = calcularSubtotal()
+      await generateFinancialPdf({
+        fileName: `Factura_${numero}_${cliente.replace(/\s+/g, "_")}.pdf`,
+        title: "FACTURA",
+        referenceLabel: "Número",
+        referenceValue: numero,
+        dateLabel: "Fecha",
+        dateValue: new Date(fecha || new Date().toISOString()).toLocaleDateString("es-DO"),
+        customerName: cliente,
+        customerEmail: email,
+        customerPhone: telefono || undefined,
+        customerCompanyName: companyName || undefined,
+        customerIdentification: identification || undefined,
+        customerAddress: direccion || undefined,
+        paymentMethodLabel: "Método de pago",
+        paymentMethodValue: paymentMethod === "efectivo" ? "Efectivo" : "Transferencia",
+        items,
+        subtotalLabel: "Subtotal",
+        subtotalValue: `$${subtotal.toLocaleString()}`,
+        totalLabel: "TOTAL",
+        totalValue: `$${subtotal.toLocaleString()}`,
+        notes: notas,
+        footerText: "Gracias por su preferencia - JumTech RD | Soluciones Tecnológicas",
       })
-
-      // Totales
-      yPos += 10
-      const totalsX = 140
-
-      doc.setFont("helvetica", "normal")
-      doc.text("Subtotal:", totalsX, yPos)
-      doc.text(`$${calcularSubtotal().toLocaleString()}`, 175, yPos)
-
-      yPos += 8
-      doc.text("ITBIS (18%):", totalsX, yPos)
-      doc.text(`$${calcularImpuestos().toLocaleString()}`, 175, yPos)
-
-      yPos += 8
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(12)
-      doc.text("TOTAL:", totalsX, yPos)
-      doc.text(`$${calcularTotal().toLocaleString()}`, 175, yPos)
-
-      // Notas
-      if (notas) {
-        yPos += 20
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "bold")
-        doc.text("NOTAS:", 15, yPos)
-
-        doc.setFont("helvetica", "normal")
-        const notasLines = doc.splitTextToSize(notas, 180)
-        doc.text(notasLines, 15, yPos + 8)
-      }
-
-      // Footer
-      const pageHeight = doc.internal.pageSize.height
-      doc.setFontSize(8)
-      doc.setTextColor(...secondaryColor)
-      doc.text("Gracias por su preferencia - JumTech RD", 15, pageHeight - 20)
-      doc.text("Email: jumtechRD@gmail.com | Tel: +1 (809) 984-8283", 15, pageHeight - 15)
-      doc.text("República Dominicana", 15, pageHeight - 10)
-
-      // Guardar PDF
-      doc.save(`Factura_${numero}_${cliente.replace(/\s+/g, "_")}.pdf`)
     } catch (error) {
       console.error("Error generando PDF:", error)
       alert("Error al generar el PDF. Inténtalo de nuevo.")
@@ -315,14 +258,19 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       email,
       telefono,
       direccion,
+      clientId,
+      sourceQuoteId: editingFactura?.sourceQuoteId || null,
+      paymentMethod,
       fecha: new Date(fecha).toISOString(),
       vencimiento: new Date(vencimiento).toISOString(),
       productos: productosSeleccionados,
       subtotal: calcularSubtotal(),
-      impuestos: calcularImpuestos(),
+      impuestos: 0,
       total: calcularTotal(),
       estado,
       notas,
+      companyName: companyName || undefined,
+      identification: identification || undefined,
     }
 
     onSave(factura)
@@ -344,8 +292,8 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-5xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+      <Card className="w-full max-w-5xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[90vh]">
         <CardHeader className="relative">
           <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors">
             <X className="h-6 w-6" />
@@ -354,19 +302,19 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
             <Badge className="mb-4 bg-purple-600/20 text-purple-400 border-purple-600/30">
               {editingFactura ? "Editar Factura" : "Nueva Factura"}
             </Badge>
-            <CardTitle className="text-2xl md:text-3xl font-bold text-white mb-2">Crear Factura Profesional</CardTitle>
+            <CardTitle className="text-xl md:text-3xl font-bold text-white mb-2">Crear Factura</CardTitle>
             <p className="text-gray-300">Completa los datos y genera una factura con PDF</p>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-6">
           {/* Información de Factura */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <FileText className="h-5 w-5 mr-2 text-purple-400" />
               Información de Factura
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Número de Factura</label>
                 <input
@@ -408,15 +356,36 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                   <option value="cancelada">Cancelada</option>
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Método de pago</label>
+                <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as "transferencia" | "efectivo")}>
+                  <SelectTrigger className="w-full px-4 py-3 bg-slate-800/90 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <SelectValue placeholder="Seleccionar método" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-gray-700 text-white">
+                    <SelectItem value="transferencia">Transferencia</SelectItem>
+                    <SelectItem value="efectivo">Efectivo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           {/* Información del Cliente */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <User className="h-5 w-5 mr-2 text-purple-400" />
               Información del Cliente
             </h3>
+            <div className="mb-4">
+              <ClientSelector
+                clients={clientes}
+                selectedClientId={clientId}
+                onSelect={handleSelectClient}
+                label="Cliente reutilizable"
+                description="Busca y selecciona un cliente para autocompletar la factura o continúa de forma manual."
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Nombre Completo *</label>
@@ -426,6 +395,26 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                   onChange={(e) => setCliente(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="Nombre del cliente"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Empresa</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Empresa opcional"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Identificación</label>
+                <input
+                  type="text"
+                  value={identification}
+                  onChange={(e) => setIdentification(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="RNC, cédula o ID"
                 />
               </div>
               <div>
@@ -445,11 +434,11 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                   value={telefono}
                   onChange={(e) => setTelefono(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="+1 (809) 000-0000"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Dirección</label>
+                placeholder="+1 (809) 000-0000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Dirección</label>
                 <input
                   type="text"
                   value={direccion}
@@ -462,8 +451,8 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
           </div>
 
           {/* Productos */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="text-lg font-semibold text-white flex items-center">
                 <Package className="h-5 w-5 mr-2 text-purple-400" />
                 Productos y Servicios
@@ -491,17 +480,17 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                 {productosSeleccionados.map((producto) => (
                   <div
                     key={producto.id}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-gray-700/30"
+                    className="flex flex-col gap-4 p-4 bg-white/5 rounded-lg border border-gray-700/30 lg:flex-row lg:items-center lg:justify-between"
                   >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-white">{producto.nombre}</h4>
-                      <p className="text-sm text-gray-400">{producto.descripcion}</p>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
+                      <p className="break-words text-sm text-gray-400">{producto.descripcion}</p>
                       <Badge className="mt-1 bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">
                         {producto.categoria}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:items-center lg:space-x-4">
+                      <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
                           className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
@@ -516,7 +505,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                           +
                         </button>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="text-white font-medium">
                           ${(producto.precio * producto.cantidad).toLocaleString()}
                         </p>
@@ -536,7 +525,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
           </div>
 
           {/* Notas */}
-          <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+          <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
             <h3 className="text-lg font-semibold text-white mb-4">Notas y Términos</h3>
             <textarea
               value={notas}
@@ -549,7 +538,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
 
           {/* Resumen */}
           {productosSeleccionados.length > 0 && (
-            <div className="bg-white/5 rounded-lg p-6 border border-gray-700/50">
+            <div className="bg-white/5 rounded-lg p-4 sm:p-6 border border-gray-700/50">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <Calculator className="h-5 w-5 mr-2 text-purple-400" />
                 Resumen de Factura
@@ -558,10 +547,6 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                 <div className="flex justify-between text-gray-300">
                   <span>Subtotal:</span>
                   <span>${calcularSubtotal().toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-gray-300">
-                  <span>ITBIS (18%):</span>
-                  <span>${calcularImpuestos().toLocaleString()}</span>
                 </div>
                 <div className="border-t border-gray-700 pt-3">
                   <div className="flex justify-between text-white font-bold text-lg">
@@ -620,8 +605,8 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
 
       {/* Modal de Productos */}
       {showProductos && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/80 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+          <Card className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-sm border-gray-700/50 max-h-[calc(100vh-1rem)] overflow-y-auto sm:max-h-[80vh]">
             <CardHeader className="relative">
               <button
                 onClick={() => setShowProductos(false)}
@@ -642,14 +627,14 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                       onClick={() => agregarProducto(producto)}
                     >
                       <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium text-white">{producto.nombre}</h4>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-2">
+                          <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
                           <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">
                             {producto.categoria}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-400 mb-3">{producto.descripcion}</p>
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <span className="text-lg font-bold text-purple-400">
                               ${producto.precio.toLocaleString()}

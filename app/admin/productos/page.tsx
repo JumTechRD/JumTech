@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ProductoManager } from "@/components/producto-manager"
+import { AdminBottomNav } from "@/components/admin-bottom-nav"
+import { deleteAdminProduct, fetchAdminProducts, saveAdminProduct } from "@/lib/admin-api-client"
 import {
   Plus,
   Search,
@@ -118,121 +120,7 @@ export default function ProductosPage() {
 
       setIsAuthenticated(true)
 
-      // Cargar productos desde localStorage
-      const productosGuardados = localStorage.getItem("productos")
-      if (productosGuardados) {
-        setProductos(JSON.parse(productosGuardados))
-      } else {
-        // Productos de ejemplo con datos mejorados
-        const productosEjemplo: Producto[] = [
-        {
-          id: "1",
-          nombre: "Laptop Dell Inspiron 15",
-          descripcion: "Laptop para uso profesional y personal con excelente rendimiento",
-          precio: 45000,
-          categoria: "laptops",
-          imagen: "/placeholder.svg?height=300&width=300&text=Dell+Laptop",
-          stock: 5,
-          rating: 4.5,
-          especificaciones: ["Intel i5", "8GB RAM", "256GB SSD", "15.6 pulgadas"],
-          activo: true,
-          fechaCreacion: new Date().toISOString(),
-          fechaActualizacion: new Date().toISOString(),
-          precioCompra: 35000,
-          margenGanancia: 28.6,
-          proveedor: "Dell Technologies",
-          sku: "DELL-INS15-001",
-          peso: 1.8,
-          dimensiones: { largo: 35.8, ancho: 24.2, alto: 1.9 },
-          garantia: 12,
-          ubicacion: "Almacén A - Estante 1",
-          stockMinimo: 2,
-          stockMaximo: 10,
-          vendido: 15,
-          ultimaVenta: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "2",
-          nombre: 'Monitor Samsung 24"',
-          descripcion: "Monitor Full HD para oficina con excelente calidad de imagen",
-          precio: 12000,
-          categoria: "monitores",
-          imagen: "/placeholder.svg?height=300&width=300&text=Samsung+Monitor",
-          stock: 8,
-          rating: 4.3,
-          especificaciones: ["24 pulgadas", "Full HD", "IPS", "HDMI"],
-          activo: true,
-          fechaCreacion: new Date().toISOString(),
-          fechaActualizacion: new Date().toISOString(),
-          precioCompra: 9000,
-          margenGanancia: 33.3,
-          proveedor: "Samsung Electronics",
-          sku: "SAM-MON24-001",
-          peso: 3.2,
-          dimensiones: { largo: 55.2, ancho: 32.7, alto: 4.2 },
-          garantia: 24,
-          ubicacion: "Almacén A - Estante 2",
-          stockMinimo: 3,
-          stockMaximo: 15,
-          vendido: 8,
-          ultimaVenta: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "3",
-          nombre: "iPhone 15",
-          descripcion: "Último modelo de Apple con tecnología avanzada",
-          precio: 85000,
-          categoria: "celulares",
-          imagen: "/placeholder.svg?height=300&width=300&text=iPhone+15",
-          stock: 3,
-          rating: 4.8,
-          especificaciones: ["128GB", "Cámara 48MP", "5G", "iOS 17"],
-          activo: true,
-          fechaCreacion: new Date().toISOString(),
-          fechaActualizacion: new Date().toISOString(),
-          precioCompra: 75000,
-          margenGanancia: 13.3,
-          proveedor: "Apple Inc.",
-          sku: "APP-IPH15-001",
-          peso: 0.171,
-          dimensiones: { largo: 14.8, ancho: 7.2, alto: 0.8 },
-          garantia: 12,
-          ubicacion: "Almacén B - Estante 1",
-          stockMinimo: 1,
-          stockMaximo: 5,
-          vendido: 25,
-          ultimaVenta: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "4",
-          nombre: "Cámara IP Hikvision",
-          descripcion: "Cámara de seguridad 4K con visión nocturna",
-          precio: 8500,
-          categoria: "camaras",
-          imagen: "/placeholder.svg?height=300&width=300&text=Hikvision+Camera",
-          stock: 12,
-          rating: 4.6,
-          especificaciones: ["4K", "Visión nocturna", "IP67", "PoE"],
-          activo: true,
-          fechaCreacion: new Date().toISOString(),
-          fechaActualizacion: new Date().toISOString(),
-          precioCompra: 6000,
-          margenGanancia: 41.7,
-          proveedor: "Hikvision",
-          sku: "HIK-CAM4K-001",
-          peso: 0.8,
-          dimensiones: { largo: 12.0, ancho: 8.0, alto: 6.0 },
-          garantia: 24,
-          ubicacion: "Almacén A - Estante 3",
-          stockMinimo: 5,
-          stockMaximo: 20,
-          vendido: 18,
-          ultimaVenta: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ]
-        setProductos(productosEjemplo)
-        localStorage.setItem("productos", JSON.stringify(productosEjemplo))
-      }
+      setProductos(await fetchAdminProducts<Producto[]>())
     }
 
     void loadAdminPage()
@@ -240,11 +128,6 @@ export default function ProductosPage() {
 
   const handleLogout = () => {
     void logoutAdminSession(router)
-  }
-
-  const saveProductos = (nuevosProductos: Producto[]) => {
-    setProductos(nuevosProductos)
-    localStorage.setItem("productos", JSON.stringify(nuevosProductos))
   }
 
   const handleNewProduct = () => {
@@ -257,32 +140,45 @@ export default function ProductosPage() {
     setShowManager(true)
   }
 
-  const handleSaveProduct = (producto: Producto) => {
-    if (editingProduct) {
-      // Actualizar producto existente
-      const nuevosProductos = productos.map((p) => (p.id === producto.id ? producto : p))
-      saveProductos(nuevosProductos)
-    } else {
-      // Nuevo producto
-      saveProductos([...productos, producto])
+  const handleSaveProduct = async (producto: Producto) => {
+    try {
+      const savedProduct = await saveAdminProduct<Producto>(producto, editingProduct?.id)
+      setProductos((currentProducts) =>
+        editingProduct
+          ? currentProducts.map((p) => (p.id === savedProduct.id ? savedProduct : p))
+          : [savedProduct, ...currentProducts],
+      )
+      setShowManager(false)
+      setEditingProduct(null)
+    } catch (error) {
+      alert("Error al guardar el producto")
     }
-    setShowManager(false)
-    setEditingProduct(null)
   }
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-      const nuevosProductos = productos.filter((p) => p.id !== id)
-      saveProductos(nuevosProductos)
+      try {
+        await deleteAdminProduct(id)
+        setProductos((currentProducts) => currentProducts.filter((p) => p.id !== id))
+      } catch (error) {
+        alert("Error al eliminar el producto")
+      }
     }
   }
 
-  const handleToggleActive = (id: string) => {
-    const nuevosProductos = productos.map((p) => (p.id === id ? { ...p, activo: !p.activo } : p))
-    saveProductos(nuevosProductos)
+  const handleToggleActive = async (id: string) => {
+    const product = productos.find((p) => p.id === id)
+    if (!product) return
+
+    try {
+      const savedProduct = await saveAdminProduct<Producto>({ ...product, activo: !product.activo }, id)
+      setProductos((currentProducts) => currentProducts.map((p) => (p.id === id ? savedProduct : p)))
+    } catch (error) {
+      alert("Error al actualizar el producto")
+    }
   }
 
-  const handleDuplicateProduct = (producto: Producto) => {
+  const handleDuplicateProduct = async (producto: Producto) => {
     const productoDuplicado: Producto = {
       ...producto,
       id: Date.now().toString(),
@@ -290,36 +186,56 @@ export default function ProductosPage() {
       fechaCreacion: new Date().toISOString(),
       fechaActualizacion: new Date().toISOString(),
     }
-    saveProductos([...productos, productoDuplicado])
+    try {
+      const savedProduct = await saveAdminProduct<Producto>(productoDuplicado)
+      setProductos((currentProducts) => [savedProduct, ...currentProducts])
+    } catch (error) {
+      alert("Error al duplicar el producto")
+    }
   }
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     if (selectedProducts.length === 0) {
       alert("Selecciona al menos un producto")
       return
     }
 
-    switch (action) {
-      case "activate":
-        const productosActivados = productos.map((p) =>
-          selectedProducts.includes(p.id) ? { ...p, activo: true } : p
-        )
-        saveProductos(productosActivados)
-        break
-      case "deactivate":
-        const productosDesactivados = productos.map((p) =>
-          selectedProducts.includes(p.id) ? { ...p, activo: false } : p
-        )
-        saveProductos(productosDesactivados)
-        break
-      case "delete":
-        if (confirm(`¿Estás seguro de que quieres eliminar ${selectedProducts.length} productos?`)) {
-          const productosFiltrados = productos.filter((p) => !selectedProducts.includes(p.id))
-          saveProductos(productosFiltrados)
+    try {
+      switch (action) {
+        case "activate": {
+          const updatedProducts = await Promise.all(
+            productos
+              .filter((p) => selectedProducts.includes(p.id))
+              .map((p) => saveAdminProduct<Producto>({ ...p, activo: true }, p.id)),
+          )
+          setProductos((currentProducts) =>
+            currentProducts.map((p) => updatedProducts.find((updated) => updated.id === p.id) || p),
+          )
+          break
         }
-        break
+        case "deactivate": {
+          const updatedProducts = await Promise.all(
+            productos
+              .filter((p) => selectedProducts.includes(p.id))
+              .map((p) => saveAdminProduct<Producto>({ ...p, activo: false }, p.id)),
+          )
+          setProductos((currentProducts) =>
+            currentProducts.map((p) => updatedProducts.find((updated) => updated.id === p.id) || p),
+          )
+          break
+        }
+        case "delete":
+          if (confirm(`¿Estás seguro de que quieres eliminar ${selectedProducts.length} productos?`)) {
+            await Promise.all(selectedProducts.map((id) => deleteAdminProduct(id)))
+            setProductos((currentProducts) => currentProducts.filter((p) => !selectedProducts.includes(p.id)))
+          }
+          break
+      }
+    } catch (error) {
+      alert("Error al ejecutar la acción masiva")
+    } finally {
+      setSelectedProducts([])
     }
-    setSelectedProducts([])
   }
 
   // Filtrar y ordenar productos
@@ -453,7 +369,7 @@ export default function ProductosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-x-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl"></div>
@@ -464,26 +380,29 @@ export default function ProductosPage() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-gray-800/50 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex min-w-0 items-center space-x-3">
             <Image
-              src="/images/logo-nuevo.jpeg"
+              src="/images/logo-nuevo-transparente.png"
               alt="JumTech RD Logo"
               width={50}
               height={50}
               className="rounded-lg"
             />
-            <div>
-              <span className="text-xl font-bold text-white">JumTech RD</span>
+            <div className="min-w-0">
+              <span className="block truncate text-base font-bold text-white sm:text-xl">JumTech RD</span>
               <Badge className="ml-2 bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">Productos</Badge>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors">
               <Home className="h-4 w-4 mr-1 inline" />
               Ver Sitio
             </Link>
             <Link href="/admin/dashboard" className="text-gray-300 hover:text-white transition-colors">
               Dashboard
+            </Link>
+            <Link href="/admin/clientes" className="text-gray-300 hover:text-white transition-colors">
+              Clientes
             </Link>
             <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white transition-colors">
               Cotizaciones
@@ -499,109 +418,114 @@ export default function ProductosPage() {
               Cerrar Sesión
             </Button>
           </div>
+          <div className="flex lg:hidden">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </nav>
 
-      <div className="pt-24 pb-16 px-4 relative z-10">
+      <div className="pt-24 pb-24 lg:pb-16 px-4 relative z-10">
         <div className="container mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-blue-600/20 text-blue-400 border-blue-600/30">Gestión de Productos</Badge>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Inventario de Productos</h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Inventario de Productos</h1>
+            <p className="text-base sm:text-xl text-gray-300 max-w-2xl mx-auto">
               Administra tu inventario con control total de stock, precios y categorías
             </p>
           </div>
 
           {/* Estadísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-8">
             <Card className="bg-white/5 border-gray-700/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-gray-400 text-sm">Total Productos</p>
-                    <p className="text-2xl font-bold text-white">{getTotalProductos()}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-white">{getTotalProductos()}</p>
                   </div>
-                  <Package className="h-8 w-8 text-blue-400" />
+                  <Package className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400 shrink-0" />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-white/5 border-gray-700/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-gray-400 text-sm">Activos</p>
-                    <p className="text-2xl font-bold text-green-400">{getProductosActivos()}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-green-400">{getProductosActivos()}</p>
                   </div>
-                  <Eye className="h-8 w-8 text-green-400" />
+                  <Eye className="h-6 w-6 sm:h-8 sm:w-8 text-green-400 shrink-0" />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-white/5 border-gray-700/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-gray-400 text-sm">Inactivos</p>
-                    <p className="text-2xl font-bold text-gray-400">{getProductosInactivos()}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-400">{getProductosInactivos()}</p>
                   </div>
-                  <EyeOff className="h-8 w-8 text-gray-400" />
+                  <EyeOff className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 shrink-0" />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-white/5 border-gray-700/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-gray-400 text-sm">Valor Inventario</p>
-                    <p className="text-2xl font-bold text-purple-400">RD$ {getValorInventario().toLocaleString()}</p>
+                    <p className="break-words text-lg sm:text-2xl font-bold text-purple-400">RD$ {getValorInventario().toLocaleString()}</p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-purple-400" />
+                  <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-purple-400 shrink-0" />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-white/5 border-gray-700/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-gray-400 text-sm">Stock Bajo</p>
-                    <p className="text-2xl font-bold text-orange-400">{getProductosStockBajo()}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-orange-400">{getProductosStockBajo()}</p>
                   </div>
-                  <AlertCircle className="h-8 w-8 text-orange-400" />
+                  <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-orange-400 shrink-0" />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-white/5 border-gray-700/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-gray-400 text-sm">Sin Stock</p>
-                    <p className="text-2xl font-bold text-red-400">{getProductosSinStock()}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-red-400">{getProductosSinStock()}</p>
                   </div>
-                  <AlertCircle className="h-8 w-8 text-red-400" />
+                  <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-400 shrink-0" />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-white/5 border-gray-700/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-gray-400 text-sm">Total Vendido</p>
-                    <p className="text-2xl font-bold text-green-400">{getTotalVendido()}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-green-400">{getTotalVendido()}</p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-green-400" />
+                  <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-green-400 shrink-0" />
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Controles */}
-          <div className="flex flex-col lg:flex-row gap-4 mb-8">
+          <div className="flex flex-col gap-4 mb-8">
             {/* Búsqueda */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -614,12 +538,12 @@ export default function ProductosPage() {
             </div>
 
             {/* Filtros */}
-            <div className="flex gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <select
                 value={filterCategoria}
                 onChange={(e) => setFilterCategoria(e.target.value)}
                 aria-label="Filtrar por categoría"
-                className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
+                className="w-full px-4 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white [&>option]:bg-slate-800 [&>option]:text-white"
               >
                 <option value="todos">Todas las categorías</option>
                 {categoriasPredefinidas.map((cat) => (
@@ -633,7 +557,7 @@ export default function ProductosPage() {
                 value={filterEstado}
                 onChange={(e) => setFilterEstado(e.target.value)}
                 aria-label="Filtrar por estado"
-                className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
+                className="w-full px-4 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white [&>option]:bg-slate-800 [&>option]:text-white"
               >
                 <option value="todos">Todos los estados</option>
                 <option value="activos">Activos</option>
@@ -644,7 +568,7 @@ export default function ProductosPage() {
                 value={filterStock}
                 onChange={(e) => setFilterStock(e.target.value)}
                 aria-label="Filtrar por stock"
-                className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
+                className="w-full px-4 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white [&>option]:bg-slate-800 [&>option]:text-white"
               >
                 <option value="todos">Todo el stock</option>
                 <option value="con-stock">Con stock</option>
@@ -659,7 +583,7 @@ export default function ProductosPage() {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 aria-label="Ordenar productos por"
-                className="px-4 py-2 bg-white/5 border border-gray-600 rounded-lg text-white"
+                className="min-w-0 flex-1 px-4 py-2 bg-slate-800/90 border border-gray-600 rounded-lg text-white [&>option]:bg-slate-800 [&>option]:text-white"
               >
                 <option value="nombre">Ordenar por</option>
                 <option value="nombre">Nombre</option>
@@ -680,7 +604,7 @@ export default function ProductosPage() {
             </div>
 
             {/* Vista */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 sm:self-start">
               <Button
                 onClick={() => setViewMode("grid")}
                 variant={viewMode === "grid" ? "default" : "outline"}
@@ -701,11 +625,11 @@ export default function ProductosPage() {
           {/* Acciones masivas */}
           {selectedProducts.length > 0 && (
             <div className="mb-6 p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-blue-300">
                   {selectedProducts.length} producto(s) seleccionado(s)
                 </span>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     onClick={() => handleBulkAction("activate")}
                     size="sm"
@@ -772,8 +696,8 @@ export default function ProductosPage() {
                   key={producto.id}
                   className="bg-white/5 border-gray-700/50 hover:border-blue-500/50 transition-all"
                 >
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:space-x-4">
                       {/* Checkbox para selección masiva */}
                       <input
                         type="checkbox"
@@ -802,12 +726,12 @@ export default function ProductosPage() {
 
                       {/* Información del producto */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="text-lg font-semibold text-white">{producto.nombre}</h3>
+                        <div className="flex flex-col gap-2 mb-2 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <h3 className="text-lg font-semibold text-white break-words">{producto.nombre}</h3>
                             <p className="text-gray-400 text-sm line-clamp-2">{producto.descripcion}</p>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Badge
                               className={
                                 producto.activo
@@ -830,7 +754,7 @@ export default function ProductosPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-sm">
                           <div>
                             <span className="text-gray-400">Categoría:</span>
                             <p className="text-white font-medium">
@@ -883,7 +807,7 @@ export default function ProductosPage() {
                       </div>
 
                       {/* Acciones */}
-                      <div className="flex flex-col space-y-2">
+                      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:space-y-2">
                         <Button
                           size="sm"
                           variant="outline"
@@ -944,6 +868,7 @@ export default function ProductosPage() {
         onSave={handleSaveProduct}
         editingProduct={editingProduct}
       />
+      <AdminBottomNav />
     </div>
   )
 }
