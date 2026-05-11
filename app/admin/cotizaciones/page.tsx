@@ -210,12 +210,14 @@ export default function CotizacionesPage() {
         const monedaOrigen = producto.moneda || cotizacion.monedaPrincipal || "RD$"
         const precioBase = monedaOrigen === "USD" ? producto.precio * tasaCambio : producto.precio
         const precioConExtra = precioBase * producto.cantidad * (1 + (producto.porcentajeExtra || 0) / 100)
+        const cantidadParaCalculo = producto.cantidad > 0 ? producto.cantidad : 1
+        const precioFinalUnitario = precioConExtra / cantidadParaCalculo
 
         return {
           name: producto.nombre,
           description: producto.descripcion,
           quantity: producto.cantidad,
-          unitPriceLabel: `${cotizacion.monedaPrincipal || "RD$"} ${precioBase.toLocaleString("es-DO")}`,
+          unitPriceLabel: `${cotizacion.monedaPrincipal || "RD$"} ${precioFinalUnitario.toLocaleString("es-DO")}`,
           lineTotalLabel: `${cotizacion.monedaPrincipal || "RD$"} ${precioConExtra.toLocaleString("es-DO")}`,
         }
       })

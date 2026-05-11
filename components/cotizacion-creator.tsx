@@ -293,12 +293,14 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
         const precioEnMonedaPrincipal = convertirPrecio(producto.precio, producto.moneda || "RD$", monedaPrincipal)
         const totalConExtra =
           precioEnMonedaPrincipal * producto.cantidad * (1 + (producto.porcentajeExtra || 0) / 100)
+        const cantidadParaCalculo = producto.cantidad > 0 ? producto.cantidad : 1
+        const precioFinalUnitario = totalConExtra / cantidadParaCalculo
 
         return {
           name: producto.nombre,
           description: producto.descripcion,
           quantity: producto.cantidad,
-          unitPriceLabel: `${monedaPrincipal} ${formatearMonto(precioEnMonedaPrincipal)}`,
+          unitPriceLabel: `${monedaPrincipal} ${formatearMonto(precioFinalUnitario)}`,
           lineTotalLabel: `${monedaPrincipal} ${formatearMonto(totalConExtra)}`,
         }
       })

@@ -84,14 +84,24 @@ Este mensaje fue enviado desde el formulario de cotización de JumTech RD.
 
 function buildClientNotes(input: PublicQuoteSubmission) {
   return sanitizeString(
-    `Solicitud pública de cotización: ${buildServiceLabel(input.servicio)} | Urgencia: ${buildUrgencyLabel(input.urgencia)} | ${input.descripcion}`,
+    `Solicitud de cotización: ${buildServiceLabel(input.servicio)} | Urgencia: ${buildUrgencyLabel(input.urgencia)} | ${input.descripcion}`,
   )
 }
 
 function buildAdminQuoteNotes(input: PublicQuoteSubmission) {
-  return sanitizeString(
-    `Solicitud pública de cotización | Servicio: ${buildServiceLabel(input.servicio)} | Urgencia: ${buildUrgencyLabel(input.urgencia)} | Ubicación: ${input.ubicacion || "No especificada"}`,
-  )
+  const notes = [
+    "Solicitud de cotización",
+    `Servicio: ${buildServiceLabel(input.servicio)}`,
+    `Urgencia: ${buildUrgencyLabel(input.urgencia)}`,
+    `Ubicación: ${input.ubicacion || "No especificada"}`,
+  ]
+  const clientDescription = input.descripcion.trim()
+
+  if (clientDescription) {
+    notes.push(`Nota del cliente: ${clientDescription}`)
+  }
+
+  return sanitizeString(notes.join(" | "))
 }
 
 function toContactEmail(input: PublicQuoteSubmission) {
