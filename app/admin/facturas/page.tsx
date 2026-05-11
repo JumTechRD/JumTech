@@ -38,6 +38,7 @@ import {
   saveAdminInvoice,
 } from "@/lib/admin-api-client"
 import { generateFinancialPdf } from "@/lib/pdf-documents"
+import { getInvoiceDisplayItems } from "@/lib/invoice-display"
 import type { ClientRecord } from "@/lib/admin-clients"
 
 interface Producto {
@@ -164,12 +165,12 @@ export default function AdminFacturasPage() {
   const handleGenerarPdfFactura = async (factura: Factura) => {
     try {
       const selectedClient = factura.clientId ? clientes.find((client) => client.id === factura.clientId) : null
-      const items = factura.productos.map((producto) => ({
+      const items = getInvoiceDisplayItems(factura.productos, factura.subtotal).map((producto) => ({
         name: producto.nombre,
         description: producto.descripcion,
         quantity: producto.cantidad,
-        unitPriceLabel: `$${producto.precio.toLocaleString("es-DO")}`,
-        lineTotalLabel: `$${(producto.precio * producto.cantidad).toLocaleString("es-DO")}`,
+        unitPriceLabel: `$${producto.displayUnitPrice.toLocaleString("es-DO")}`,
+        lineTotalLabel: `$${producto.displayLineTotal.toLocaleString("es-DO")}`,
       }))
 
       await generateFinancialPdf({

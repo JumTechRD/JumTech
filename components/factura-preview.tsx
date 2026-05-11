@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
+import { getInvoiceDisplayItems } from "@/lib/invoice-display"
 
 interface Producto {
   id: string
@@ -43,6 +44,8 @@ interface FacturaPreviewProps {
 }
 
 export function FacturaPreview({ factura }: FacturaPreviewProps) {
+  const displayProducts = getInvoiceDisplayItems(factura.productos, factura.subtotal)
+
   const getEstadoColor = (estado: string) => {
     switch (estado) {
       case "pendiente":
@@ -135,7 +138,7 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
                 </tr>
               </thead>
               <tbody>
-                {factura.productos.map((producto, index) => (
+                {displayProducts.map((producto, index) => (
                   <tr key={producto.id} className={index % 2 === 0 ? "bg-gray-50" : ""}>
                     <td className="border p-3">
                       <div>
@@ -145,9 +148,9 @@ export function FacturaPreview({ factura }: FacturaPreviewProps) {
                       </div>
                     </td>
                     <td className="border p-3 text-center">{producto.cantidad}</td>
-                    <td className="border p-3 text-right">${producto.precio.toLocaleString()}</td>
+                    <td className="border p-3 text-right">${producto.displayUnitPrice.toLocaleString()}</td>
                     <td className="border p-3 text-right font-semibold">
-                      ${(producto.precio * producto.cantidad).toLocaleString()}
+                      ${producto.displayLineTotal.toLocaleString()}
                     </td>
                   </tr>
                 ))}

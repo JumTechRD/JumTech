@@ -12,6 +12,8 @@ export type InvoiceProductInput = {
   imagen?: string | null
   cantidad: number
   position: number
+  moneda?: string | null
+  porcentajeExtra?: number | null
 }
 
 export interface QuoteInvoiceSource {
@@ -26,7 +28,49 @@ export interface QuoteInvoiceSource {
   subtotal: number
   total: number
   impuestos?: number
+  monedaPrincipal?: string | null
   productos: InvoiceProductInput[]
+}
+
+const DEFAULT_EXCHANGE_RATE = 58
+
+function normalizeCurrency(value?: string | null) {
+  return value === "USD" ? "USD" : "RD$"
+}
+
+function convertPrice(precio: number, monedaOrigen?: string | null, monedaDestino?: string | null) {
+  const origen = normalizeCurrency(monedaOrigen)
+  const destino = normalizeCurrency(monedaDestino)
+
+  if (origen === destino) return precio
+  if (origen === "USD" && destino === "RD$") return precio * DEFAULT_EXCHANGE_RATE
+  return precio / DEFAULT_EXCHANGE_RATE
+}
+
+function buildInvoiceProductsFromQuote(quote: QuoteInvoiceSource) {
+  const productsWithFinalUnitPrice = quote.productos.map((producto) => {
+    const precioBase = convertPrice(producto.precio, producto.moneda, quote.monedaPrincipal)
+    const precioFinalUnitario = precioBase * (1 + (producto.porcentajeExtra || 0) / 100)
+
+    return {
+      ...producto,
+      precio: precioFinalUnitario,
+    }
+  })
+  const calculatedSubtotal = productsWithFinalUnitPrice.reduce(
+    (sum, producto) => sum + producto.precio * producto.cantidad,
+    0,
+  )
+
+  if (quote.subtotal > 0 && calculatedSubtotal > 0 && Math.abs(quote.subtotal - calculatedSubtotal) > 0.01) {
+    const adjustmentFactor = quote.subtotal / calculatedSubtotal
+    return productsWithFinalUnitPrice.map((producto) => ({
+      ...producto,
+      precio: producto.precio * adjustmentFactor,
+    }))
+  }
+
+  return productsWithFinalUnitPrice
 }
 
 export async function getInvoiceById(db: RawDb, id: string) {
@@ -110,6 +154,6 @@ export async function createInvoiceFromQuote(db: RawDb, quote: QuoteInvoiceSourc
     return existingAfterConflict
   }
 
-  await insertInvoiceItems(db, record.id, quote.productos)
+  await insertInvoiceItems(db, record.id, buildInvoiceProductsFromQuote(quote))
   return getInvoiceById(db, record.id)
 }

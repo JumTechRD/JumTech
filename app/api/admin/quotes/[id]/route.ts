@@ -170,6 +170,7 @@ export async function PUT(request: NextRequest, context: Params) {
           subtotal: mergedQuote.subtotal,
           total: mergedQuote.total,
           impuestos: mergedQuote.impuestos,
+          monedaPrincipal: mergedQuote.monedaPrincipal,
           productos: quote.productos,
         })
       }
