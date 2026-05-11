@@ -79,23 +79,43 @@ export default function CotizacionesPage() {
   const [filterEstado, setFilterEstado] = useState<string>("todos")
   const router = useRouter()
 
+  const loadQuotesAndClients = async () => {
+    const [quotesData, clientsData] = await Promise.all([
+      fetchAdminQuotes<Cotizacion[]>(),
+      fetchAdminClients<ClientRecord[]>(),
+    ])
+    setCotizaciones(quotesData)
+    setClientes(clientsData)
+  }
+
   useEffect(() => {
     const loadAdminPage = async () => {
       const isSessionValid = await ensureAdminSession(router)
       if (!isSessionValid) return
 
       setIsAuthenticated(true)
-
-      const [quotesData, clientsData] = await Promise.all([
-        fetchAdminQuotes<Cotizacion[]>(),
-        fetchAdminClients<ClientRecord[]>(),
-      ])
-      setCotizaciones(quotesData)
-      setClientes(clientsData)
+      await loadQuotesAndClients()
     }
 
     void loadAdminPage()
   }, [router])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const refreshData = () => {
+      void loadQuotesAndClients()
+    }
+
+    // Keep admin quotes list in sync with public submissions.
+    const intervalId = window.setInterval(refreshData, 15000)
+    window.addEventListener("focus", refreshData)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener("focus", refreshData)
+    }
+  }, [isAuthenticated])
 
   const handleLogout = () => {
     void logoutAdminSession(router)

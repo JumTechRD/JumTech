@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -49,6 +49,18 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const loadClients = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await fetchAdminClients<ClientRecord[]>()
+      setClients(data)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     const loadPage = async () => {
       const isSessionValid = await ensureAdminSession(router)
@@ -59,19 +71,23 @@ export default function ClientesPage() {
     }
 
     void loadPage()
-  }, [router])
+  }, [loadClients, router])
 
-  const loadClients = async () => {
-    setLoading(true)
-    try {
-      const data = await fetchAdminClients<ClientRecord[]>()
-      setClients(data)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const refreshClients = () => {
+      void loadClients()
     }
-  }
+
+    const intervalId = window.setInterval(refreshClients, 15000)
+    window.addEventListener("focus", refreshClients)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener("focus", refreshClients)
+    }
+  }, [isAuthenticated, loadClients])
 
   const handleLogout = () => {
     void logoutAdminSession(router)
