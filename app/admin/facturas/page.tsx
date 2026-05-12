@@ -291,7 +291,7 @@ export default function AdminFacturasPage() {
             <Link href="/admin/usuarios" className="text-gray-300 hover:text-white transition-colors text-sm">
               Usuarios
             </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+            <Button variant="ghost" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 text-sm">
               <LogOut className="h-4 w-4 mr-1" />Salir
             </Button>
           </div>
@@ -493,7 +493,7 @@ export default function AdminFacturasPage() {
                 setFechaInicial("")
                 setFechaFinal("")
               }}
-              className="border-gray-600 text-gray-300 hover:bg-white/10 bg-transparent"
+              className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10"
             >
               Limpiar filtros
             </Button>

@@ -324,13 +324,13 @@ export default function CotizacionesPage() {
             <Link href="/admin/facturas" className="text-gray-300 hover:text-white text-sm">Facturas</Link>
             <Link href="/admin/reportes" className="text-gray-300 hover:text-white text-sm">Reportes</Link>
             <Link href="/admin/usuarios" className="text-gray-300 hover:text-white text-sm">Usuarios</Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+            <Button variant="ghost" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 text-sm">
               <LogOut className="h-4 w-4 mr-1" />Salir
             </Button>
           </div>
           {/* Mobile: solo logout */}
           <div className="flex lg:hidden">
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 p-2">
               <LogOut className="h-5 w-5" />
             </Button>
           </div>

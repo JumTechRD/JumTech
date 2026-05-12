@@ -361,14 +361,14 @@ export default function ReportesPage() {
             <Link href="/admin/cotizaciones" className="text-gray-300 hover:text-white text-sm flex items-center gap-1"><FileText className="h-4 w-4" />Cotizaciones</Link>
             <Link href="/admin/facturas" className="text-gray-300 hover:text-white text-sm flex items-center gap-1"><Receipt className="h-4 w-4" />Facturas</Link>
             <Link href="/admin/usuarios" className="text-gray-300 hover:text-white text-sm">Usuarios</Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+            <Button variant="ghost" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 text-sm">
               <LogOut className="h-4 w-4 mr-1" />Salir
             </Button>
           </div>
           {/* Mobile nav */}
           <div className="flex lg:hidden items-center gap-2">
-            <Link href="/admin/dashboard"><Button variant="ghost" size="sm" className="text-gray-300 p-2"><Home className="h-4 w-4" /></Button></Link>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2"><LogOut className="h-4 w-4" /></Button>
+            <Link href="/admin/dashboard"><Button variant="ghost" size="sm" className="text-slate-200 hover:text-white hover:bg-white/10 p-2"><Home className="h-4 w-4" /></Button></Link>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 p-2"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
       </nav>

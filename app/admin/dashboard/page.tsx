@@ -243,13 +243,13 @@ export default function AdminDashboardPage() {
             <Link href="/admin/usuarios" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center gap-1">
               <Users className="h-4 w-4" />Usuarios
             </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+            <Button variant="ghost" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 text-sm">
               <LogOut className="h-4 w-4 mr-1" />Salir
             </Button>
           </div>
           {/* Mobile logout */}
           <div className="flex lg:hidden">
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 p-2">
               <LogOut className="h-5 w-5" />
             </Button>
           </div>

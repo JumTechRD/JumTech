@@ -678,7 +678,7 @@ export function ProductoManager({ isOpen, onClose, onSave, editingProduct }: Pro
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 border-gray-600 text-gray-300 hover:bg-white/10 bg-transparent"
+              className="flex-1 border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10"
               disabled={isLoading}
             >
               Cancelar

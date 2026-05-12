@@ -248,7 +248,7 @@ export default function ClientesPage() {
               <BarChart3 className="h-4 w-4" />
               Reportes
             </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+            <Button variant="ghost" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 text-sm">
               <LogOut className="h-4 w-4 mr-1" />
               Salir
             </Button>
@@ -320,7 +320,7 @@ export default function ClientesPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleEditClient(client)}
-                            className="border-gray-600 text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                            className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-blue-600 hover:text-white hover:border-blue-600"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -329,7 +329,7 @@ export default function ClientesPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => void handleDeleteClient(client)}
-                            className="border-gray-600 text-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
+                            className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-red-600 hover:text-white hover:border-red-600"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -427,7 +427,7 @@ export default function ClientesPage() {
                       type="button"
                       variant="outline"
                       onClick={handleNewClient}
-                      className="border-gray-600 text-gray-300 hover:bg-white/10 bg-transparent"
+                      className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10"
                     >
                       Cancelar
                     </Button>
