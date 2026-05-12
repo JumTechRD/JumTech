@@ -66,6 +66,8 @@ interface ProductoEnFactura {
   nombre: string
   descripcion: string
   precio: number
+  total?: number | null
+  profitPercentage?: number | null
   categoria: string
   imagen?: string
   stock?: number

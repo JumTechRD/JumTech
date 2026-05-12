@@ -53,6 +53,8 @@ interface Producto {
 
 interface ProductoEnFactura extends Producto {
   cantidad: number
+  total?: number | null
+  profitPercentage?: number | null
 }
 
 interface Factura {

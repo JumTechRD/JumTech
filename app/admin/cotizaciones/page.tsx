@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import jsPDF from "jspdf"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -31,6 +30,7 @@ import {
 } from "lucide-react"
 import { ensureAdminSession, logoutAdminSession } from "@/lib/admin-session-client"
 import type { ClientRecord } from "@/lib/admin-clients"
+import { DEFAULT_EXCHANGE_RATE, calcularItemConGanancia } from "@/lib/pricing"
 
 interface ProductoEnCotizacion {
   id: string
@@ -204,21 +204,23 @@ export default function CotizacionesPage() {
     try {
       const numeroCotizacion =
         cotizacion.numeroFactura || `COT-${new Date(cotizacion.fecha).getFullYear()}-${cotizacion.id.slice(-4)}`
-      const tasaCambio = 58
       const selectedClient = cotizacion.clientId ? clientes.find((client) => client.id === cotizacion.clientId) : null
       const items = cotizacion.productos.map((producto) => {
-        const monedaOrigen = producto.moneda || cotizacion.monedaPrincipal || "RD$"
-        const precioBase = monedaOrigen === "USD" ? producto.precio * tasaCambio : producto.precio
-        const precioConExtra = precioBase * producto.cantidad * (1 + (producto.porcentajeExtra || 0) / 100)
-        const cantidadParaCalculo = producto.cantidad > 0 ? producto.cantidad : 1
-        const precioFinalUnitario = precioConExtra / cantidadParaCalculo
+        const pricing = calcularItemConGanancia({
+          precio: producto.precio,
+          cantidad: producto.cantidad,
+          porcentajeGanancia: producto.porcentajeExtra,
+          monedaOrigen: producto.moneda || "RD$",
+          monedaDestino: cotizacion.monedaPrincipal || "RD$",
+          tasaCambio: DEFAULT_EXCHANGE_RATE,
+        })
 
         return {
           name: producto.nombre,
           description: producto.descripcion,
           quantity: producto.cantidad,
-          unitPriceLabel: `${cotizacion.monedaPrincipal || "RD$"} ${precioFinalUnitario.toLocaleString("es-DO")}`,
-          lineTotalLabel: `${cotizacion.monedaPrincipal || "RD$"} ${precioConExtra.toLocaleString("es-DO")}`,
+          unitPriceLabel: `${cotizacion.monedaPrincipal || "RD$"} ${formatearMonto(pricing.precioFinalUnitario)}`,
+          lineTotalLabel: `${cotizacion.monedaPrincipal || "RD$"} ${formatearMonto(pricing.totalItem)}`,
         }
       })
 

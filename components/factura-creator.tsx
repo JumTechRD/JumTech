@@ -10,6 +10,11 @@ import { fetchAdminClients } from "@/lib/admin-api-client"
 import { ClientSelector } from "@/components/client-selector"
 import type { ClientRecord } from "@/lib/admin-clients"
 import { generateFinancialPdf } from "@/lib/pdf-documents"
+import {
+  PROFIT_PERCENTAGE_OPTIONS,
+  calcularItemConGanancia,
+  calcularPrecioBaseDesdeFinal,
+} from "@/lib/pricing"
 
 interface Producto {
   id: string
@@ -23,6 +28,8 @@ interface Producto {
 
 interface ProductoEnFactura extends Producto {
   cantidad: number
+  total?: number | null
+  profitPercentage?: number | null
 }
 
 interface Factura {
@@ -55,6 +62,42 @@ interface FacturaCreatorProps {
   productos: Producto[]
 }
 
+const formatearMonto = (monto: number) =>
+  monto.toLocaleString("es-DO", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+
+function normalizarProductoParaEdicion(producto: ProductoEnFactura): ProductoEnFactura {
+  const profitPercentage = producto.profitPercentage || 0
+
+  return {
+    ...producto,
+    precio: calcularPrecioBaseDesdeFinal(producto.precio, profitPercentage),
+    profitPercentage,
+    total: producto.total ?? producto.precio * producto.cantidad,
+  }
+}
+
+function calcularProductoFactura(producto: ProductoEnFactura) {
+  return calcularItemConGanancia({
+    precio: producto.precio,
+    cantidad: producto.cantidad,
+    porcentajeGanancia: producto.profitPercentage,
+  })
+}
+
+function prepararProductoParaGuardar(producto: ProductoEnFactura): ProductoEnFactura {
+  const pricing = calcularProductoFactura(producto)
+
+  return {
+    ...producto,
+    precio: pricing.precioFinalUnitario,
+    total: pricing.totalItem,
+    profitPercentage: producto.profitPercentage || 0,
+  }
+}
+
 export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, productos }: FacturaCreatorProps) {
   const [numero, setNumero] = useState("")
   const [cliente, setCliente] = useState("")
@@ -83,7 +126,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       setDireccion(editingFactura.direccion)
       setFecha(editingFactura.fecha.split("T")[0])
       setVencimiento(editingFactura.vencimiento.split("T")[0])
-      setProductosSeleccionados(editingFactura.productos)
+      setProductosSeleccionados(editingFactura.productos.map(normalizarProductoParaEdicion))
       setEstado(editingFactura.estado)
       setNotas(editingFactura.notas || "")
       setClientId(editingFactura.clientId || null)
@@ -157,7 +200,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
         productosSeleccionados.map((p) => (p.id === producto.id ? { ...p, cantidad: p.cantidad + 1 } : p)),
       )
     } else {
-      setProductosSeleccionados([...productosSeleccionados, { ...producto, cantidad: 1 }])
+      setProductosSeleccionados([...productosSeleccionados, { ...producto, cantidad: 1, profitPercentage: 0, total: producto.precio }])
     }
     setShowProductos(false)
   }
@@ -168,6 +211,12 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       return
     }
     setProductosSeleccionados(productosSeleccionados.map((p) => (p.id === id ? { ...p, cantidad } : p)))
+  }
+
+  const actualizarPorcentajeGanancia = (id: string, profitPercentage: number) => {
+    setProductosSeleccionados(
+      productosSeleccionados.map((p) => (p.id === id ? { ...p, profitPercentage } : p)),
+    )
   }
 
   const eliminarProducto = (id: string) => {
@@ -190,7 +239,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
   }
 
   const calcularSubtotal = () => {
-    return productosSeleccionados.reduce((sum, producto) => sum + producto.precio * producto.cantidad, 0)
+    return productosSeleccionados.reduce((sum, producto) => sum + calcularProductoFactura(producto).totalItem, 0)
   }
 
   const calcularImpuestos = () => {
@@ -205,13 +254,17 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
     setIsGeneratingPDF(true)
 
     try {
-      const items = productosSeleccionados.map((producto) => ({
-        name: producto.nombre,
-        description: producto.descripcion,
-        quantity: producto.cantidad,
-        unitPriceLabel: `$${producto.precio.toLocaleString()}`,
-        lineTotalLabel: `$${(producto.precio * producto.cantidad).toLocaleString()}`,
-      }))
+      const items = productosSeleccionados.map((producto) => {
+        const pricing = calcularProductoFactura(producto)
+
+        return {
+          name: producto.nombre,
+          description: producto.descripcion,
+          quantity: producto.cantidad,
+          unitPriceLabel: `$${formatearMonto(pricing.precioFinalUnitario)}`,
+          lineTotalLabel: `$${formatearMonto(pricing.totalItem)}`,
+        }
+      })
 
       const subtotal = calcularSubtotal()
       await generateFinancialPdf({
@@ -231,9 +284,9 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
         paymentMethodValue: paymentMethod === "efectivo" ? "Efectivo" : "Transferencia",
         items,
         subtotalLabel: "Subtotal",
-        subtotalValue: `$${subtotal.toLocaleString()}`,
+        subtotalValue: `$${formatearMonto(subtotal)}`,
         totalLabel: "TOTAL",
-        totalValue: `$${subtotal.toLocaleString()}`,
+        totalValue: `$${formatearMonto(subtotal)}`,
         notes: notas,
         footerText: "Gracias por su preferencia - JumTech RD | Soluciones Tecnológicas",
       })
@@ -251,6 +304,9 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       return
     }
 
+    const productosFinales = productosSeleccionados.map(prepararProductoParaGuardar)
+    const subtotal = productosFinales.reduce((sum, producto) => sum + (producto.total ?? producto.precio * producto.cantidad), 0)
+
     const factura: Factura = {
       id: editingFactura?.id || Date.now().toString(),
       numero,
@@ -263,10 +319,10 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       paymentMethod,
       fecha: new Date(fecha).toISOString(),
       vencimiento: new Date(vencimiento).toISOString(),
-      productos: productosSeleccionados,
-      subtotal: calcularSubtotal(),
+      productos: productosFinales,
+      subtotal,
       impuestos: 0,
-      total: calcularTotal(),
+      total: subtotal,
       estado,
       notas,
       companyName: companyName || undefined,
@@ -477,49 +533,68 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
               </div>
             ) : (
               <div className="space-y-3">
-                {productosSeleccionados.map((producto) => (
-                  <div
-                    key={producto.id}
-                    className="flex flex-col gap-4 p-4 bg-white/5 rounded-lg border border-gray-700/30 lg:flex-row lg:items-center lg:justify-between"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
-                      <p className="break-words text-sm text-gray-400">{producto.descripcion}</p>
-                      <Badge className="mt-1 bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">
-                        {producto.categoria}
-                      </Badge>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:items-center lg:space-x-4">
-                      <div className="flex items-center justify-center space-x-2">
+                {productosSeleccionados.map((producto) => {
+                  const pricing = calcularProductoFactura(producto)
+
+                  return (
+                    <div
+                      key={producto.id}
+                      className="flex flex-col gap-4 p-4 bg-white/5 rounded-lg border border-gray-700/30 lg:flex-row lg:items-center lg:justify-between"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
+                        <p className="break-words text-sm text-gray-400">{producto.descripcion}</p>
+                        <Badge className="mt-1 bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">
+                          {producto.categoria}
+                        </Badge>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:items-center lg:space-x-4">
+                        <div className="flex items-center justify-center space-x-2">
+                          <button
+                            onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
+                            className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
+                          >
+                            -
+                          </button>
+                          <span className="text-white w-8 text-center">{producto.cantidad}</span>
+                          <button
+                            onClick={() => actualizarCantidad(producto.id, producto.cantidad + 1)}
+                            className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="text-center">
+                          <label className="text-xs text-gray-400 block mb-1">% Ganancia</label>
+                          <select
+                            value={producto.profitPercentage || 0}
+                            onChange={(e) => actualizarPorcentajeGanancia(producto.id, Number.parseInt(e.target.value))}
+                            className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-xs"
+                          >
+                            {PROFIT_PERCENTAGE_OPTIONS.map((percentage) => (
+                              <option key={percentage} value={percentage}>
+                                {percentage}%
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="text-left sm:text-right">
+                          <p className="text-white font-medium">${formatearMonto(pricing.totalItem)}</p>
+                          <p className="text-sm text-gray-400">Base: ${formatearMonto(producto.precio)} c/u</p>
+                          <p className="text-sm font-semibold text-green-400">
+                            Final: ${formatearMonto(pricing.precioFinalUnitario)} c/u
+                          </p>
+                        </div>
                         <button
-                          onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
-                          className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
+                          onClick={() => eliminarProducto(producto.id)}
+                          className="text-red-400 hover:text-red-300 p-2"
                         >
-                          -
-                        </button>
-                        <span className="text-white w-8 text-center">{producto.cantidad}</span>
-                        <button
-                          onClick={() => actualizarCantidad(producto.id, producto.cantidad + 1)}
-                          className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
-                        >
-                          +
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-white font-medium">
-                          ${(producto.precio * producto.cantidad).toLocaleString()}
-                        </p>
-                        <p className="text-sm text-gray-400">${producto.precio} c/u</p>
-                      </div>
-                      <button
-                        onClick={() => eliminarProducto(producto.id)}
-                        className="text-red-400 hover:text-red-300 p-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -544,16 +619,16 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                 Resumen de Factura
               </h3>
               <div className="space-y-3">
-                <div className="flex justify-between text-gray-300">
-                  <span>Subtotal:</span>
-                  <span>${calcularSubtotal().toLocaleString()}</span>
-                </div>
-                <div className="border-t border-gray-700 pt-3">
-                  <div className="flex justify-between text-white font-bold text-lg">
-                    <span>Total:</span>
-                    <span>${calcularTotal().toLocaleString()}</span>
-                  </div>
-                </div>
+	                <div className="flex justify-between text-gray-300">
+	                  <span>Subtotal:</span>
+	                  <span>${formatearMonto(calcularSubtotal())}</span>
+	                </div>
+	                <div className="border-t border-gray-700 pt-3">
+	                  <div className="flex justify-between text-white font-bold text-lg">
+	                    <span>Total:</span>
+	                    <span>${formatearMonto(calcularTotal())}</span>
+	                  </div>
+	                </div>
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-gray-300">Estado:</span>
                   <Badge className={getEstadoColor(estado)}>{estado}</Badge>

@@ -1,3 +1,9 @@
+import {
+  calcularPrecioFinalUnitario,
+  calcularPrecioUnitarioDesdeTotal,
+  calcularTotalItem,
+} from "@/lib/pricing"
+
 type Nullable<T> = T | null
 
 export interface ProductRecord {
@@ -54,6 +60,8 @@ export interface InvoiceItemRecord {
   nombre: string
   descripcion: string
   precio: number
+  total: Nullable<number>
+  profitPercentage: Nullable<number>
   categoria: string
   imagen: Nullable<string>
   cantidad: number
@@ -243,13 +251,22 @@ function normalizeInvoiceItems(value: unknown) {
   if (!Array.isArray(value)) return []
   return value.map((item, index) => {
     const record = item && typeof item === "object" ? (item as Record<string, unknown>) : {}
+    const cantidad = Math.max(1, toIntValue(record.cantidad, 1))
+    const profitPercentage = toOptionalNumber(record.profitPercentage ?? record.porcentajeExtra) ?? 0
+    const precioInput = toNumberValue(record.precio)
+    const explicitTotal = toOptionalNumber(record.total)
+    const total = explicitTotal ?? calcularTotalItem(calcularPrecioFinalUnitario(precioInput, profitPercentage), cantidad)
+    const precio = calcularPrecioUnitarioDesdeTotal(total, cantidad)
+
     return {
       nombre: toStringValue(record.nombre),
       descripcion: toStringValue(record.descripcion),
-      precio: toNumberValue(record.precio),
+      precio,
+      total,
+      profitPercentage,
       categoria: toStringValue(record.categoria),
       imagen: toOptionalString(record.imagen),
-      cantidad: Math.max(1, toIntValue(record.cantidad, 1)),
+      cantidad,
       position: index,
     }
   })
@@ -275,6 +292,8 @@ export function serializeInvoice(invoice: InvoiceRecord, items: InvoiceItemRecor
         nombre: item.nombre,
         descripcion: item.descripcion,
         precio: item.precio,
+        total: item.total ?? calcularTotalItem(item.precio, item.cantidad),
+        profitPercentage: item.profitPercentage || 0,
         categoria: item.categoria,
         imagen: item.imagen || undefined,
         cantidad: item.cantidad,
