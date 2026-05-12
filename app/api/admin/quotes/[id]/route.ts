@@ -147,32 +147,44 @@ export async function PUT(request: NextRequest, context: Params) {
       `
       await insertAdminQuoteItems(tx, id, quote.productos)
 
-      if (quote.estado === "aprobada") {
+      if (mergedQuote.estado === "aprobada") {
         const [clientRow] =
-          quote.clientId
+          mergedQuote.clientId
             ? await tx.$queryRaw<{ address: string | null }[]>`
                 SELECT "address"
                 FROM "Client"
-                WHERE "id" = ${quote.clientId}
+                WHERE "id" = ${mergedQuote.clientId}
                 LIMIT 1
               `
             : []
 
-        await createInvoiceFromQuote(tx, {
-          id: existingQuote.id,
-          numeroFactura: mergedQuote.numeroFactura,
-          cliente: mergedQuote.cliente,
-          email: mergedQuote.email,
-          telefono: mergedQuote.telefono,
-          clientId: mergedQuote.clientId,
-          direccion: clientRow?.address || "",
-          notas: mergedQuote.notas,
-          subtotal: mergedQuote.subtotal,
-          total: mergedQuote.total,
-          impuestos: mergedQuote.impuestos,
-          monedaPrincipal: mergedQuote.monedaPrincipal,
-          productos: quote.productos,
-        })
+        try {
+          const generatedInvoice = await createInvoiceFromQuote(tx, {
+            id: existingQuote.id,
+            numeroFactura: mergedQuote.numeroFactura,
+            cliente: mergedQuote.cliente,
+            email: mergedQuote.email,
+            telefono: mergedQuote.telefono,
+            clientId: mergedQuote.clientId,
+            direccion: clientRow?.address || "",
+            notas: mergedQuote.notas,
+            subtotal: mergedQuote.subtotal,
+            total: mergedQuote.total,
+            impuestos: mergedQuote.impuestos,
+            monedaPrincipal: mergedQuote.monedaPrincipal,
+            productos: quote.productos,
+          })
+
+          if (!generatedInvoice) {
+            throw new Error(`Invoice generation returned empty result for quote ${id}`)
+          }
+        } catch (invoiceError) {
+          console.error("Error creating invoice from approved quote:", {
+            quoteId: id,
+            invoiceError,
+          })
+          throw invoiceError
+        }
       }
 
       return getAdminQuote(tx, id)

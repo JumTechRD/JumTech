@@ -1,4 +1,5 @@
 import {
+  calcularPrecioFinalUnitario,
   calcularPrecioUnitarioDesdeTotal,
   calcularTotalItem,
 } from "@/lib/pricing"
@@ -149,6 +150,15 @@ function toBooleanValue(value: unknown, fallback = false) {
   return fallback
 }
 
+function firstDefined(...values: unknown[]) {
+  return values.find((value) => value !== undefined && value !== null)
+}
+
+function normalizeQuoteStatus(value: unknown) {
+  const status = toStringValue(value, "pendiente").toLowerCase()
+  return status === "aprobado" ? "aprobada" : status
+}
+
 function toDateValue(value: unknown, fallback = new Date()) {
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value
   if (typeof value === "string" || typeof value === "number") {
@@ -225,24 +235,24 @@ export function serializeProduct(product: ProductRecord) {
 }
 
 export function normalizeInvoiceInput(body: Record<string, unknown>) {
-  const paymentMethod = toStringValue(body.paymentMethod, "transferencia").toLowerCase()
+  const paymentMethod = toStringValue(firstDefined(body.paymentMethod, body.metodoPago), "transferencia").toLowerCase()
   return {
-    numero: toStringValue(body.numero),
-    cliente: toStringValue(body.cliente),
-    email: toStringValue(body.email),
-    telefono: toStringValue(body.telefono),
-    direccion: toStringValue(body.direccion),
+    numero: toStringValue(firstDefined(body.numero, body.number)),
+    cliente: toStringValue(firstDefined(body.cliente, body.clientName, body.customerName)),
+    email: toStringValue(firstDefined(body.email, body.customerEmail)),
+    telefono: toStringValue(firstDefined(body.telefono, body.phone, body.customerPhone)),
+    direccion: toStringValue(firstDefined(body.direccion, body.address, body.customerAddress)),
     clientId: toOptionalString(body.clientId),
     sourceQuoteId: toOptionalString(body.sourceQuoteId),
     paymentMethod: paymentMethod === "efectivo" ? "efectivo" : "transferencia",
-    fecha: toDateValue(body.fecha),
-    vencimiento: toDateValue(body.vencimiento),
+    fecha: toDateValue(firstDefined(body.fecha, body.date)),
+    vencimiento: toDateValue(firstDefined(body.vencimiento, body.dueDate)),
     subtotal: toNumberValue(body.subtotal),
     impuestos: toNumberValue(body.impuestos),
     total: toNumberValue(body.total),
-    estado: toStringValue(body.estado, "pendiente"),
-    notas: toOptionalString(body.notas),
-    productos: normalizeInvoiceItems(body.productos),
+    estado: toStringValue(firstDefined(body.estado, body.status), "pendiente").toLowerCase(),
+    notas: toOptionalString(firstDefined(body.notas, body.notes)),
+    productos: normalizeInvoiceItems(firstDefined(body.productos, body.items)),
   }
 }
 
@@ -250,21 +260,32 @@ function normalizeInvoiceItems(value: unknown) {
   if (!Array.isArray(value)) return []
   return value.map((item, index) => {
     const record = item && typeof item === "object" ? (item as Record<string, unknown>) : {}
-    const cantidad = Math.max(1, toIntValue(record.cantidad, 1))
+    const cantidad = Math.max(1, toIntValue(firstDefined(record.cantidad, record.quantity), 1))
     const profitPercentage = toOptionalNumber(record.profitPercentage ?? record.porcentajeExtra) ?? 0
-    const precioInput = toNumberValue(record.precio)
-    const explicitTotal = toOptionalNumber(record.total)
-    const total = explicitTotal ?? calcularTotalItem(precioInput, cantidad)
-    const precio = calcularPrecioUnitarioDesdeTotal(total, cantidad)
+    const explicitTotal = toOptionalNumber(firstDefined(record.total, record.lineTotal))
+    const explicitFinalUnitPrice = toOptionalNumber(
+      firstDefined(record.finalUnitPrice, record.precioFinalUnitario, record.finalPrice),
+    )
+    const basePrice = toOptionalNumber(firstDefined(record.basePrice, record.precioBase, record.costPrice, record.costoInterno))
+    const unitPriceInput = toNumberValue(firstDefined(record.precio, record.unitPrice, record.price))
+    const precio =
+      explicitTotal !== null
+        ? calcularPrecioUnitarioDesdeTotal(explicitTotal, cantidad)
+        : explicitFinalUnitPrice !== null
+          ? explicitFinalUnitPrice
+          : basePrice !== null || profitPercentage > 0
+            ? calcularPrecioFinalUnitario(basePrice ?? unitPriceInput, profitPercentage)
+            : unitPriceInput
+    const total = explicitTotal ?? calcularTotalItem(precio, cantidad)
 
     return {
-      nombre: toStringValue(record.nombre),
-      descripcion: toStringValue(record.descripcion),
+      nombre: toStringValue(firstDefined(record.nombre, record.name)),
+      descripcion: toStringValue(firstDefined(record.descripcion, record.description)),
       precio,
       total,
       profitPercentage,
-      categoria: toStringValue(record.categoria),
-      imagen: toOptionalString(record.imagen),
+      categoria: toStringValue(firstDefined(record.categoria, record.category)),
+      imagen: toOptionalString(firstDefined(record.imagen, record.image)),
       cantidad,
       position: index,
     }
@@ -308,9 +329,9 @@ export function serializeInvoice(invoice: InvoiceRecord, items: InvoiceItemRecor
 export function normalizeAdminQuoteInput(body: Record<string, unknown>) {
   return {
     numeroFactura: toOptionalString(body.numeroFactura),
-    cliente: toStringValue(body.cliente),
-    email: toStringValue(body.email),
-    telefono: toStringValue(body.telefono),
+    cliente: toStringValue(firstDefined(body.cliente, body.clientName, body.customerName)),
+    email: toStringValue(firstDefined(body.email, body.customerEmail)),
+    telefono: toStringValue(firstDefined(body.telefono, body.phone, body.customerPhone)),
     clientId: toOptionalString(body.clientId),
     tipoServicio: toOptionalString(body.tipoServicio),
     urgencia: toOptionalString(body.urgencia),
@@ -320,12 +341,12 @@ export function normalizeAdminQuoteInput(body: Record<string, unknown>) {
     subtotal: toNumberValue(body.subtotal),
     impuestos: toNumberValue(body.impuestos),
     total: toNumberValue(body.total),
-    estado: toStringValue(body.estado, "pendiente"),
-    notas: toOptionalString(body.notas),
+    estado: normalizeQuoteStatus(firstDefined(body.estado, body.status)),
+    notas: toOptionalString(firstDefined(body.notas, body.notes)),
     monedaPrincipal: toOptionalString(body.monedaPrincipal),
     itbisActivo: toBooleanValue(body.itbisActivo, true),
     porcentajeItbis: toOptionalNumber(body.porcentajeItbis),
-    productos: normalizeAdminQuoteItems(body.productos),
+    productos: normalizeAdminQuoteItems(firstDefined(body.productos, body.items)),
   }
 }
 
@@ -334,14 +355,15 @@ function normalizeAdminQuoteItems(value: unknown) {
   return value.map((item, index) => {
     const record = item && typeof item === "object" ? (item as Record<string, unknown>) : {}
     return {
-      nombre: toStringValue(record.nombre),
-      descripcion: toStringValue(record.descripcion),
-      precio: toNumberValue(record.precio),
-      categoria: toStringValue(record.categoria),
-      cantidad: Math.max(1, toIntValue(record.cantidad, 1)),
+      nombre: toStringValue(firstDefined(record.nombre, record.name)),
+      descripcion: toStringValue(firstDefined(record.descripcion, record.description)),
+      precio: toNumberValue(firstDefined(record.precio, record.unitPrice, record.price)),
+      categoria: toStringValue(firstDefined(record.categoria, record.category)),
+      cantidad: Math.max(1, toIntValue(firstDefined(record.cantidad, record.quantity), 1)),
       esManual: toBooleanValue(record.esManual, false),
       moneda: toOptionalString(record.moneda),
-      porcentajeExtra: toOptionalNumber(record.porcentajeExtra),
+      porcentajeExtra: toOptionalNumber(firstDefined(record.porcentajeExtra, record.profitPercentage)),
+      total: toOptionalNumber(firstDefined(record.total, record.lineTotal)),
       position: index,
     }
   })

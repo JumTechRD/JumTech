@@ -39,7 +39,12 @@ export interface QuoteInvoiceSource {
   productos: InvoiceProductInput[]
 }
 
+function toFiniteNumber(value: number | null | undefined, fallback = 0) {
+  return Number.isFinite(value) ? Number(value) : fallback
+}
+
 function buildInvoiceProductsFromQuote(quote: QuoteInvoiceSource) {
+  const hasExplicitItemTotals = quote.productos.some((producto) => Number.isFinite(producto.total))
   const productsWithFinalPrices = quote.productos.map((producto) => {
     const pricing = calcularItemConGanancia({
       precio: producto.precio,
@@ -48,7 +53,7 @@ function buildInvoiceProductsFromQuote(quote: QuoteInvoiceSource) {
       monedaOrigen: producto.moneda,
       monedaDestino: quote.monedaPrincipal,
     })
-    const totalFinalItem = producto.total ?? pricing.totalItem
+    const totalFinalItem = Number.isFinite(producto.total) ? Number(producto.total) : pricing.totalItem
     const finalUnitPrice = calcularPrecioUnitarioDesdeTotal(totalFinalItem, producto.cantidad)
 
     return {
@@ -63,7 +68,12 @@ function buildInvoiceProductsFromQuote(quote: QuoteInvoiceSource) {
     0,
   )
 
-  if (quote.subtotal > 0 && calculatedSubtotal > 0 && Math.abs(quote.subtotal - calculatedSubtotal) > 0.01) {
+  if (
+    !hasExplicitItemTotals &&
+    quote.subtotal > 0 &&
+    calculatedSubtotal > 0 &&
+    Math.abs(quote.subtotal - calculatedSubtotal) > 0.01
+  ) {
     const adjustmentFactor = quote.subtotal / calculatedSubtotal
     return productsWithFinalPrices.map((producto) => {
       const adjustedTotal = (producto.total ?? calcularTotalItem(producto.precio, producto.cantidad)) * adjustmentFactor
@@ -117,15 +127,20 @@ export async function getInvoiceBySourceQuoteId(db: RawDb, sourceQuoteId: string
 
 export async function insertInvoiceItems(db: RawDb, invoiceId: string, productos: InvoiceProductInput[]) {
   for (const producto of productos) {
+    const cantidad = Math.max(1, Math.trunc(toFiniteNumber(producto.cantidad, 1)))
+    const precio = toFiniteNumber(producto.precio)
+    const total = Number.isFinite(producto.total) ? Number(producto.total) : calcularTotalItem(precio, cantidad)
+    const profitPercentage = toFiniteNumber(producto.profitPercentage)
+    const imagen = producto.imagen ?? null
+
     await db.$executeRaw`
       INSERT INTO "InvoiceItem" (
         "id", "invoiceId", "nombre", "descripcion", "precio", "total", "profitPercentage", "categoria", "imagen",
         "cantidad", "position"
       )
       VALUES (
-        ${crypto.randomUUID()}, ${invoiceId}, ${producto.nombre}, ${producto.descripcion}, ${producto.precio},
-        ${producto.total ?? calcularTotalItem(producto.precio, producto.cantidad)}, ${producto.profitPercentage ?? 0},
-        ${producto.categoria}, ${producto.imagen}, ${producto.cantidad}, ${producto.position}
+        ${crypto.randomUUID()}, ${invoiceId}, ${producto.nombre}, ${producto.descripcion}, ${precio},
+        ${total}, ${profitPercentage}, ${producto.categoria}, ${imagen}, ${cantidad}, ${producto.position}
       )
     `
   }
