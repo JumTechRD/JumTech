@@ -1,5 +1,4 @@
 import {
-  calcularPrecioFinalUnitario,
   calcularPrecioUnitarioDesdeTotal,
   calcularTotalItem,
 } from "@/lib/pricing"
@@ -255,7 +254,7 @@ function normalizeInvoiceItems(value: unknown) {
     const profitPercentage = toOptionalNumber(record.profitPercentage ?? record.porcentajeExtra) ?? 0
     const precioInput = toNumberValue(record.precio)
     const explicitTotal = toOptionalNumber(record.total)
-    const total = explicitTotal ?? calcularTotalItem(calcularPrecioFinalUnitario(precioInput, profitPercentage), cantidad)
+    const total = explicitTotal ?? calcularTotalItem(precioInput, cantidad)
     const precio = calcularPrecioUnitarioDesdeTotal(total, cantidad)
 
     return {
