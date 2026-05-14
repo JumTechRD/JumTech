@@ -134,6 +134,13 @@ const productosDisponiblesInicial: Producto[] = [
   },
 ]
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isValidOptionalEmail(value: string) {
+  const email = value.trim()
+  return !email || emailRegex.test(email)
+}
+
 export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }: CotizacionCreatorProps) {
   const [numeroFactura, setNumeroFactura] = useState("")
   const [cliente, setCliente] = useState("")
@@ -206,7 +213,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     if (editingCotizacion) {
       setNumeroFactura(editingCotizacion.numeroFactura || "")
       setCliente(editingCotizacion.cliente)
-      setEmail(editingCotizacion.email)
+      setEmail(editingCotizacion.email || "")
       setTelefono(editingCotizacion.telefono)
       setNotas(editingCotizacion.notas || "")
       setProductosSeleccionados(
@@ -290,8 +297,13 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   }
 
   const generarPDF = async () => {
-    if (!cliente || !email || productosSeleccionados.length === 0) {
+    if (!cliente || productosSeleccionados.length === 0) {
       alert("Por favor completa todos los campos antes de generar el PDF")
+      return
+    }
+
+    if (!isValidOptionalEmail(email)) {
+      alert("Ingresa un correo válido o deja el campo vacío")
       return
     }
 
@@ -320,7 +332,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
         dateLabel: "Fecha",
         dateValue: formatearFecha(new Date()),
         customerName: cliente,
-        customerEmail: email,
+        customerEmail: email.trim() || undefined,
         customerPhone: telefono || "No especificado",
         customerCompanyName: companyName || undefined,
         customerIdentification: identification || undefined,
@@ -477,8 +489,13 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   }
 
   const handleSave = () => {
-    if (!cliente || !email || productosSeleccionados.length === 0) {
+    if (!cliente || productosSeleccionados.length === 0) {
       alert("Por favor completa todos los campos requeridos")
+      return
+    }
+
+    if (!isValidOptionalEmail(email)) {
+      alert("Ingresa un correo válido o deja el campo vacío")
       return
     }
 
@@ -486,7 +503,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
       id: editingCotizacion?.id || Date.now().toString(),
       numeroFactura,
       cliente,
-      email,
+      email: email.trim(),
       telefono,
       clientId,
       fecha: editingCotizacion?.fecha || new Date().toISOString(),
@@ -626,7 +643,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico *</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico</label>
                 <input
                   type="email"
                   value={email}
@@ -907,7 +924,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
             <Button
               onClick={handleSave}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              disabled={!cliente || !email || productosSeleccionados.length === 0}
+              disabled={!cliente || productosSeleccionados.length === 0}
             >
               <Save className="h-4 w-4 mr-2" />
               {editingCotizacion ? "Actualizar" : "Guardar"} Cotización

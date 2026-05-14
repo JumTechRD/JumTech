@@ -233,7 +233,7 @@ export default function CotizacionesPage() {
         dateLabel: "Fecha",
         dateValue: new Date(cotizacion.fecha).toLocaleDateString("es-DO"),
         customerName: selectedClient?.name || cotizacion.cliente,
-        customerEmail: selectedClient?.email || cotizacion.email,
+        customerEmail: selectedClient?.email || cotizacion.email || undefined,
         customerPhone: selectedClient?.phone || cotizacion.telefono || undefined,
         customerCompanyName: selectedClient?.companyName || undefined,
         customerIdentification: selectedClient?.identification || undefined,
@@ -259,7 +259,7 @@ export default function CotizacionesPage() {
   const cotizacionesFiltradas = cotizaciones.filter((cotizacion) => {
     const matchesSearch =
       cotizacion.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cotizacion.email.toLowerCase().includes(searchTerm.toLowerCase())
+      (cotizacion.email || "").toLowerCase().includes(searchTerm.toLowerCase())
     const matchesEstado = filterEstado === "todos" || cotizacion.estado === filterEstado
     return matchesSearch && matchesEstado
   })
@@ -456,7 +456,7 @@ export default function CotizacionesPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                       <div>
                         <h3 className="text-base font-semibold text-white">{cotizacion.cliente}</h3>
-                        <p className="text-gray-400 text-xs">{cotizacion.email}</p>
+                        <p className="text-gray-400 text-xs">{cotizacion.email || "-"}</p>
                         {cotizacion.telefono && <p className="text-gray-400 text-xs">{cotizacion.telefono}</p>}
                         {cotizacion.tipoServicio && <p className="text-blue-300 text-xs mt-1">{cotizacion.tipoServicio}</p>}
                         {cotizacion.urgencia && <p className="text-amber-300 text-xs">{cotizacion.urgencia}</p>}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/middleware'
+import { validateEmail } from '@/lib/auth'
 import {
   AdminQuoteItemRecord,
   AdminQuoteRecord,
@@ -34,11 +35,12 @@ async function getAdminQuote(db: any, id: string) {
 function mergeQuoteFields(
   existingQuote: AdminQuoteRecord,
   quote: ReturnType<typeof normalizeAdminQuoteInput>,
+  emailWasProvided: boolean,
 ) {
   return {
     numeroFactura: quote.numeroFactura ?? existingQuote.numeroFactura,
     cliente: quote.cliente || existingQuote.cliente,
-    email: quote.email || existingQuote.email,
+    email: emailWasProvided ? quote.email : existingQuote.email,
     telefono: quote.telefono || existingQuote.telefono,
     clientId: quote.clientId ?? existingQuote.clientId,
     tipoServicio: quote.tipoServicio ?? existingQuote.tipoServicio,
@@ -85,9 +87,16 @@ export async function PUT(request: NextRequest, context: Params) {
     const { id } = await context.params
     const body = (await request.json()) as Record<string, unknown>
     const quote = normalizeAdminQuoteInput(body)
+    const emailWasProvided =
+      Object.prototype.hasOwnProperty.call(body, "email") ||
+      Object.prototype.hasOwnProperty.call(body, "customerEmail")
 
-    if (!quote.cliente || !quote.email || quote.productos.length === 0) {
+    if (!quote.cliente || quote.productos.length === 0) {
       return NextResponse.json({ error: 'Missing required quote fields' }, { status: 400 })
+    }
+
+    if (quote.email && !validateEmail(quote.email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
 
     if (quote.clientId) {
@@ -111,7 +120,7 @@ export async function PUT(request: NextRequest, context: Params) {
 
       if (!existingQuote) return null
 
-      const mergedQuote = mergeQuoteFields(existingQuote, quote)
+      const mergedQuote = mergeQuoteFields(existingQuote, quote, emailWasProvided)
 
       const updatedRecords = await tx.$queryRaw<AdminQuoteRecord[]>`
         UPDATE "AdminQuote"

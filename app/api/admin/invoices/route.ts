@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/middleware'
+import { validateEmail } from '@/lib/auth'
 import {
   type InvoiceItemRecord,
   normalizeInvoiceInput,
@@ -92,8 +93,12 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as Record<string, unknown>
     const invoice = normalizeInvoiceInput(body)
 
-    if (!invoice.numero || !invoice.cliente || !invoice.email || invoice.productos.length === 0) {
+    if (!invoice.numero || !invoice.cliente || invoice.productos.length === 0) {
       return NextResponse.json({ error: 'Missing required invoice fields' }, { status: 400 })
+    }
+
+    if (invoice.email && !validateEmail(invoice.email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
 
     if (invoice.clientId) {

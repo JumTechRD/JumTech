@@ -16,7 +16,7 @@ export interface PdfDocumentData {
   dateLabel: string
   dateValue: string
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerPhone?: string
   customerCompanyName?: string
   customerIdentification?: string
@@ -123,9 +123,12 @@ export async function generateFinancialPdf(data: PdfDocumentData) {
   doc.setFont("helvetica", "bold")
   doc.text(data.customerName, margin, yPosition)
   yPosition += 5
-  doc.setFont("helvetica", "normal")
-  doc.text(`Email: ${data.customerEmail}`, margin, yPosition)
-  yPosition += 5
+  const customerEmail = data.customerEmail?.trim()
+  if (customerEmail) {
+    doc.setFont("helvetica", "normal")
+    doc.text(`Email: ${customerEmail}`, margin, yPosition)
+    yPosition += 5
+  }
   if (data.customerPhone) {
     doc.text(`Tel: ${data.customerPhone}`, margin, yPosition)
     yPosition += 5

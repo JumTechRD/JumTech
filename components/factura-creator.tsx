@@ -68,6 +68,13 @@ const formatearMonto = (monto: number) =>
     maximumFractionDigits: 2,
   })
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isValidOptionalEmail(value: string) {
+  const email = value.trim()
+  return !email || emailRegex.test(email)
+}
+
 function normalizarProductoParaEdicion(producto: ProductoEnFactura): ProductoEnFactura {
   const profitPercentage = producto.profitPercentage || 0
 
@@ -121,7 +128,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
     if (editingFactura) {
       setNumero(editingFactura.numero)
       setCliente(editingFactura.cliente)
-      setEmail(editingFactura.email)
+      setEmail(editingFactura.email || "")
       setTelefono(editingFactura.telefono)
       setDireccion(editingFactura.direccion)
       setFecha(editingFactura.fecha.split("T")[0])
@@ -251,6 +258,11 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
   }
 
   const generarPDF = async () => {
+    if (!isValidOptionalEmail(email)) {
+      alert("Ingresa un correo válido o deja el campo vacío")
+      return
+    }
+
     setIsGeneratingPDF(true)
 
     try {
@@ -275,7 +287,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
         dateLabel: "Fecha",
         dateValue: new Date(fecha || new Date().toISOString()).toLocaleDateString("es-DO"),
         customerName: cliente,
-        customerEmail: email,
+        customerEmail: email.trim() || undefined,
         customerPhone: telefono || undefined,
         customerCompanyName: companyName || undefined,
         customerIdentification: identification || undefined,
@@ -299,8 +311,13 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
   }
 
   const handleSave = () => {
-    if (!cliente || !email || productosSeleccionados.length === 0) {
+    if (!cliente || productosSeleccionados.length === 0) {
       alert("Por favor completa todos los campos requeridos")
+      return
+    }
+
+    if (!isValidOptionalEmail(email)) {
+      alert("Ingresa un correo válido o deja el campo vacío")
       return
     }
 
@@ -311,7 +328,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
       id: editingFactura?.id || Date.now().toString(),
       numero,
       cliente,
-      email,
+      email: email.trim(),
       telefono,
       direccion,
       clientId,
@@ -474,7 +491,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico *</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico</label>
                 <input
                   type="email"
                   value={email}
@@ -669,7 +686,7 @@ export function FacturaCreator({ isOpen, onClose, onSave, editingFactura, produc
             <Button
               onClick={handleSave}
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
-              disabled={!cliente || !email || productosSeleccionados.length === 0}
+              disabled={!cliente || productosSeleccionados.length === 0}
             >
               <Save className="h-4 w-4 mr-2" />
               {editingFactura ? "Actualizar" : "Guardar"} Factura

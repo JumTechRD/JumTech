@@ -183,7 +183,7 @@ export default function AdminFacturasPage() {
         dateLabel: "Fecha",
         dateValue: new Date(factura.fecha).toLocaleDateString("es-DO"),
         customerName: selectedClient?.name || factura.cliente,
-        customerEmail: selectedClient?.email || factura.email,
+        customerEmail: selectedClient?.email || factura.email || undefined,
         customerPhone: selectedClient?.phone || factura.telefono || undefined,
         customerCompanyName: selectedClient?.companyName || undefined,
         customerIdentification: selectedClient?.identification || undefined,
@@ -543,7 +543,7 @@ export default function AdminFacturasPage() {
                             <User className="h-4 w-4 mr-1" />
                             {factura.cliente}
                           </p>
-                          <p className="break-all text-gray-500 text-sm">{factura.email}</p>
+                          <p className="break-all text-gray-500 text-sm">{factura.email || "-"}</p>
                         </div>
                       </div>
                       <div className="text-left sm:text-right">

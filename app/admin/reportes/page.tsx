@@ -274,7 +274,7 @@ export default function ReportesPage() {
         const num = c.numeroFactura || c.id.slice(-6)
         const fecha = new Date(c.fecha).toLocaleDateString("es-DO")
         const prods = c.productos.map((p: any) => `${p.nombre}(x${p.cantidad})`).join(" | ")
-        csvCot += `"${num}","${c.cliente}","${c.email}","${c.telefono || ""}","${fecha}","${c.estado}","${c.subtotal}","${c.impuestos}","${c.total}","${c.monedaPrincipal || "RD$"}","${prods}"\r\n`
+        csvCot += `"${num}","${c.cliente}","${c.email || ""}","${c.telefono || ""}","${fecha}","${c.estado}","${c.subtotal}","${c.impuestos}","${c.total}","${c.monedaPrincipal || "RD$"}","${prods}"\r\n`
       })
 
       csvCot += "\r\nRESUMEN COTIZACIONES\r\n"
@@ -289,7 +289,7 @@ export default function ReportesPage() {
       facturas.forEach((f) => {
         const fecha = new Date(f.fecha).toLocaleDateString("es-DO")
         const venc = new Date(f.vencimiento).toLocaleDateString("es-DO")
-        csvFac += `"${f.numero}","${f.cliente}","${f.email}","${f.telefono || ""}","${fecha}","${venc}","${f.estado}","${f.subtotal}","${f.impuestos}","${f.total}"\r\n`
+        csvFac += `"${f.numero}","${f.cliente}","${f.email || ""}","${f.telefono || ""}","${fecha}","${venc}","${f.estado}","${f.subtotal}","${f.impuestos}","${f.total}"\r\n`
       })
 
       csvFac += "\r\nRESUMEN FACTURAS\r\n"

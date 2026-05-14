@@ -309,7 +309,7 @@ export default function ClientesPage() {
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <p className="font-semibold text-white">{client.name}</p>
-                          <p className="text-sm text-gray-300 break-all">{client.email}</p>
+                          <p className="text-sm text-gray-300 break-all">{client.email || "-"}</p>
                           <p className="text-sm text-gray-400">{client.phone}</p>
                           {client.companyName && <p className="text-xs text-gray-500">{client.companyName}</p>}
                           {client.identification && <p className="text-xs text-gray-500">ID: {client.identification}</p>}
