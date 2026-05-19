@@ -3,10 +3,16 @@
 import { z } from "zod"
 import { submitPublicQuote } from "@/lib/public-quote-submission"
 
+const optionalEmailSchema = z.preprocess((value) => {
+  if (value === null || value === undefined) return ""
+  if (typeof value === "string") return value.trim()
+  return value
+}, z.union([z.literal(""), z.string().email("Email inválido")]))
+
 const cotizacionSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   empresa: z.string().optional(),
-  email: z.string().email("Email inválido"),
+  email: optionalEmailSchema,
   telefono: z.string().min(8, "El teléfono debe tener al menos 8 caracteres"),
   servicio: z.string().min(1, "Debe seleccionar un servicio"),
   urgencia: z.string().min(1, "Debe seleccionar la urgencia"),

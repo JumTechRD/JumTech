@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/middleware'
+import { validateEmail } from '@/lib/auth'
 import {
   normalizeInvoiceInput,
   type InvoiceRecord,
@@ -19,9 +20,16 @@ export async function PUT(request: NextRequest, context: Params) {
     const { id } = await context.params
     const body = (await request.json()) as Record<string, unknown>
     const invoice = normalizeInvoiceInput(body)
+    const emailWasProvided =
+      Object.prototype.hasOwnProperty.call(body, "email") ||
+      Object.prototype.hasOwnProperty.call(body, "customerEmail")
 
-    if (!invoice.numero || !invoice.cliente || !invoice.email || invoice.productos.length === 0) {
+    if (!invoice.numero || !invoice.cliente || invoice.productos.length === 0) {
       return NextResponse.json({ error: 'Missing required invoice fields' }, { status: 400 })
+    }
+
+    if (invoice.email && !validateEmail(invoice.email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
 
     if (invoice.clientId) {
@@ -47,12 +55,13 @@ export async function PUT(request: NextRequest, context: Params) {
 
       const sourceQuoteId = invoice.sourceQuoteId || existingInvoice.sourceQuoteId || null
       const paymentMethod = invoice.paymentMethod || existingInvoice.paymentMethod || "transferencia"
+      const email = emailWasProvided ? invoice.email : existingInvoice.email
       const updatedRecords = await tx.$queryRaw<InvoiceRecord[]>`
         UPDATE "Invoice"
         SET
           "numero" = ${invoice.numero},
           "cliente" = ${invoice.cliente},
-          "email" = ${invoice.email},
+          "email" = ${email},
           "telefono" = ${invoice.telefono},
           "direccion" = ${invoice.direccion},
           "clientId" = ${invoice.clientId},

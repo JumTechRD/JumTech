@@ -22,10 +22,16 @@ const URGENCY_LABELS: Record<string, string> = {
   flexible: "Flexible (1-3 meses)",
 }
 
+const optionalEmailSchema = z.preprocess((value) => {
+  if (value === null || value === undefined) return ""
+  if (typeof value === "string") return value.trim()
+  return value
+}, z.union([z.literal(""), z.string().email()]))
+
 const quoteSubmissionSchema = z.object({
   nombre: z.string().trim().min(2).max(120),
   empresa: z.string().trim().max(120).optional().nullable(),
-  email: z.string().trim().email(),
+  email: optionalEmailSchema,
   telefono: z.string().trim().min(8).max(30),
   servicio: z.string().trim().min(1),
   urgencia: z.string().trim().min(1),
@@ -66,7 +72,7 @@ Nueva Solicitud de Cotización - JumTech RD
 Información del Cliente:
 - Nombre: ${input.nombre}
 - Empresa: ${input.empresa || "No especificada"}
-- Email: ${input.email}
+- Email: ${input.email || "No especificado"}
 - Teléfono: ${input.telefono}
 - Ubicación: ${input.ubicacion || "No especificada"}
 
@@ -84,18 +90,28 @@ Este mensaje fue enviado desde el formulario de cotización de JumTech RD.
 
 function buildClientNotes(input: PublicQuoteSubmission) {
   return sanitizeString(
-    `Solicitud pública de cotización: ${buildServiceLabel(input.servicio)} | Urgencia: ${buildUrgencyLabel(input.urgencia)} | ${input.descripcion}`,
+    `Solicitud de cotización: ${buildServiceLabel(input.servicio)} | Urgencia: ${buildUrgencyLabel(input.urgencia)} | ${input.descripcion}`,
   )
 }
 
 function buildAdminQuoteNotes(input: PublicQuoteSubmission) {
-  return sanitizeString(
-    `Solicitud pública de cotización | Servicio: ${buildServiceLabel(input.servicio)} | Urgencia: ${buildUrgencyLabel(input.urgencia)} | Ubicación: ${input.ubicacion || "No especificada"}`,
-  )
+  const notes = [
+    "Solicitud de cotización",
+    `Servicio: ${buildServiceLabel(input.servicio)}`,
+    `Urgencia: ${buildUrgencyLabel(input.urgencia)}`,
+    `Ubicación: ${input.ubicacion || "No especificada"}`,
+  ]
+  const clientDescription = input.descripcion.trim()
+
+  if (clientDescription) {
+    notes.push(`Nota del cliente: ${clientDescription}`)
+  }
+
+  return sanitizeString(notes.join(" | "))
 }
 
 function toContactEmail(input: PublicQuoteSubmission) {
-  return input.email.toLowerCase().trim()
+  return input.email.trim().toLowerCase()
 }
 
 function logSubmissionError(stage: string, error: unknown, context?: Record<string, unknown>) {
@@ -157,28 +173,35 @@ async function upsertClient(tx: Prisma.TransactionClient, input: PublicQuoteSubm
   const email = toContactEmail(input)
   const normalizedPhone = normalizePhone(input.telefono)
   const phoneDigits = phoneKey(normalizedPhone)
+  type ExistingClient = {
+    id: string
+    name: string
+    email: string
+    phone: string
+    companyName: string | null
+    identification: string | null
+    address: string | null
+    notes: string | null
+    createdAt: Date
+    updatedAt: Date
+  }
 
-  const [existingClient] = await tx.$queryRaw<
-    Array<{
-      id: string
-      name: string
-      email: string
-      phone: string
-      companyName: string | null
-      identification: string | null
-      address: string | null
-      notes: string | null
-      createdAt: Date
-      updatedAt: Date
-    }>
-  >`
-    SELECT *
-    FROM "Client"
-    WHERE lower("email") = ${email}
-       OR regexp_replace("phone", '\\D', '', 'g') = ${phoneDigits}
-    ORDER BY CASE WHEN lower("email") = ${email} THEN 0 ELSE 1 END, "createdAt" DESC
-    LIMIT 1
-  `
+  const [existingClient] = email
+    ? await tx.$queryRaw<ExistingClient[]>(Prisma.sql`
+        SELECT *
+        FROM "Client"
+        WHERE lower("email") = ${email}
+           OR regexp_replace("phone", '\\D', '', 'g') = ${phoneDigits}
+        ORDER BY CASE WHEN lower("email") = ${email} THEN 0 ELSE 1 END, "createdAt" DESC
+        LIMIT 1
+      `)
+    : await tx.$queryRaw<ExistingClient[]>(Prisma.sql`
+        SELECT *
+        FROM "Client"
+        WHERE regexp_replace("phone", '\\D', '', 'g') = ${phoneDigits}
+        ORDER BY "createdAt" DESC
+        LIMIT 1
+      `)
 
   const notes = buildClientNotes(input)
 
@@ -187,7 +210,7 @@ async function upsertClient(tx: Prisma.TransactionClient, input: PublicQuoteSubm
       where: { id: existingClient.id },
       data: {
         name: sanitizeString(input.nombre),
-        email,
+        ...(email ? { email } : {}),
         phone: normalizedPhone,
         companyName: input.empresa ? sanitizeString(input.empresa) : existingClient.companyName ?? undefined,
         address: input.ubicacion ? sanitizeString(input.ubicacion) : existingClient.address ?? undefined,
@@ -195,6 +218,8 @@ async function upsertClient(tx: Prisma.TransactionClient, input: PublicQuoteSubm
       },
     })
   }
+
+  if (!email) return null
 
   return tx.client.create({
     data: {
@@ -208,13 +233,14 @@ async function upsertClient(tx: Prisma.TransactionClient, input: PublicQuoteSubm
   })
 }
 
-async function sendQuoteNotifications(input: PublicQuoteSubmission, clientId: string, quoteId: string) {
+async function sendQuoteNotifications(input: PublicQuoteSubmission, clientId: string | null, quoteId: string) {
   if (!isEmailConfigured()) {
     console.warn("[quote-submission] Servicio de correo no configurado; se omiten notificaciones")
     return
   }
 
   const internalRecipient = process.env.QUOTE_INTERNAL_RECIPIENT_EMAIL?.trim() || "jumtechrd@gmail.com"
+  const contactEmail = toContactEmail(input)
   const serviceLabel = buildServiceLabel(input.servicio)
   const urgencyLabel = buildUrgencyLabel(input.urgencia)
   const customerText = `
@@ -238,7 +264,7 @@ Nueva solicitud de cotización recibida
 
 Cliente: ${input.nombre}
 Empresa: ${input.empresa || "No especificada"}
-Email: ${input.email}
+Email: ${contactEmail || "No especificado"}
 Teléfono: ${input.telefono}
 Ubicación: ${input.ubicacion || "No especificada"}
 Servicio: ${serviceLabel}
@@ -251,28 +277,37 @@ QuoteId: ${quoteId}
 Fecha: ${new Date().toLocaleString("es-DO")}
   `.trim()
 
-  const [customerEmailResult, internalEmailResult] = await Promise.allSettled([
-    sendEmail({
-      to: input.email,
-      subject: "Hemos recibido tu solicitud de cotización",
-      text: customerText,
-      html: customerText.replace(/\n/g, "<br>"),
-    }),
-    sendEmail({
-      to: internalRecipient,
-      subject: `Nueva solicitud de cotización - ${input.nombre}`,
-      text: internalText,
-      html: internalText.replace(/\n/g, "<br>"),
-    }),
-  ])
+  const notifications = [
+    {
+      label: "interno",
+      promise: sendEmail({
+        to: internalRecipient,
+        subject: `Nueva solicitud de cotización - ${input.nombre}`,
+        text: internalText,
+        html: internalText.replace(/\n/g, "<br>"),
+      }),
+    },
+  ]
 
-  if (customerEmailResult.status === "rejected") {
-    console.error("[quote-submission] Falló el correo al cliente", customerEmailResult.reason)
+  if (contactEmail) {
+    notifications.unshift({
+      label: "cliente",
+      promise: sendEmail({
+        to: contactEmail,
+        subject: "Hemos recibido tu solicitud de cotización",
+        text: customerText,
+        html: customerText.replace(/\n/g, "<br>"),
+      }),
+    })
   }
 
-  if (internalEmailResult.status === "rejected") {
-    console.error("[quote-submission] Falló el correo interno", internalEmailResult.reason)
-  }
+  const results = await Promise.allSettled(notifications.map((notification) => notification.promise))
+
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      console.error(`[quote-submission] Falló el correo ${notifications[index].label}`, result.reason)
+    }
+  })
 }
 
 function normalizeSubmissionInput(raw: Record<string, unknown>) {
@@ -298,7 +333,8 @@ export function parsePublicQuoteSubmission(raw: Record<string, unknown>) {
     }
   }
 
-  if (!validateEmail(parsed.data.email)) {
+  const email = toContactEmail(parsed.data)
+  if (email && !validateEmail(email)) {
     return {
       success: false as const,
       message: "Por favor completa todos los campos requeridos correctamente.",
@@ -329,24 +365,25 @@ export async function submitPublicQuote(raw: Record<string, unknown>): Promise<S
       const service = await resolveService(tx, parsed.data.servicio)
       const client = await upsertClient(tx, parsed.data)
       const requestMessage = buildRequestMessage(parsed.data)
+      const email = toContactEmail(parsed.data)
 
       const quoteRequest = await tx.quoteRequest.create({
         data: {
           name: sanitizeString(parsed.data.nombre),
-          email: parsed.data.email.toLowerCase().trim(),
+          email,
           phone: normalizePhone(parsed.data.telefono),
           message: requestMessage,
           serviceId: service.id,
-          clientId: client.id,
+          clientId: client?.id ?? null,
         },
       })
 
       const adminQuote = await tx.adminQuote.create({
         data: {
           cliente: sanitizeString(parsed.data.nombre),
-          email: parsed.data.email.toLowerCase().trim(),
+          email,
           telefono: normalizePhone(parsed.data.telefono),
-          clientId: client.id,
+          clientId: client?.id ?? null,
           fecha: new Date(),
           subtotal: 0,
           impuestos: 0,
@@ -363,7 +400,7 @@ export async function submitPublicQuote(raw: Record<string, unknown>): Promise<S
       return { client, quoteRequest, adminQuote }
     })
 
-    await sendQuoteNotifications(parsed.data, result.client.id, result.adminQuote.id)
+    await sendQuoteNotifications(parsed.data, result.client?.id ?? null, result.adminQuote.id)
 
     return {
       success: true,
@@ -371,7 +408,7 @@ export async function submitPublicQuote(raw: Record<string, unknown>): Promise<S
     }
   } catch (error) {
     logSubmissionError("submitPublicQuote", error, {
-      email: parsed.data.email,
+      email: toContactEmail(parsed.data) || "No especificado",
       service: parsed.data.servicio,
     })
     return {

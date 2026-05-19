@@ -70,7 +70,7 @@ export function ClientSelector({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-semibold text-white">{selectedClient.name}</p>
-              <p className="text-gray-300 break-all">{selectedClient.email}</p>
+              <p className="text-gray-300 break-all">{selectedClient.email || "-"}</p>
               <p className="text-gray-400">{selectedClient.phone}</p>
               {selectedClient.companyName && <p className="text-gray-400">{selectedClient.companyName}</p>}
               {selectedClient.identification && <p className="text-gray-400">ID: {selectedClient.identification}</p>}
@@ -126,7 +126,7 @@ export function ClientSelector({
                     <UserRound className="mt-0.5 h-4 w-4 text-blue-400 shrink-0" />
                     <span className="min-w-0">
                       <span className="block font-medium text-white">{client.name}</span>
-                      <span className="block truncate text-gray-400">{client.email}</span>
+                      <span className="block truncate text-gray-400">{client.email || "-"}</span>
                       <span className="block text-gray-500">{client.phone}</span>
                     </span>
                   </button>

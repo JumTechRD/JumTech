@@ -379,14 +379,14 @@ export default function AdminUsersPage() {
               <Receipt className="h-4 w-4" />
               Facturas
             </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+            <Button variant="ghost" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 text-sm">
               <LogOut className="h-4 w-4 mr-1" />
               Salir
             </Button>
           </div>
 
           <div className="flex lg:hidden">
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 p-2">
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
@@ -518,7 +518,7 @@ export default function AdminUsersPage() {
                           placeholder="Agregar permiso custom (ej: EXPORT_DATA)"
                           className="bg-slate-900/90 border-slate-700 text-slate-100 placeholder:text-slate-500 h-11"
                         />
-                        <Button type="button" variant="outline" onClick={addCustomPermission} className="border-slate-600 text-slate-200">
+                        <Button type="button" variant="outline" onClick={addCustomPermission} className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-slate-800 hover:text-white">
                           Agregar
                         </Button>
                       </div>
@@ -711,7 +711,7 @@ export default function AdminUsersPage() {
                             >
                               {actionLoadingId === user.id ? "Guardando..." : "Guardar"}
                             </Button>
-                            <Button variant="outline" size="sm" onClick={cancelEditingUser} className="border-slate-600 text-slate-200">
+                            <Button variant="outline" size="sm" onClick={cancelEditingUser} className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-slate-800 hover:text-white">
                               <X className="h-4 w-4 mr-1" />
                               Cancelar
                             </Button>
@@ -723,7 +723,7 @@ export default function AdminUsersPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => startEditingUser(user)}
-                            className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+                            className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-slate-800 hover:text-white"
                           >
                             <Pencil className="h-4 w-4 mr-1" />
                             Editar
@@ -731,7 +731,7 @@ export default function AdminUsersPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border-slate-600 bg-slate-900 text-slate-200 hover:bg-slate-800 hover:text-white"
+                            className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-slate-800 hover:text-white"
                           >
                             Ver detalle
                           </Button>
@@ -779,7 +779,7 @@ export default function AdminUsersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 border-slate-600 text-slate-200 sm:flex-none"
+                        className="flex-1 border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-slate-800 hover:text-white sm:flex-none"
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                       >
@@ -788,7 +788,7 @@ export default function AdminUsersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 border-slate-600 text-slate-200 sm:flex-none"
+                        className="flex-1 border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-slate-800 hover:text-white sm:flex-none"
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                       >

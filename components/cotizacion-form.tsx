@@ -129,13 +129,12 @@ export function CotizacionForm({ isOpen, onClose }: CotizacionFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Correo Electrónico *
+                  Correo Electrónico
                 </label>
                 <input
                   type="email"
                   id="email"
                   name="email"
-                  required
                   className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   placeholder="tu@email.com"
                 />

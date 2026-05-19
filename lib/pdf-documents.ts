@@ -16,7 +16,7 @@ export interface PdfDocumentData {
   dateLabel: string
   dateValue: string
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
   customerPhone?: string
   customerCompanyName?: string
   customerIdentification?: string
@@ -123,9 +123,12 @@ export async function generateFinancialPdf(data: PdfDocumentData) {
   doc.setFont("helvetica", "bold")
   doc.text(data.customerName, margin, yPosition)
   yPosition += 5
-  doc.setFont("helvetica", "normal")
-  doc.text(`Email: ${data.customerEmail}`, margin, yPosition)
-  yPosition += 5
+  const customerEmail = data.customerEmail?.trim()
+  if (customerEmail) {
+    doc.setFont("helvetica", "normal")
+    doc.text(`Email: ${customerEmail}`, margin, yPosition)
+    yPosition += 5
+  }
   if (data.customerPhone) {
     doc.text(`Tel: ${data.customerPhone}`, margin, yPosition)
     yPosition += 5
@@ -147,99 +150,207 @@ export async function generateFinancialPdf(data: PdfDocumentData) {
   }
 
   yPosition += 10
-  const tableTop = yPosition
   const colDescWidth = 110
   const colCantWidth = 20
   const colPrecioWidth = 25
+  const tableHeaderHeight = 8
+  const minRowHeight = 14
+  const tableBottomLimit = pageHeight - 20
+  const textFirstBaseline = 5
+  const textBottomPadding = 4
+  const nameLineHeight = 4.2
+  const descriptionLineHeight = 3.7
+  const descriptionGap = 0.8
 
-  doc.setFillColor(...lightGray)
-  doc.rect(margin, tableTop, contentWidth, 8, "F")
-  doc.setDrawColor(...lineGray)
-  doc.rect(margin, tableTop, contentWidth, 8)
+  type TableLine = {
+    text: string
+    kind: "name" | "description"
+    advanceBefore: number
+  }
 
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(10)
-  doc.setTextColor(...darkText)
-  doc.text("DESCRIPCIÓN", margin + 2, tableTop + 5.5)
-  doc.text("CANT.", margin + colDescWidth + 2, tableTop + 5.5)
-  doc.text("PRECIO", margin + colDescWidth + colCantWidth + 2, tableTop + 5.5)
-  doc.text("TOTAL", margin + colDescWidth + colCantWidth + colPrecioWidth + 2, tableTop + 5.5)
+  const drawTableHeader = (top: number) => {
+    doc.setFillColor(...lightGray)
+    doc.rect(margin, top, contentWidth, tableHeaderHeight, "F")
+    doc.setDrawColor(...lineGray)
+    doc.rect(margin, top, contentWidth, tableHeaderHeight)
 
-  yPosition = tableTop + 8
-  const bottomLimit = pageHeight - 58
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(10)
+    doc.setTextColor(...darkText)
+    doc.text("DESCRIPCIÓN", margin + 2, top + 5.5)
+    doc.text("CANT.", margin + colDescWidth + 2, top + 5.5)
+    doc.text("PRECIO", margin + colDescWidth + colCantWidth + 2, top + 5.5)
+    doc.text("TOTAL", margin + colDescWidth + colCantWidth + colPrecioWidth + 2, top + 5.5)
 
-  for (let index = 0; index < data.items.length; index++) {
-    const item = data.items[index]
+    return top + tableHeaderHeight
+  }
 
-    if (yPosition > bottomLimit) {
-      doc.addPage()
-      yPosition = margin
-      doc.setFillColor(...lightGray)
-      doc.rect(margin, yPosition, contentWidth, 8, "F")
-      doc.setDrawColor(...lineGray)
-      doc.rect(margin, yPosition, contentWidth, 8)
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(10)
-      doc.setTextColor(...darkText)
-      doc.text("DESCRIPCIÓN", margin + 2, yPosition + 5.5)
-      doc.text("CANT.", margin + colDescWidth + 2, yPosition + 5.5)
-      doc.text("PRECIO", margin + colDescWidth + colCantWidth + 2, yPosition + 5.5)
-      doc.text("TOTAL", margin + colDescWidth + colCantWidth + colPrecioWidth + 2, yPosition + 5.5)
-      yPosition += 8
+  const addTablePage = () => {
+    doc.addPage()
+    yPosition = drawTableHeader(margin)
+  }
+
+  const splitPdfText = (text: string, maxWidth: number) => {
+    const normalizedText = text.trim()
+    if (!normalizedText) return []
+
+    const lines = doc.splitTextToSize(normalizedText, maxWidth)
+    return Array.isArray(lines) ? lines : [lines]
+  }
+
+  const getRowHeight = (lines: TableLine[]) => {
+    if (lines.length === 0) return minRowHeight
+
+    let lastBaseline = textFirstBaseline
+    for (let index = 1; index < lines.length; index++) {
+      lastBaseline += lines[index].advanceBefore
     }
 
-    const rowHeight = 14
-    if (index % 2 !== 0) {
+    return Math.max(minRowHeight, lastBaseline + textBottomPadding)
+  }
+
+  const drawRowFrame = (top: number, rowHeight: number, isAlternate: boolean) => {
+    if (isAlternate) {
       doc.setFillColor(252, 252, 252)
-      doc.rect(margin, yPosition, contentWidth, rowHeight, "F")
+      doc.rect(margin, top, contentWidth, rowHeight, "F")
     }
 
     doc.setDrawColor(...lineGray)
-    doc.rect(margin, yPosition, contentWidth, rowHeight)
-    doc.line(margin + colDescWidth, yPosition, margin + colDescWidth, yPosition + rowHeight)
-    doc.line(
-      margin + colDescWidth + colCantWidth,
-      yPosition,
-      margin + colDescWidth + colCantWidth,
-      yPosition + rowHeight,
-    )
+    doc.rect(margin, top, contentWidth, rowHeight)
+    doc.line(margin + colDescWidth, top, margin + colDescWidth, top + rowHeight)
+    doc.line(margin + colDescWidth + colCantWidth, top, margin + colDescWidth + colCantWidth, top + rowHeight)
     doc.line(
       margin + colDescWidth + colCantWidth + colPrecioWidth,
-      yPosition,
+      top,
       margin + colDescWidth + colCantWidth + colPrecioWidth,
-      yPosition + rowHeight,
+      top + rowHeight,
     )
+  }
 
-    const descripcion = doc.splitTextToSize(item.name, colDescWidth - 4)
-    const descripcionSecundaria = doc.splitTextToSize(item.description || "", colDescWidth - 4)
+  const drawRowText = (lines: TableLine[], top: number) => {
+    let lineY = top + textFirstBaseline
 
-    doc.setTextColor(...darkText)
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(9)
-    doc.text(descripcion[0] || item.name, margin + 2, yPosition + 5)
+    lines.forEach((line, index) => {
+      if (index > 0) lineY += line.advanceBefore
 
-    if (descripcionSecundaria[0]) {
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(8)
-      doc.setTextColor(...grayText)
-      doc.text(descripcionSecundaria[0], margin + 2, yPosition + 10)
-    }
+      if (line.kind === "name") {
+        doc.setTextColor(...darkText)
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(9)
+      } else {
+        doc.setTextColor(...grayText)
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(8)
+      }
 
+      doc.text(line.text, margin + 2, lineY)
+    })
+  }
+
+  const drawRowTotals = (item: PdfLineItem, top: number) => {
     doc.setTextColor(...darkText)
     doc.setFont("helvetica", "normal")
     doc.setFontSize(9)
-    doc.text(`${item.quantity}`, margin + colDescWidth + 10, yPosition + 8, { align: "center" })
-    doc.text(item.unitPriceLabel, margin + colDescWidth + colCantWidth + colPrecioWidth - 2, yPosition + 8, {
+    doc.text(`${item.quantity}`, margin + colDescWidth + 10, top + 8, { align: "center" })
+    doc.text(item.unitPriceLabel, margin + colDescWidth + colCantWidth + colPrecioWidth - 2, top + 8, {
       align: "right",
     })
-    doc.text(item.lineTotalLabel, margin + contentWidth - 2, yPosition + 8, {
+    doc.text(item.lineTotalLabel, margin + contentWidth - 2, top + 8, {
       align: "right",
     })
+  }
+
+  const drawRowChunk = (
+    item: PdfLineItem,
+    lines: TableLine[],
+    index: number,
+    shouldDrawTotals: boolean,
+  ) => {
+    const rowHeight = getRowHeight(lines)
+
+    drawRowFrame(yPosition, rowHeight, index % 2 !== 0)
+    drawRowText(lines, yPosition)
+    if (shouldDrawTotals) drawRowTotals(item, yPosition)
 
     yPosition += rowHeight
   }
 
+  yPosition = drawTableHeader(yPosition)
+  const fullPageTableContentHeight = tableBottomLimit - margin - tableHeaderHeight
+
+  for (let index = 0; index < data.items.length; index++) {
+    const item = data.items[index]
+    doc.setTextColor(...darkText)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(9)
+    const nameLines = splitPdfText(item.name, colDescWidth - 4)
+    doc.setTextColor(...grayText)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(8)
+    const descriptionLines = splitPdfText(item.description || "", colDescWidth - 4)
+    const rowLines: TableLine[] = [
+      ...(nameLines.length > 0 ? nameLines : [item.name]).map((line, lineIndex) => ({
+        text: line,
+        kind: "name" as const,
+        advanceBefore: lineIndex === 0 ? 0 : nameLineHeight,
+      })),
+      ...descriptionLines.map((line, lineIndex) => ({
+        text: line,
+        kind: "description" as const,
+        advanceBefore: lineIndex === 0 ? nameLineHeight + descriptionGap : descriptionLineHeight,
+      })),
+    ]
+    const fullRowHeight = getRowHeight(rowLines)
+    const availableHeight = tableBottomLimit - yPosition
+
+    if (fullRowHeight > availableHeight && fullRowHeight <= fullPageTableContentHeight) {
+      addTablePage()
+      drawRowChunk(item, rowLines, index, true)
+      continue
+    }
+
+    if (fullRowHeight <= tableBottomLimit - yPosition) {
+      drawRowChunk(item, rowLines, index, true)
+      continue
+    }
+
+    let remainingLines = rowLines
+    let shouldDrawTotals = true
+
+    while (remainingLines.length > 0) {
+      if (tableBottomLimit - yPosition < minRowHeight) {
+        addTablePage()
+      }
+
+      const nextChunk: TableLine[] = []
+      for (const line of remainingLines) {
+        const candidateChunk = [...nextChunk, line]
+        if (getRowHeight(candidateChunk) <= tableBottomLimit - yPosition || nextChunk.length === 0) {
+          nextChunk.push(line)
+        } else {
+          break
+        }
+      }
+
+      drawRowChunk(item, nextChunk, index, shouldDrawTotals)
+      remainingLines = remainingLines.slice(nextChunk.length)
+      shouldDrawTotals = false
+
+      if (remainingLines.length > 0) {
+        addTablePage()
+      }
+    }
+  }
+
   yPosition += 6
+  const notesBoxHeight = data.validityNote ? 24 : 18
+  const totalsAndNotesHeight = 8 + 11 + notesBoxHeight
+
+  if (yPosition + totalsAndNotesHeight > pageHeight - 20) {
+    doc.addPage()
+    yPosition = margin
+  }
+
   const totalsXLabel = pageWidth - margin - 45
   const totalsXValue = pageWidth - margin
 
@@ -258,7 +369,7 @@ export async function generateFinancialPdf(data: PdfDocumentData) {
 
   yPosition += 11
   doc.setFillColor(236, 236, 236)
-  doc.rect(margin, yPosition, contentWidth, data.validityNote ? 24 : 18, "F")
+  doc.rect(margin, yPosition, contentWidth, notesBoxHeight, "F")
   doc.setFont("helvetica", "bold")
   doc.setTextColor(...darkText)
   doc.setFontSize(10)

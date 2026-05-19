@@ -413,13 +413,13 @@ export default function ProductosPage() {
             <Link href="/admin/reportes" className="text-gray-300 hover:text-white transition-colors">
               Reportes
             </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white">
+            <Button variant="ghost" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10">
               <LogOut className="h-4 w-4 mr-2" />
               Cerrar Sesión
             </Button>
           </div>
           <div className="flex lg:hidden">
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 p-2">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 p-2">
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
@@ -597,7 +597,7 @@ export default function ProductosPage() {
               <Button
                 onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                 variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-white/10"
+                className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10"
               >
                 {sortOrder === "asc" ? "↑" : "↓"}
               </Button>
@@ -608,14 +608,14 @@ export default function ProductosPage() {
               <Button
                 onClick={() => setViewMode("grid")}
                 variant={viewMode === "grid" ? "default" : "outline"}
-                className={viewMode === "grid" ? "bg-blue-600" : "border-gray-600 text-gray-300"}
+                className={viewMode === "grid" ? "bg-blue-600" : "border-slate-600 bg-slate-900/80 text-slate-100"}
               >
                 <BarChart3 className="h-4 w-4" />
               </Button>
               <Button
                 onClick={() => setViewMode("list")}
                 variant={viewMode === "list" ? "default" : "outline"}
-                className={viewMode === "list" ? "bg-blue-600" : "border-gray-600 text-gray-300"}
+                className={viewMode === "list" ? "bg-blue-600" : "border-slate-600 bg-slate-900/80 text-slate-100"}
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -666,7 +666,7 @@ export default function ProductosPage() {
               <FileSpreadsheet className="h-5 w-5 mr-2" />
               Exportar Excel
             </Button>
-            <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-white/10">
+            <Button variant="outline" className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10">
               <Upload className="h-5 w-5 mr-2" />
               Importar
             </Button>
@@ -812,7 +812,7 @@ export default function ProductosPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleEditProduct(producto)}
-                          className="border-gray-600 text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                          className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-blue-600 hover:text-white hover:border-blue-600"
                         >
                           <Edit className="h-4 w-4 mr-1" />
                           Editar
@@ -823,8 +823,8 @@ export default function ProductosPage() {
                           onClick={() => handleToggleActive(producto.id)}
                           className={
                             producto.activo
-                              ? "border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white"
-                              : "border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+                              ? "border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-gray-600 hover:text-white"
+                              : "border-green-600 bg-slate-900/80 text-green-300 hover:bg-green-600 hover:text-white"
                           }
                         >
                           {producto.activo ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
@@ -834,7 +834,7 @@ export default function ProductosPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDuplicateProduct(producto)}
-                          className="border-gray-600 text-gray-300 hover:bg-purple-600 hover:text-white hover:border-purple-600"
+                          className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-purple-600 hover:text-white hover:border-purple-600"
                         >
                           <Copy className="h-4 w-4 mr-1" />
                           Duplicar

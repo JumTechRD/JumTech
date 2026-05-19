@@ -38,6 +38,7 @@ import {
   saveAdminInvoice,
 } from "@/lib/admin-api-client"
 import { generateFinancialPdf } from "@/lib/pdf-documents"
+import { getInvoiceDisplayItems } from "@/lib/invoice-display"
 import type { ClientRecord } from "@/lib/admin-clients"
 
 interface Producto {
@@ -52,6 +53,8 @@ interface Producto {
 
 interface ProductoEnFactura extends Producto {
   cantidad: number
+  total?: number | null
+  profitPercentage?: number | null
 }
 
 interface Factura {
@@ -164,12 +167,12 @@ export default function AdminFacturasPage() {
   const handleGenerarPdfFactura = async (factura: Factura) => {
     try {
       const selectedClient = factura.clientId ? clientes.find((client) => client.id === factura.clientId) : null
-      const items = factura.productos.map((producto) => ({
+      const items = getInvoiceDisplayItems(factura.productos, factura.subtotal).map((producto) => ({
         name: producto.nombre,
         description: producto.descripcion,
         quantity: producto.cantidad,
-        unitPriceLabel: `$${producto.precio.toLocaleString("es-DO")}`,
-        lineTotalLabel: `$${(producto.precio * producto.cantidad).toLocaleString("es-DO")}`,
+        unitPriceLabel: `$${producto.displayUnitPrice.toLocaleString("es-DO")}`,
+        lineTotalLabel: `$${producto.displayLineTotal.toLocaleString("es-DO")}`,
       }))
 
       await generateFinancialPdf({
@@ -180,7 +183,7 @@ export default function AdminFacturasPage() {
         dateLabel: "Fecha",
         dateValue: new Date(factura.fecha).toLocaleDateString("es-DO"),
         customerName: selectedClient?.name || factura.cliente,
-        customerEmail: selectedClient?.email || factura.email,
+        customerEmail: selectedClient?.email || factura.email || undefined,
         customerPhone: selectedClient?.phone || factura.telefono || undefined,
         customerCompanyName: selectedClient?.companyName || undefined,
         customerIdentification: selectedClient?.identification || undefined,
@@ -288,7 +291,7 @@ export default function AdminFacturasPage() {
             <Link href="/admin/usuarios" className="text-gray-300 hover:text-white transition-colors text-sm">
               Usuarios
             </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-gray-300 hover:text-white text-sm">
+            <Button variant="ghost" onClick={handleLogout} className="text-slate-200 hover:text-white hover:bg-white/10 text-sm">
               <LogOut className="h-4 w-4 mr-1" />Salir
             </Button>
           </div>
@@ -490,7 +493,7 @@ export default function AdminFacturasPage() {
                 setFechaInicial("")
                 setFechaFinal("")
               }}
-              className="border-gray-600 text-gray-300 hover:bg-white/10 bg-transparent"
+              className="border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10"
             >
               Limpiar filtros
             </Button>
@@ -540,7 +543,7 @@ export default function AdminFacturasPage() {
                             <User className="h-4 w-4 mr-1" />
                             {factura.cliente}
                           </p>
-                          <p className="break-all text-gray-500 text-sm">{factura.email}</p>
+                          <p className="break-all text-gray-500 text-sm">{factura.email || "-"}</p>
                         </div>
                       </div>
                       <div className="text-left sm:text-right">

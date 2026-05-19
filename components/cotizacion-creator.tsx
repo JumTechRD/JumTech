@@ -9,6 +9,12 @@ import { fetchAdminClients, fetchAdminProducts } from "@/lib/admin-api-client"
 import { ClientSelector } from "@/components/client-selector"
 import type { ClientRecord } from "@/lib/admin-clients"
 import { generateFinancialPdf } from "@/lib/pdf-documents"
+import {
+  DEFAULT_EXCHANGE_RATE,
+  PROFIT_PERCENTAGE_OPTIONS,
+  calcularItemConGanancia,
+  convertirPrecio,
+} from "@/lib/pricing"
 
 interface Producto {
   id: string
@@ -128,6 +134,13 @@ const productosDisponiblesInicial: Producto[] = [
   },
 ]
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isValidOptionalEmail(value: string) {
+  const email = value.trim()
+  return !email || emailRegex.test(email)
+}
+
 export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }: CotizacionCreatorProps) {
   const [numeroFactura, setNumeroFactura] = useState("")
   const [cliente, setCliente] = useState("")
@@ -143,7 +156,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   const [clientes, setClientes] = useState<ClientRecord[]>([])
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [monedaPrincipal, setMonedaPrincipal] = useState<"USD" | "RD$">("RD$")
-  const [tasaCambio, setTasaCambio] = useState(58) // Tasa USD a RD$
+  const [tasaCambio, setTasaCambio] = useState(DEFAULT_EXCHANGE_RATE) // Tasa USD a RD$
   const [itbisActivo, setItbisActivo] = useState(false)
   const [porcentajeItbis, setPorcentajeItbis] = useState(0)
   const [clientId, setClientId] = useState<string | null>(null)
@@ -200,7 +213,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     if (editingCotizacion) {
       setNumeroFactura(editingCotizacion.numeroFactura || "")
       setCliente(editingCotizacion.cliente)
-      setEmail(editingCotizacion.email)
+      setEmail(editingCotizacion.email || "")
       setTelefono(editingCotizacion.telefono)
       setNotas(editingCotizacion.notas || "")
       setProductosSeleccionados(
@@ -247,19 +260,22 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
     setAddress(selectedClient.address || "")
   }, [clientId, clientes])
 
-  const convertirPrecio = (precio: number, monedaOrigen: "USD" | "RD$", monedaDestino: "USD" | "RD$") => {
-    if (monedaOrigen === monedaDestino) return precio
-    if (monedaOrigen === "USD" && monedaDestino === "RD$") return precio * tasaCambio
-    if (monedaOrigen === "RD$" && monedaDestino === "USD") return precio / tasaCambio
-    return precio
-  }
-
   const formatearMonto = (monto: number) => {
     return monto.toLocaleString("es-DO", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     })
   }
+
+  const calcularProductoCotizacion = (producto: ProductoEnCotizacion) =>
+    calcularItemConGanancia({
+      precio: producto.precio,
+      cantidad: producto.cantidad,
+      porcentajeGanancia: producto.porcentajeExtra,
+      monedaOrigen: producto.moneda || "RD$",
+      monedaDestino: monedaPrincipal,
+      tasaCambio,
+    })
 
   const formatearFecha = (fecha: Date) => {
     return fecha.toLocaleDateString("es-DO")
@@ -281,8 +297,13 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   }
 
   const generarPDF = async () => {
-    if (!cliente || !email || productosSeleccionados.length === 0) {
+    if (!cliente || productosSeleccionados.length === 0) {
       alert("Por favor completa todos los campos antes de generar el PDF")
+      return
+    }
+
+    if (!isValidOptionalEmail(email)) {
+      alert("Ingresa un correo válido o deja el campo vacío")
       return
     }
 
@@ -290,16 +311,14 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
 
     try {
       const items = productosSeleccionados.map((producto) => {
-        const precioEnMonedaPrincipal = convertirPrecio(producto.precio, producto.moneda || "RD$", monedaPrincipal)
-        const totalConExtra =
-          precioEnMonedaPrincipal * producto.cantidad * (1 + (producto.porcentajeExtra || 0) / 100)
+        const pricing = calcularProductoCotizacion(producto)
 
         return {
           name: producto.nombre,
           description: producto.descripcion,
           quantity: producto.cantidad,
-          unitPriceLabel: `${monedaPrincipal} ${formatearMonto(precioEnMonedaPrincipal)}`,
-          lineTotalLabel: `${monedaPrincipal} ${formatearMonto(totalConExtra)}`,
+          unitPriceLabel: `${monedaPrincipal} ${formatearMonto(pricing.precioFinalUnitario)}`,
+          lineTotalLabel: `${monedaPrincipal} ${formatearMonto(pricing.totalItem)}`,
         }
       })
 
@@ -313,7 +332,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
         dateLabel: "Fecha",
         dateValue: formatearFecha(new Date()),
         customerName: cliente,
-        customerEmail: email,
+        customerEmail: email.trim() || undefined,
         customerPhone: telefono || "No especificado",
         customerCompanyName: companyName || undefined,
         customerIdentification: identification || undefined,
@@ -457,11 +476,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
 
   const calcularSubtotal = () => {
     return productosSeleccionados.reduce((sum, producto) => {
-      const precioEnMonedaPrincipal = convertirPrecio(producto.precio, producto.moneda || "RD$", monedaPrincipal)
-      const subtotalProducto = precioEnMonedaPrincipal * producto.cantidad
-      const porcentajeExtra = (producto.porcentajeExtra || 0) / 100
-      const totalConExtra = subtotalProducto * (1 + porcentajeExtra)
-      return sum + totalConExtra
+      return sum + calcularProductoCotizacion(producto).totalItem
     }, 0)
   }
 
@@ -474,8 +489,13 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   }
 
   const handleSave = () => {
-    if (!cliente || !email || productosSeleccionados.length === 0) {
+    if (!cliente || productosSeleccionados.length === 0) {
       alert("Por favor completa todos los campos requeridos")
+      return
+    }
+
+    if (!isValidOptionalEmail(email)) {
+      alert("Ingresa un correo válido o deja el campo vacío")
       return
     }
 
@@ -483,7 +503,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
       id: editingCotizacion?.id || Date.now().toString(),
       numeroFactura,
       cliente,
-      email,
+      email: email.trim(),
       telefono,
       clientId,
       fecha: editingCotizacion?.fecha || new Date().toISOString(),
@@ -507,7 +527,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   // Actualizar la función calcularSubtotalBase para mostrar el subtotal sin extra
   const calcularSubtotalBase = () => {
     return productosSeleccionados.reduce((sum, producto) => {
-      const precioEnMonedaPrincipal = convertirPrecio(producto.precio, producto.moneda || "RD$", monedaPrincipal)
+      const precioEnMonedaPrincipal = convertirPrecio(producto.precio, producto.moneda || "RD$", monedaPrincipal, tasaCambio)
       return sum + precioEnMonedaPrincipal * producto.cantidad
     }, 0)
   }
@@ -515,11 +535,10 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
   // Actualizar la función calcularTotalExtra para mostrar solo el monto extra
   const calcularTotalExtra = () => {
     return productosSeleccionados.reduce((sum, producto) => {
-      const precioEnMonedaPrincipal = convertirPrecio(producto.precio, producto.moneda || "RD$", monedaPrincipal)
-      const subtotalProducto = precioEnMonedaPrincipal * producto.cantidad
-      const porcentajeExtra = (producto.porcentajeExtra || 0) / 100
-      const montoExtra = subtotalProducto * porcentajeExtra
-      return sum + montoExtra
+      const pricing = calcularProductoCotizacion(producto)
+      const subtotalProducto = pricing.precioBaseUnitario * producto.cantidad
+
+      return sum + (pricing.totalItem - subtotalProducto)
     }, 0)
   }
 
@@ -578,14 +597,14 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Tasa de Cambio (USD → RD$)</label>
-                <input
-                  type="number"
-                  value={tasaCambio}
-                  onChange={(e) => setTasaCambio(Number.parseFloat(e.target.value) || 58)}
-                  className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="58.00"
-                  min="1"
+	                <label className="block text-sm font-medium text-gray-300 mb-2">Tasa de Cambio (USD → RD$)</label>
+	                <input
+	                  type="number"
+	                  value={tasaCambio}
+	                  onChange={(e) => setTasaCambio(Number.parseFloat(e.target.value) || DEFAULT_EXCHANGE_RATE)}
+	                  className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+	                  placeholder="58.00"
+	                  min="1"
                   step="0.01"
                 />
               </div>
@@ -624,7 +643,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico *</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico</label>
                 <input
                   type="email"
                   value={email}
@@ -724,128 +743,113 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
               </div>
             ) : (
               <div className="space-y-3">
-                {productosSeleccionados.map((producto) => (
-                  <div
-                    key={producto.id}
-                    className="flex flex-col gap-4 p-4 bg-white/5 rounded-lg border border-gray-700/30 lg:flex-row lg:items-center lg:justify-between"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
-                      </div>
-                      <p className="break-words text-sm text-gray-400">{producto.descripcion}</p>
-                      <Badge className="mt-1 bg-purple-600/20 text-purple-400 border-purple-600/30 text-xs">
-                        {producto.categoria}
-                      </Badge>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:items-center lg:space-x-4">
-                      {/* Cantidad */}
-                      <div className="flex items-center justify-center space-x-2">
-                        <button
-                          onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
-                          className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
-                        >
-                          -
-                        </button>
-                        <span className="text-white w-8 text-center">{producto.cantidad}</span>
-                        <button
-                          onClick={() => actualizarCantidad(producto.id, producto.cantidad + 1)}
-                          className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
-                        >
-                          +
-                        </button>
-                      </div>
+                {productosSeleccionados.map((producto) => {
+                  const pricing = calcularProductoCotizacion(producto)
+                  const subtotalBase = pricing.precioBaseUnitario * producto.cantidad
+                  const totalExtra = pricing.totalItem - subtotalBase
 
-                      {/* Porcentaje Extra */}
-                      <div className="text-center">
-                        <label className="text-xs text-gray-400 block mb-1">% Extra</label>
-                        <select
-                          value={producto.porcentajeExtra || 0}
-                          onChange={(e) => actualizarPorcentajeExtra(producto.id, Number.parseInt(e.target.value))}
-                          className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-xs"
-                        >
-                          <option value={0}>0%</option>
-                          <option value={20}>20%</option>
-                          <option value={30}>30%</option>
-                          <option value={40}>40%</option>
-                        </select>
+                  return (
+                    <div
+                      key={producto.id}
+                      className="flex flex-col gap-4 p-4 bg-white/5 rounded-lg border border-gray-700/30 lg:flex-row lg:items-center lg:justify-between"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="break-words font-medium text-white">{producto.nombre}</h4>
+                        </div>
+                        <p className="break-words text-sm text-gray-400">{producto.descripcion}</p>
+                        <Badge className="mt-1 bg-purple-600/20 text-purple-400 border-purple-600/30 text-xs">
+                          {producto.categoria}
+                        </Badge>
                       </div>
-
-                      {/* Precio y Moneda */}
-                      <div className="text-left sm:text-right">
-                        <div className="flex items-center space-x-2 mb-1">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:items-center lg:space-x-4">
+                        <div className="flex items-center justify-center space-x-2">
+                          <button
+                            onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
+                            className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
+                          >
+                            -
+                          </button>
+                          <span className="text-white w-8 text-center">{producto.cantidad}</span>
+                          <button
+                            onClick={() => actualizarCantidad(producto.id, producto.cantidad + 1)}
+                            className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded text-white flex items-center justify-center"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="text-center">
+                          <label className="text-xs text-gray-400 block mb-1">% Extra</label>
                           <select
-                            value={producto.moneda || "RD$"}
-                            onChange={(e) => actualizarMoneda(producto.id, e.target.value as "USD" | "RD$")}
+                            value={producto.porcentajeExtra || 0}
+                            onChange={(e) => actualizarPorcentajeExtra(producto.id, Number.parseInt(e.target.value))}
                             className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-xs"
                           >
-                            <option value="RD$">RD$</option>
-                            <option value="USD">USD</option>
+                            {PROFIT_PERCENTAGE_OPTIONS.map((percentage) => (
+                              <option key={percentage} value={percentage}>
+                                {percentage}%
+                              </option>
+                            ))}
                           </select>
-                          {producto.esManual ? (
-                            <input
-                              type="number"
-                              value={producto.precio}
-                              onChange={(e) => actualizarPrecio(producto.id, Number.parseFloat(e.target.value) || 0)}
-                              className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm text-right"
-                              min="0"
-                              step="0.01"
-                            />
-                          ) : (
-                            <span className="text-white font-medium text-sm">{producto.precio.toLocaleString()}</span>
+                        </div>
+                        <div className="text-left sm:text-right">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <select
+                              value={producto.moneda || "RD$"}
+                              onChange={(e) => actualizarMoneda(producto.id, e.target.value as "USD" | "RD$")}
+                              className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-xs"
+                            >
+                              <option value="RD$">RD$</option>
+                              <option value="USD">USD</option>
+                            </select>
+                            {producto.esManual ? (
+                              <input
+                                type="number"
+                                value={producto.precio}
+                                onChange={(e) => actualizarPrecio(producto.id, Number.parseFloat(e.target.value) || 0)}
+                                className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm text-right"
+                                min="0"
+                                step="0.01"
+                              />
+                            ) : (
+                              <span className="text-white font-medium text-sm">{producto.precio.toLocaleString()}</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            Subtotal: {monedaPrincipal} {formatearMonto(subtotalBase)}
+                          </p>
+                          {(producto.porcentajeExtra || 0) > 0 && (
+                            <p className="text-xs text-orange-400">
+                              +{producto.porcentajeExtra}%: {monedaPrincipal} {formatearMonto(totalExtra)}
+                            </p>
+                          )}
+                          <p className="text-sm font-semibold text-green-400">
+                            Total: {monedaPrincipal} {formatearMonto(pricing.totalItem)}
+                          </p>
+                          {(producto.moneda || "RD$") !== monedaPrincipal && (
+                            <p className="text-xs text-blue-400">
+                              Precio base original: {producto.moneda || "RD$"}{" "}
+                              {formatearMonto(producto.precio * producto.cantidad)}
+                            </p>
                           )}
                         </div>
-                        <p className="text-sm text-gray-400">
-                          Subtotal: {producto.moneda || "RD$"} {(producto.precio * producto.cantidad).toLocaleString()}
-                        </p>
-                        {(producto.porcentajeExtra || 0) > 0 && (
-                          <p className="text-xs text-orange-400">
-                            +{producto.porcentajeExtra}%: {producto.moneda || "RD$"}{" "}
-                            {(
-                              producto.precio *
-                              producto.cantidad *
-                              ((producto.porcentajeExtra || 0) / 100)
-                            ).toLocaleString()}
-                          </p>
-                        )}
-                        <p className="text-sm font-semibold text-green-400">
-                          Total: {producto.moneda || "RD$"}{" "}
-                          {(
-                            producto.precio *
-                            producto.cantidad *
-                            (1 + (producto.porcentajeExtra || 0) / 100)
-                          ).toLocaleString()}
-                        </p>
-                        {producto.moneda !== monedaPrincipal && (
-                          <p className="text-xs text-blue-400">
-                            ≈ {monedaPrincipal}{" "}
-                            {convertirPrecio(
-                              producto.precio * producto.cantidad * (1 + (producto.porcentajeExtra || 0) / 100),
-                              producto.moneda || "RD$",
-                              monedaPrincipal,
-                            ).toLocaleString()}
-                          </p>
-                        )}
+                        <button
+                          onClick={() => iniciarEditarProducto(producto)}
+                          className="text-blue-400 hover:text-blue-300 p-2"
+                          title="Editar producto"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => eliminarProducto(producto.id)}
+                          className="text-red-400 hover:text-red-300 p-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-
-                      {/* Botón Editar */}
-                      <button
-                        onClick={() => iniciarEditarProducto(producto)}
-                        className="text-blue-400 hover:text-blue-300 p-2"
-                        title="Editar producto"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-
-                      <button
-                        onClick={() => eliminarProducto(producto.id)}
-                        className="text-red-400 hover:text-red-300 p-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -894,7 +898,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 border-gray-600 text-gray-300 hover:bg-white/10 bg-transparent"
+              className="flex-1 border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10"
             >
               Cancelar
             </Button>
@@ -920,7 +924,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
             <Button
               onClick={handleSave}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              disabled={!cliente || !email || productosSeleccionados.length === 0}
+              disabled={!cliente || productosSeleccionados.length === 0}
             >
               <Save className="h-4 w-4 mr-2" />
               {editingCotizacion ? "Actualizar" : "Guardar"} Cotización
@@ -1049,7 +1053,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                 <Button
                   variant="outline"
                   onClick={() => setShowProductoManual(false)}
-                  className="flex-1 border-gray-600 text-gray-300 hover:bg-white/10 bg-transparent"
+                  className="flex-1 border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10"
                 >
                   Cancelar
                 </Button>
@@ -1113,18 +1117,19 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                     min="1"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">% Extra</label>
-                  <select
-                    value={porcentajeExtraEdit}
-                    onChange={(e) => setPorcentajeExtraEdit(Number.parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-slate-800/90 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value={0}>0%</option>
-                    <option value={20}>20%</option>
-                    <option value={30}>30%</option>
-                    <option value={40}>40%</option>
-                  </select>
+	                <div>
+	                  <label className="block text-sm font-medium text-gray-300 mb-2">% Extra</label>
+	                  <select
+	                    value={porcentajeExtraEdit}
+	                    onChange={(e) => setPorcentajeExtraEdit(Number.parseInt(e.target.value))}
+	                    className="w-full px-4 py-3 bg-slate-800/90 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+	                  >
+	                    {PROFIT_PERCENTAGE_OPTIONS.map((percentage) => (
+	                      <option key={percentage} value={percentage}>
+	                        {percentage}%
+	                      </option>
+	                    ))}
+	                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Moneda *</label>
@@ -1164,7 +1169,7 @@ export function CotizacionCreator({ isOpen, onClose, onSave, editingCotizacion }
                 <Button
                   variant="outline"
                   onClick={() => setShowEditProducto(false)}
-                  className="flex-1 border-gray-600 text-gray-300 hover:bg-white/10 bg-transparent"
+              className="flex-1 border-slate-600 bg-slate-900/80 text-slate-100 hover:bg-white/10"
                 >
                   Cancelar
                 </Button>
