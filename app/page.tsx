@@ -776,7 +776,7 @@ export default function HomePage() {
                 <CardTitle className="text-white">Correo Electrónico</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300 mb-4 break-all">jumtechRD@gmail.com</p>
+                <p className="text-gray-300 mb-4 break-all">Info@jumtechRD.com</p>
                 <Button
                   className="w-full bg-black/60 text-red-400 border border-red-500/50 hover:bg-black/80 hover:text-red-300 hover:border-red-400 backdrop-blur-sm transition-all duration-300 sm:w-auto"
                   asChild
